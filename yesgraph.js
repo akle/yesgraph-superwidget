@@ -1,23 +1,36 @@
 (function ($) {
-
+    var YESGRAPH_BASE_URL = 'http://localhost:5001'; // FIXME: This should change in prod
     var yesgraphDiv = $('div.yesgraph');
-    var appId = yesgraphDiv.data('app');
-    var fbAppId = '1695708317364334';
+    var appName = yesgraphDiv.data('app');
     init();
 
-    function init(fbAppId) {
+    function init() {
         checkConfig();
-        loadFacebook();
         loadTwitter();
         loadPinterest();
 
-        var appOptions = getAppOptions(appId);
+        var appOptions = getAppOptions(appName);
 
         if (appOptions.error) {
             error('Invalid app ID.', true);
         } else {
             renderWidget(appOptions);
         }
+    }
+
+    function getAppOptions(appName) {
+        var optionsUrl = YESGRAPH_BASE_URL + '/apps/' + appName + '/js/get-options';
+        var options;
+
+        $.ajax({
+            dataType: "json",
+            async: false, // get options before proceeding
+            url: optionsUrl,
+            success: function (r) {
+                options = r;
+            }
+        });
+        return options;
     }
 
     function renderWidget(options) {
@@ -35,33 +48,40 @@
         };
 
         yesgraphDiv.append(yesgraphWidget);
-
     }
 
-    function buildInviteWidget() {
-        var inviteWidget = $('<div>');
-        return inviteWidget;
+    function buildInviteWidget(options) {
+        // var token = getToken(appName);
+        // var inviteWidget = $('<div>');
+        // var getContactsBtn = inviteWidget.append('<button>', {'text': 'GET CONTACTS'});
+        // getContactsBtn.on('click', function(){ getContacts(token); });
+        // return inviteWidget;
     }
 
-    function getAppOptions(appId) {
-        var YESGRAPH_BASE_URL = 'http://localhost:5001'; // FIXME: This should change in prod
-        var optionsUrl = YESGRAPH_BASE_URL + '/apps/' + appId + '/superwidget/get-options';
-        var options;
-
+    function getContacts(token) {
+        var getContactsUrl = YESGRAPH_BASE_URL + '/superwidget/address-book';
+        var contacts = [];
         $.ajax({
+            url: getContactsUrl,
+            data: {token: token},
             dataType: "json",
-            async: false, // get options before proceeding
-            url: optionsUrl,
-            success: function (r) {
-                options = r;
+            success: function(r) {
+                console.log('Successfully retrieved contacts:');
+                console.log(r);
+                contacts = r;
+            },
+            error: function(e) {
+                console.log('Failed to retrieve contacts:');
+                console.log(e);
+                error(e.responseJSON.error, false);
             }
         });
-        return options;
+        return contacts;
     }
 
-    function buildShareButtons(appOptions) {
+    function buildShareButtons(options) {
 
-        var headline = $('<h3>', {text: 'Tell your friends about ' + appOptions.appName + '!'});
+        var headline = $('<h3>', {text: 'Tell your friends about ' + options.appDisplayName + '!'});
         var fbIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/facebook-128.png';
         var twIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/twitter-128.png';
         var pnIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/pinterest-128.png';
@@ -73,7 +93,7 @@
 
         // Build Twitter button
         var twDialogParams = {
-            text: appOptions.tweetMsg + ' ' + currentWindowUrl
+            text: options.integrations.twitter.tweetMsg + ' ' + currentWindowUrl
         };
 
         var twShareButton = $('<a>', {
@@ -91,10 +111,10 @@
         function openFacebookDialog(e) {
             e.preventDefault();
             var fbDialogParams = {
-                app_id: fbAppId,
-                display: 'popup',
+                app_id: options.integrations.facebook.appId,
+                display: 'iframe',
                 href: currentWindowUrl,
-                redirect_uri: 'https://www.yesgraph.com/' // + 'close-window'  // FIXME: add close-window in prod
+                redirect_uri: 'https://www.yesgraph.com/' // FIXME: a close-window endpoint won't work in Chrome
             };
             var windowObjectReference = window.open(
                 "https://www.facebook.com/dialog/share?" + objToCommas(fbDialogParams),
@@ -139,23 +159,33 @@
         return shareButtonsWidget
     }
 
+    function getToken(appName) {
+        var cookieName = 'yg-client-token';
+        var token = readCookie(cookieName);
+        if (!token) {
+            $.ajax({
+                url: YESGRAPH_BASE_URL + '/generate-token',
+                data: {'appName': appName},
+                dataType: 'json',
+                success: function(r) {
+                    token = r;
+                    setCookie(cookieName, token);
+                },
+                error: function(e) {
+                    error(e.responseJSON.error, true);
+                }
+            });
+        };
+        return token;
+    }
+
     function checkConfig() {
         if (!yesgraphDiv) {
             error('No target element specified.', true);
         }
-        if (!appId) {
+        if (!appName) {
             error('No app specified.', true);
         }
-    }
-
-    function loadFacebook() {
-        window.fbAsyncInit = function () {
-            FB.init({
-                appId: fbAppId,
-                xfbml: true,
-                version: 'v2.5'
-            });
-        };
     }
 
     function loadTwitter() {
@@ -204,6 +234,32 @@
                 return k + '=' + obj[k];
             }
         ).join("&");
+    }
+
+    function setCookie(key, val, expDays) {
+        // Adapted from http://www.w3schools.com/js/js_cookies.asp
+        var cookie = key + '=' + val;
+        if (expDays) {
+            var expDate = new Date();
+            expDate.setTime(expDate.getTime() + (expDays*24*60*60*1000));
+            cookie = cookie + '; expires=' + expDate.toGMTString();
+        }
+        document.cookie = cookie;
+    }
+
+    function readCookie(key) {
+        // Adapted from http://www.w3schools.com/js/js_cookies.asp
+        var key = key + "=";
+        var cookies = document.cookie.split(';');
+        for(var i=0; i < cookies.length; i++) {
+            var cookie = cookies[i];
+            while (cookie.charAt(0)==' ') cookie = cookie.substring(1);
+            if (cookie.indexOf(key) == 0) return cookie.substring(key.length,cookie.length);
+        }
+    }
+
+    function eraseCookie(key) {
+        setCookie(key, '', -1);  // Expiry date is yesterday; Erase immediately
     }
 
 }(jQuery))
