@@ -36,16 +36,14 @@
     function renderWidget(options) {
 
         var yesgraphWidget = $('<div>');
-
-        if (options.include.shareButtons) {
+        window.shareOptions = options;
+        if (options.shareButtons) {
             var shareButtonsWidget = buildShareButtons(options);
             yesgraphWidget.append(shareButtonsWidget);
         };
 
-        if (options.include.inviteFlow) {
-            var inviteWidget = buildInviteWidget(options);
-            yesgraphWidget.append(inviteWidget);
-        };
+        var inviteWidget = buildInviteWidget(options);
+        yesgraphWidget.append(inviteWidget);
 
         yesgraphDiv.append(yesgraphWidget);
     }
@@ -85,69 +83,78 @@
         var fbIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/facebook-128.png';
         var twIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/twitter-128.png';
         var pnIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/pinterest-128.png';
-        var currentWindowUrl = window.location.href;
 
-        if (window.location.href.indexOf('localhost') !== -1) { // Facebook sharing of localhost will fail
-            currentWindowUrl = 'https://www.yesgraph.com';
-        };
-
-        // Build Twitter button
-        var twDialogParams = {
-            text: options.integrations.twitter.tweetMsg + ' ' + currentWindowUrl
-        };
-
-        var twShareButton = $('<a>', {
-            'href': 'https://twitter.com/intent/tweet?' + objToCommas(twDialogParams),
-            'class': 'yg-share-btn'
-        }).append($('<img>', {'src': twIconUrl}));
-
-        // Build Facebook button
-        var fbShareButton = $('<a>', {
-            'class': 'yg-share-btn'
-        }).append($('<img>', {'src': fbIconUrl}));
-
-        fbShareButton.on('click', openFacebookDialog);
-
-        function openFacebookDialog(e) {
-            e.preventDefault();
-            var fbDialogParams = {
-                app_id: options.integrations.facebook.appId,
-                display: 'iframe',
-                href: currentWindowUrl,
-                redirect_uri: 'https://www.yesgraph.com/' // FIXME: a close-window endpoint won't work in Chrome
-            };
-            var windowObjectReference = window.open(
-                "https://www.facebook.com/dialog/share?" + objToCommas(fbDialogParams),
-                "Post to Facebook",
-                "status"
-            );
-        }
-
-        // Build Pinterest button
-        var pnDialogParams = {
-            'url': currentWindowUrl
-        };
-
-        var pnShareButton = $('<a>', {
-            'href': "https://www.pinterest.com/pin/create/button/" + objToCommas(pnDialogParams),
-            'data-pin-do': 'buttonBookmark',
-            'data-pin-custom': true,
-            'class': 'yg-share-btn'
-        }).append($('<img>', {'src': pnIconUrl}));
-
-        // Assemble the shareButtonsWidget
         var buttonsRow = $('<div>').css({
             'display': 'table',
             'table-layout': 'fixed'
         });
 
-        buttonsRow.append(twShareButton);
-        buttonsRow.append(fbShareButton);
-        buttonsRow.append(pnShareButton);
+        // Build Twitter button
+        if (options.shareButtons.includes('twitter')) {
+            var twDialogParams = {
+                text: options.integrations.twitter.tweetMsg + ' ' + options.urlToShare
+            };
+
+            var twShareButton = $('<a>', {
+                'href': 'https://twitter.com/intent/tweet?' + objToCommas(twDialogParams),
+                'class': 'yg-share-btn'
+            }).append($('<img>', {'src': twIconUrl}));
+
+            buttonsRow.append(twShareButton);
+        }
+
+        // Build Facebook button
+        if (options.shareButtons.includes('facebook') && options.integrations.facebook.appId) {
+            var fbShareButton = $('<a>', {
+                'class': 'yg-share-btn'
+            }).append($('<img>', {'src': fbIconUrl}));
+
+            fbShareButton.on('click', openFacebookDialog);
+
+            function openFacebookDialog(e) {
+                e.preventDefault();
+                var currentWindowUrl = window.location.href;
+                if (currentWindowUrl.indexOf('localhost') !== -1) {
+                    currentWindowUrl = 'https://www.yesgraph.com';
+                };
+
+                var fbDialogParams = {
+                    app_id: options.integrations.facebook.appId,
+                    display: 'iframe',
+                    href: options.urlToShare,
+                    redirect_uri: currentWindowUrl // FIXME
+                };
+                var windowObjectReference = window.open(
+                    "https://www.facebook.com/dialog/share?" + objToCommas(fbDialogParams),
+                    "Post to Facebook",
+                    "status"
+                );
+            }
+
+            buttonsRow.append(fbShareButton);
+        }
+    
+        // Build Pinterest button
+        if (options.shareButtons.includes('pinterest')) {
+            var pnDialogParams = {
+                'url': options.urlToShare
+            };
+
+            var pnShareButton = $('<a>', {
+                'href': "https://www.pinterest.com/pin/create/button/" + objToCommas(pnDialogParams),
+                'data-pin-do': 'buttonBookmark',
+                'data-pin-custom': true,
+                'class': 'yg-share-btn'
+            }).append($('<img>', {'src': pnIconUrl}));
+
+            buttonsRow.append(pnShareButton);         
+        }
+
+        // Style the share buttons & add them to the shareButtonsWidget
         buttonsRow.children().css({
-                            'display': 'table-cell',
-                            'padding': '0'
-                       }).children().css({'max-width': '100%'});
+            'display': 'table-cell',
+            'padding': '0'
+        }).children().css({'max-width': '100%'});
 
         var shareButtonsWidget = $('<div>', {
             'id': 'yg-share-widget'
