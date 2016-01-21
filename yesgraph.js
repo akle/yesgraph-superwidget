@@ -1,272 +1,201 @@
-(function ($) {
-    var YESGRAPH_BASE_URL = 'http://localhost:5001'; // FIXME: This should change in prod
-    var yesgraphDiv = $('div.yesgraph');
-    var appName = yesgraphDiv.data('app');
-    init();
+(function($){
 
-    function init() {
-        checkConfig();
-        loadTwitter();
-        loadPinterest();
+    function getGoogleAuthUrl() {
 
-        var appOptions = getAppOptions(appName);
+        var oAuthClientID = "1087547563887-dc6k04gv92q59l404vfu43f0u8s0u43e.apps.googleusercontent.com";
+        var oAuthRedirectURL = "http://localhost:5001";
 
-        if (appOptions.error) {
-            error('Invalid app ID.', true);
-        } else {
-            renderWidget(appOptions);
+        var requestParams = {
+            response_type: "token",
+            client_id: oAuthClientID,
+            redirect_uri: oAuthRedirectURL,
+            scope: "https://www.googleapis.com/auth/contacts.readonly",
         }
+        var oAuthURL =  "https://accounts.google.com/o/oauth2/auth?" + $.param(requestParams);
+                return oAuthURL;
     }
 
-    function getAppOptions(appName) {
-        var optionsUrl = YESGRAPH_BASE_URL + '/apps/' + appName + '/js/get-options';
-        var options;
+    function getUrlParams () {
+        // https://developers.google.com/identity/protocols/OAuth2UserAgent#handlingtheresponse
+        var params = {},
+            queryString = location.hash.substring(1),
+            regex = /([^&=]+)=([^&]*)/g, m;
 
-        $.ajax({
-            dataType: "json",
-            async: false, // get options before proceeding
-            url: optionsUrl,
-            success: function (r) {
-                options = r;
+        while (m = regex.exec(queryString)) {
+          params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+        }
+        return params
+    }
+
+    function parseGoogleContactsFeed(contactsFeed) {
+        var entries = [],
+            googleEntry,
+            yesgraphEntry,
+            emails;
+
+        // Aggregate the google contacts into a list of entries
+        for (i in contactsFeed.entry) {
+            googleEntry = contactsFeed.entry[i];
+            yesgraphEntry = {}
+
+            // Add the contact's name
+            if (googleEntry.title.$t) {
+                yesgraphEntry.name = googleEntry.title.$t;
             }
-        });
-        return options;
-    }
 
-    function renderWidget(options) {
+            // Add the contact's email addresses
+            if (googleEntry.gd$email) {
+                yesgraphEntry.emails = [];
+                for (i in googleEntry.gd$email) {
+                    yesgraphEntry.emails.push(googleEntry.gd$email[i].address);
+                };
+            };
 
-        var yesgraphWidget = $('<div>');
-        window.shareOptions = options;
-        if (options.shareButtons) {
-            var shareButtonsWidget = buildShareButtons(options);
-            yesgraphWidget.append(shareButtonsWidget);
+            entries.push(yesgraphEntry);
         };
 
-        var inviteWidget = buildInviteWidget(options);
-        yesgraphWidget.append(inviteWidget);
-
-        yesgraphDiv.append(yesgraphWidget);
-    }
-
-    function buildInviteWidget(options) {
-        // var token = getToken(appName);
-        // var inviteWidget = $('<div>');
-        // var getContactsBtn = inviteWidget.append('<button>', {'text': 'GET CONTACTS'});
-        // getContactsBtn.on('click', function(){ getContacts(token); });
-        // return inviteWidget;
-    }
-
-    function getContacts(token) {
-        var getContactsUrl = YESGRAPH_BASE_URL + '/superwidget/address-book';
-        var contacts = [];
-        $.ajax({
-            url: getContactsUrl,
-            data: {token: token},
-            dataType: "json",
-            success: function(r) {
-                console.log('Successfully retrieved contacts:');
-                console.log(r);
-                contacts = r;
+        var contacts = {
+            client_token: '',
+            source: {
+                type: 'gmail',
+                name: contactsFeed.author.name,
+                email: contactsFeed.author.email
             },
-            error: function(e) {
-                console.log('Failed to retrieve contacts:');
-                console.log(e);
-                error(e.responseJSON.error, false);
-            }
-        });
+            entries: entries
+        }
+
         return contacts;
     }
 
-    function buildShareButtons(options) {
+    function getRankedContacts(contacts) {
+        // TODO: get ranked contacts from YesGraph
+        return contacts;
+    }
 
-        var headline = $('<h3>', {text: 'Tell your friends about ' + options.appDisplayName + '!'});
-        var fbIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/facebook-128.png';
-        var twIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/twitter-128.png';
-        var pnIconUrl = 'https://cdn2.iconfinder.com/data/icons/capsocial-square-flat-3/500/pinterest-128.png';
+    $.fn.showContactsList = function (accessToken) {
+        // Use the accessToken to get contacts, and then
+        // display them on the target element.
+        console.log('Loading contacts.');
 
-        var buttonsRow = $('<div>').css({
-            'display': 'table',
-            'table-layout': 'fixed'
+        var contacts,
+            $targetElem = $(this),
+            contactsFeedUrl = 'https://www.google.com/m8/feeds/contacts/default/full',
+            readContactsScope = 'https://www.googleapis.com/auth/contacts.readonly';
+
+        var queryParams = {
+            access_token: accessToken,
+            alt: 'json',
+            orderby: 'lastmodified'
+        }
+
+        $.ajax({
+            url: contactsFeedUrl,
+            data: queryParams,
+            dataType: "jsonp",
+            success: function (r) {
+                contacts = parseGoogleContactsFeed(r.feed);
+                contacts = getRankedContacts(contacts);
+
+                // Display the ranked
+                var entry,
+                    $contactRow,
+                    $contactsTable = $('<table>'),
+                    $contactsList = $contactsTable.append($('<tbody>'));
+
+                for (i in contacts.entries) {
+                    entry = contacts.entries[i];
+
+                    if (entry.emails) {
+
+                        $contactRow = $('<tr>').css({
+                            display: 'table-row'
+                        });
+                        $contactRow.append($('<td>'))
+                                   .append($('<input>', {type: 'checkbox'}));
+                        $contactRow.append($('<td>', {text: entry.name}));
+                        $contactRow.append($('<td>', {text: entry.emails}));
+
+                        // Style the contacts list
+                        $contactRow.css({
+                            display: 'table-row'
+                        }).children().css({
+                            display: 'table-cell',
+                        })
+                        $contactsTable.append($contactRow);
+                    }
+                }
+                $targetElem.append($contactsTable);
+            },
+            error: function(e) {
+                console.log('Error');
+                console.log(e);
+            }
+        });
+    }
+
+    $.fn.showContactImporter = function () {
+        var $importContactsDiv = $('<div>');
+
+        // Add a button for importing Google Contacts
+        var $googleContactsBtn = $importContactsDiv.append($('<a>', {
+            text: "Google",
+            href: getGoogleAuthUrl()
+        }));
+
+        $(this).append($importContactsDiv);
+    }
+
+    $.fn.showEmailImportForm = function () {
+        var $emailInputDiv = $(this).append($('<div>')),
+            $emailInputForm = $emailInputDiv.append($('<form>')),
+            $emailInput = $emailInputForm.append($('<input>', {type: 'text'})),
+            $addBtn = $emailInputForm.append($('<input>', {type: 'submit', value: 'Add'})),
+            $nextBtn = $emailInputDiv.append($('<button>', {text: 'Next'}));
+    }
+
+    function buildInviteDialog ($dialogBtn) {
+
+        // Create and initialize the dialog for the invite flow
+        var $dialog = $('<div>');
+        $dialog.dialog({
+            autoOpen: false,
+            modal: true,
+            width: 500,
+            buttons: [
+                {
+                    text: "Close",
+                    click: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            ]
         });
 
-        // Build Twitter button
-        if (options.shareButtons.includes('twitter')) {
-            var twDialogParams = {
-                text: options.integrations.twitter.tweetMsg + ' ' + options.urlToShare
-            };
+        $dialogBtn.on('click', function(evt) {
+            evt.preventDefault();
+            $dialog.dialog("open");
+        });
 
-            var twShareButton = $('<a>', {
-                'href': 'https://twitter.com/intent/tweet?' + objToCommas(twDialogParams),
-                'class': 'yg-share-btn'
-            }).append($('<img>', {'src': twIconUrl}));
-
-            buttonsRow.append(twShareButton);
-        }
-
-        // Build Facebook button
-        if (options.shareButtons.includes('facebook') && options.integrations.facebook.appId) {
-            var fbShareButton = $('<a>', {
-                'class': 'yg-share-btn'
-            }).append($('<img>', {'src': fbIconUrl}));
-
-            fbShareButton.on('click', openFacebookDialog);
-
-            function openFacebookDialog(e) {
-                e.preventDefault();
-                var currentWindowUrl = window.location.href;
-                if (currentWindowUrl.indexOf('localhost') !== -1) {
-                    currentWindowUrl = 'https://www.yesgraph.com';
-                };
-
-                var fbDialogParams = {
-                    app_id: options.integrations.facebook.appId,
-                    display: 'iframe',
-                    href: options.urlToShare,
-                    redirect_uri: currentWindowUrl // FIXME
-                };
-                var windowObjectReference = window.open(
-                    "https://www.facebook.com/dialog/share?" + objToCommas(fbDialogParams),
-                    "Post to Facebook",
-                    "status"
-                );
-            }
-
-            buttonsRow.append(fbShareButton);
-        }
-    
-        // Build Pinterest button
-        if (options.shareButtons.includes('pinterest')) {
-            var pnDialogParams = {
-                'url': options.urlToShare
-            };
-
-            var pnShareButton = $('<a>', {
-                'href': "https://www.pinterest.com/pin/create/button/" + objToCommas(pnDialogParams),
-                'data-pin-do': 'buttonBookmark',
-                'data-pin-custom': true,
-                'class': 'yg-share-btn'
-            }).append($('<img>', {'src': pnIconUrl}));
-
-            buttonsRow.append(pnShareButton);         
-        }
-
-        // Style the share buttons & add them to the shareButtonsWidget
-        buttonsRow.children().css({
-            'display': 'table-cell',
-            'padding': '0'
-        }).children().css({'max-width': '100%'});
-
-        var shareButtonsWidget = $('<div>', {
-            'id': 'yg-share-widget'
-        }).css({'margin': '1em'});
-
-        shareButtonsWidget.append(headline);
-        shareButtonsWidget.append(buttonsRow);
-
-        return shareButtonsWidget
+        return $dialog;
     }
 
-    function getToken(appName) {
-        var cookieName = 'yg-client-token';
-        var token = readCookie(cookieName);
-        if (!token) {
-            $.ajax({
-                url: YESGRAPH_BASE_URL + '/generate-token',
-                data: {'appName': appName},
-                dataType: 'json',
-                success: function(r) {
-                    token = r;
-                    setCookie(cookieName, token);
-                },
-                error: function(e) {
-                    error(e.responseJSON.error, true);
-                }
-            });
-        };
-        return token;
-    }
+    $.fn.yesgraphInvites = function() {
+        var urlParams = getUrlParams(),
+            $inviteDialog = buildInviteDialog($(this));
 
-    function checkConfig() {
-        if (!yesgraphDiv) {
-            error('No target element specified.', true);
-        }
-        if (!appName) {
-            error('No app specified.', true);
-        }
-    }
+        // If we have an access token, get contacts & display them.
+        // Otherwise, load the contact importer instead.
 
-    function loadTwitter() {
-        window.twttr = (function (d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0],
-                t = window.twttr || {};
-            if (d.getElementById(id)) return t;
-            js = d.createElement(s);
-            js.id = id;
-            js.src = "https://platform.twitter.com/widgets.js";
-            fjs.parentNode.insertBefore(js, fjs);
-
-            t._e = [];
-            t.ready = function (f) {
-                t._e.push(f);
-            };
-
-            return t;
-        }(document, "script", "twitter-wjs"));
-    }
-
-    function loadPinterest() {
-        (function (d) {
-            var f = d.getElementsByTagName('SCRIPT')[0],
-                p = d.createElement('SCRIPT');
-            p.type = 'text/javascript';
-            p.async = true;
-            p.src = 'https://assets.pinterest.com/js/pinit.js';
-            f.parentNode.insertBefore(p, f);
-        }(document));
-    }
-
-    function error(msg, fail) {
-        msg = 'YesGraph Error: ' + msg;
-        if (fail) {
-            throw msg;
+        if ('access_token' in urlParams) {
+            $inviteDialog.dialog("open");
+            $inviteDialog.showContactsList(urlParams.access_token);
 
         } else {
-            console.log(msg);
+            $inviteDialog.showContactImporter();
+            $inviteDialog.showEmailImportForm();
         }
-    }
-
-    function objToCommas(obj) {
-        return Object.keys(obj).map(
-            function (k) {
-                return k + '=' + obj[k];
-            }
-        ).join("&");
-    }
-
-    function setCookie(key, val, expDays) {
-        // Adapted from http://www.w3schools.com/js/js_cookies.asp
-        var cookie = key + '=' + val;
-        if (expDays) {
-            var expDate = new Date();
-            expDate.setTime(expDate.getTime() + (expDays*24*60*60*1000));
-            cookie = cookie + '; expires=' + expDate.toGMTString();
-        }
-        document.cookie = cookie;
-    }
-
-    function readCookie(key) {
-        // Adapted from http://www.w3schools.com/js/js_cookies.asp
-        var key = key + "=";
-        var cookies = document.cookie.split(';');
-        for(var i=0; i < cookies.length; i++) {
-            var cookie = cookies[i];
-            while (cookie.charAt(0)==' ') cookie = cookie.substring(1);
-            if (cookie.indexOf(key) == 0) return cookie.substring(key.length,cookie.length);
-        }
-    }
-
-    function eraseCookie(key) {
-        setCookie(key, '', -1);  // Expiry date is yesterday; Erase immediately
     }
 
 }(jQuery))
+
+$('.yesgraph').yesgraphInvites();
