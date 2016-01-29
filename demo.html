@@ -1,22 +1,123 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <style>
-    .yesgraph {
-        display: inline-block;
-        padding: 0.25em 0.5em;
-        border: 1px solid black;
-    }
-    </style>
-    <link rel="stylesheet" type="text/css" href="jquery-ui.min.custom.css">
-    <title></title>
-</head>
 <body>
 
-    <a class="yesgraph", data-app="mytestapp1">Invite Friends</a>
+    <button id="test">Test</button>
+    <button id="post-contacts">Post Contacts</button>
+    <button id="get-contacts">Get Contacts</button>
+    <button id="post-sugseen">Post Suggested & Seen</button>
+    <button id="post-invsent">Post Invites Sent</button>
+    <button id="post-invacc">Post Invites Accepted</button>
 
-    <script src="jquery-2.1.4.min.js"></script>
-    <script src="jquery-ui.min.custom.js"></script>
-    <script src="yesgraph.js"></script>
+    <pre id="response"></pre>
+
+<script src="jquery-2.1.4.min.js"></script>
+<script src="yesgraph.js"></script>
+<script>
+
+var rawContacts = {
+  "user_id": "1234",
+  "source": {
+    "name": "Vincent Driessen",
+    "email": "vincent@yesgraph.com",
+    "type": "gmail"
+  },
+  "entries": [
+    {
+      "name": "Ivan Kirigin",
+      "emails": ["ivan@yesgraph.com"],
+      "phones": ["+1 555 123 4567"],
+      "data": {"picture_url": "http://j.mp/ivan_jpg"}
+    },
+    {
+      "name": "Jonathan Chu",
+      "nickname": "Jon",
+      "company": "YesGraph",
+      "title": "Software Engineer",
+      "last_message_sent_date": "2015-03-28T20:16:12+00:00",
+      "last_message_received_date": "2015-03-28T20:16:12+00:00",
+      "times_contacted": 100,
+      "is_favorite": 1,
+      "pinned": 10,
+      "websites": [{"url": "http://jonathanchu.com/", "type": "home"}],
+      "addresses": [{"po_box": "12345", "street": "708 Winslow", "city": "Redwood City", "state": "CA",
+                       "postal_code": "11111", "country": "USA", "type": "work"}],
+      "ims": [{"name": "jonchu", "type": "aol"}],
+      "emails": ["jonathan.chu@me.com"]
+    },
+    {
+      "name": "Vincent Driessen",
+      "emails": ["me@nvie.com", "vincent@yesgraph.com"]
+    },
+    {
+      "emails": ["post@posterous.com"]
+    },
+    {
+      "emails": ["hous-123456@craigslist.org"]
+    },
+    {
+      "name": "George Hickman",
+      "emails": ["george@yesgraph.com"],
+      "data": {"foo": "bar"}
+    }
+  ]
+};
+
+var seenContacts = {
+    "entries": [{
+        "name":"kendall",
+        "emails": ["kendall@yesgraph.com"],
+        "seen_at": "2015-02-28T20:16:12+00:00"
+    }]
+};
+
+var invitesSent = {
+    "entries": [{
+        "invitee_name":"kendall",
+        "email": "kendall@yesgraph.com",
+        "sent_at": "2015-02-28T20:19:12+00:00"
+    }]
+}
+
+var invitesAccepted = {
+    "entries": [{
+        "new_user_id":"12345",
+        "name": "Kendall",
+        "email": "kendall@yesgraph.com",
+        "accepted_at": "2015-03-05T20:16:12+00:00"
+    }]
+}
+
+var api = YesGraph({app: "YesGraph"});
+
+$('#post-contacts').on('click', function () {
+    api.rankContacts(rawContacts, handleResponse);
+});
+
+$('#get-contacts').on('click', function () {
+    api.getRankedContacts(handleResponse);
+});
+
+$('#post-sugseen').on('click', function () {
+    api.postSuggestedSeen(seenContacts, handleResponse);
+});
+
+$('#post-invsent').on('click', function () {
+  api.postInvitesSent(invitesSent, handleResponse);
+});
+
+$('#post-invacc').on('click', function () {
+  api.postInvitesAccepted(invitesAccepted, handleResponse);
+});
+
+$('#test').on('click', function () {
+  api.test(handleResponse);
+});
+
+function handleResponse (data) {
+  $('#response').html(JSON.stringify(data, undefined, 2));
+}
+
+</script>
 </body>
 </html>
