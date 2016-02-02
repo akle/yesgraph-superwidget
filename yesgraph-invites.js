@@ -1,6 +1,14 @@
-(function($){
-    var appName,
-        YESGRAPH_BASE_URL = 'http://localhost:5001';  // FIXME
+(function($, win){
+    var APP_NAME,
+        YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
+        CLIENT_TOKEN_ENDPOINT = '/client-token',
+        CLIENT_TOKEN,
+        tokenValidationUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo",
+        urlParams = getUrlParams(),
+        gmailAccessToken = urlParams.access_token,
+        gmailAccessDenied = urlParams.error,
+        $inviteDialog,
+        rankedContacts;
 
     function getGoogleAuthUrl(options) {
         var requestParams = {
@@ -55,7 +63,6 @@
         };
 
         var contacts = {
-            client_token: '',  // updated when we displayRankedContacts
             source: {
                 type: 'gmail',
                 name: contactsFeed.author[0].name.$t,
@@ -74,6 +81,7 @@
             $sendBtn = $('<button>', {text: "Send"});
 
         // Load each contact entry onto the list
+        window.contacts = rankedContacts;
 
         for (var i=0; i < rankedContacts.length; i++) {
             entry = rankedContacts[i];
@@ -168,52 +176,18 @@
         }
     }
 
-    function displayRankedContacts(contacts, $dialog) {
+    function displayRankedContacts(contacts) {
         // Use the app name to get a client_token, then use
         // the client_token to post/return contacts
-        var rankedContacts;
-
-        $.ajax({
-            url: YESGRAPH_BASE_URL + '/v0/client-token',
-            data: {appName: appName},
-            success: function (r) {
-                // Use the returned token to POST the contacts
-                // to YesGraph & get ranked results
-                $.ajax({
-                    url: YESGRAPH_BASE_URL + '/v0/address-book',
-                    method: 'POST',
-                    headers: [{'Authorization': 'ClientToken ' + r.token}],
-                    data: JSON.stringify(contacts),
-                    contentType: "application/json; charset=UTF-8",
-                    success: function(r) {
-                        rankedContacts = r.data;
-                    },
-                    error: function(r) {
-                        // If YesGraph ranking errors, fail silently,
-                        // just rendering the unranked contacts
-                        rankedContacts = contacts.entries;
-                    },
-                    complete: function() {
-                        renderContacts(rankedContacts, $dialog);
-                    }
-                });
-            },
-            error: function(r) {
-                // If YesGraph token request errors, fail silently,
-                // just rendering the unranked contacts
-                rankedContacts = contacts.entries;
-                renderContacts(rankedContacts, $dialog);
-            }
-        })
-
-        return contacts;
+        win.YesGraphAPI.rankContacts(contacts).done(function(data){
+            rankedContacts = data.data;
+            renderContacts(rankedContacts, $inviteDialog);
+        });
+        // TODO: handle failure
     }
 
-    $.fn.showContactsList = function (gmailAccessToken) {
-        // Use the gmailAccessToken to get  Gmail contacts,
-        // and then display them on the target element.
-        var contacts,
-            $targetElem = $(this),
+    function fetchContacts(gmailAccessToken) {
+        var d = $.Deferred(),
             contactsFeedUrl = 'https://www.google.com/m8/feeds/contacts/default/full',
             readContactsScope = 'https://www.googleapis.com/auth/contacts.readonly';
 
@@ -227,16 +201,18 @@
             url: contactsFeedUrl,
             data: queryParams,
             dataType: "jsonp",
-            success: function (r) {
-                contacts = parseGoogleContactsFeed(r.feed);
-                displayRankedContacts(contacts, $targetElem);
+            success: function (data) {
+                contacts = parseGoogleContactsFeed(data.feed);
+                d.resolve(contacts);
             },
-            error: function(e) {
+            error: function (data) {
                 // FIXME: Fail gracefully if for whatever
                 // reason we can't get the gmail contacts
-                console.log("Google contacts error")
+                d.fail(data);
             }
         });
+
+        return d.promise();
     }
 
     $.fn.showContactImportPage = function (options) {
@@ -320,7 +296,6 @@
     }
 
     function buildInviteDialog ($dialogBtn) {
-
         // Create and initialize the dialog for the invite flow
         var $dialog = $('<div>');
         $dialog.dialog({
@@ -342,58 +317,119 @@
         return $dialog;
     }
 
-    $.fn.yesgraphInvites = function() {
-        appName = $(this).data('app');
+    function storeToken (data) {
+        CLIENT_TOKEN = data.token
+        setCookie('yg-client-token', data.token);
+    }
 
-        var optionsUrl = YESGRAPH_BASE_URL + '/apps/' + appName + '/js/get-options',
-            tokenValidationUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo",
-            urlParams = getUrlParams(),
-            gmailAccessToken = urlParams.access_token,
-            gmailAccessDenied = urlParams.error,
-            $inviteDialog = buildInviteDialog($(this));
+    $.fn.yesgraphInvites = function () {
+        // Wait to have YesGraphAPI loaded with a ClientToken
+        $inviteDialog = buildInviteDialog($(this));
+        waitForYesGraphLib().done(waitForClientToken)
+                            .done(buildWidget);
+    }
+
+    function buildWidget () {
+        // Get custom widget options
+        // we don't use YesGraphAPI.hitAPI here because
+        // this is not an API endpoint, it's a dashboard one.
+        APP_NAME = win.YesGraphAPI.app;
+        var getWidgetOptions = $.Deferred(),
+            optionsEndpoint = '/apps/' + APP_NAME + '/js/get-options';
 
         $.ajax({
-            dataType: "json",
-            url: optionsUrl,
-            success: function (appOptions) {
-                // Once we have the app's custom options, we should
-                // check for a gmail access token and validate it.
-
-                if (gmailAccessToken) {
-                    // If the token is valid, use it to load contacts.
-                    // Otherwise, clear the token & get a new one.
-                    // https://developers.google.com/identity/protocols/OAuth2UserAgent#validatetoken
-
-                    $.ajax({
-                        url: tokenValidationUrl,
-                        data: {access_token: gmailAccessToken},
-                        success: function (data) {
-                            // Valid token. Pull & display contacts
-                            $inviteDialog.showContactsList(gmailAccessToken);
-                            $inviteDialog.dialog("open");
-                        },
-                        error: function (data) {
-                            // Invalid token.
-                            $inviteDialog.showContactImportPage(appOptions);
-                        }
-                    });
-
-                } else if (gmailAccessDenied) {
-                    // If access was already denied, immediately open
-                    // the contact importer.
-                    $inviteDialog.dialog("open");
-                    $inviteDialog.showContactImportPage(appOptions);
-
-                } else {
-                    // We don't have gmailAccessToken OR gmailAccessDenied,
-                    // so we setup the contact import page but leave the dialog
-                    // closed until the user manually opens it.
-                    $inviteDialog.showContactImportPage(appOptions);
-                }
-            },
+            url: YESGRAPH_BASE_URL + optionsEndpoint,
+            success: function(data) {
+                data = JSON.parse(data);
+                getWidgetOptions.resolve(data);
+            }
         });
+
+        // This is the order we're going to do things in:
+        getWidgetOptions.done(checkGmailAuth);
+    }
+
+    function waitForClientToken () {
+        var d = $.Deferred();
+        if (win.YesGraphAPI.hasClientToken()) {
+            d.resolve();
+        } else {
+            setTimeout(function(){waitForClientToken()}, 100);
+        }
+        return d.promise();
+    }
+
+    function waitForYesGraphLib () {
+        var d = $.Deferred();
+        if (win.YesGraphAPI) {
+            d.resolve();
+        } else {
+            setTimeout(function(){waitForYesGraphLib()}, 100);
+        }
+        return d.promise();
+    }
+
+    function checkGmailAuth (options) {
+        // Determine what to do based on whether or not we have a valid access token.
+        if (gmailAccessToken) {
+            validateGmailToken(gmailAccessToken).done(
+                function () {
+                    fetchContacts(gmailAccessToken).done(function(contacts){
+                        displayRankedContacts(contacts, $inviteDialog);
+                        $inviteDialog.dialog("open");
+                    });
+                }
+            ).fail(
+                function () {
+                    $inviteDialog.showContactImportPage(options);
+                }
+            );
+
+        } else {
+            $inviteDialog.showContactImportPage(options);
+            gmailAccessDenied ? $inviteDialog.dialog("open") : null;
+        };
+    }
+
+    function validateGmailToken (token) {
+
+        var d = $.Deferred();
+        $.ajax({
+            url: tokenValidationUrl,
+            data: {access_token: token},
+            success: function () {d.resolve()},
+            error: function () {d.reject()}
+        });
+        return d.promise();
+    }
+
+    function setCookie(key, val, expDays) {
+        // Adapted from http://www.w3schools.com/js/js_cookies.asp
+        var cookie = key + '=' + val;
+        if (expDays) {
+            var expDate = new Date();
+            expDate.setTime(expDate.getTime() + (expDays*24*60*60*1000));
+            cookie = cookie + '; expires=' + expDate.toGMTString();
+        }
+        win.document.cookie = cookie;
+    }
+
+    function readCookie(key) {
+        // Adapted from http://www.w3schools.com/js/js_cookies.asp
+        var key = key + "=";
+        var cookies = document.cookie.split(';');
+        for(var i=0; i < cookies.length; i++) {
+            var cookie = cookies[i];
+            while (cookie.charAt(0)==' ') cookie = cookie.substring(1);
+            if (cookie.indexOf(key) == 0) return cookie.substring(key.length,cookie.length);
+        }
+    }
+
+    function eraseCookie(key) {
+        setCookie(key, '', -1);  // Expiry date is yesterday; Erase immediately
     }
 
     $('.yesgraph').yesgraphInvites();
+           
 
-}(jQuery))
+}(jQuery, window));

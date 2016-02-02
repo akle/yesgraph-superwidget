@@ -12,7 +12,7 @@
     <pre id="response"></pre>
 
 <script src="jquery-2.1.4.min.js"></script>
-<script src="yesgraph.js"></script>
+<script src="yesgraph.js" id="yesgraph" data-app="mytestapp1"></script>
 <script>
 
 var rawContacts = {
@@ -88,36 +88,33 @@ var invitesAccepted = {
     }]
 }
 
-var api = YesGraph({app: "YesGraph"});
-
 $('#post-contacts').on('click', function () {
-    api.rankContacts(rawContacts, handleResponse);
+    YesGraphAPI.rankContacts(rawContacts, handleResponse);
 });
 
 $('#get-contacts').on('click', function () {
-    api.getRankedContacts(handleResponse);
+    YesGraphAPI.getRankedContacts(handleResponse);
 });
 
 $('#post-sugseen').on('click', function () {
-    api.postSuggestedSeen(seenContacts, handleResponse);
+    YesGraphAPI.postSuggestedSeen(seenContacts, handleResponse);
 });
 
 $('#post-invsent').on('click', function () {
-  api.postInvitesSent(invitesSent, handleResponse);
+  YesGraphAPI.postInvitesSent(invitesSent, handleResponse);
 });
 
 $('#post-invacc').on('click', function () {
-  api.postInvitesAccepted(invitesAccepted, handleResponse);
+  YesGraphAPI.postInvitesAccepted(invitesAccepted, handleResponse);
 });
 
 $('#test').on('click', function () {
-  api.test(handleResponse);
+  YesGraphAPI.test(handleResponse);
 });
 
 function handleResponse (data) {
   $('#response').html(JSON.stringify(data, undefined, 2));
 }
-
 </script>
 </body>
 </html>
