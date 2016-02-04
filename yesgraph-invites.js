@@ -1,5 +1,6 @@
 (function($, win){
-    var APP_NAME,
+    var VERSION = 'v0.0.1',
+        APP_NAME,
         YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         CLIENT_TOKEN,

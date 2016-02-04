@@ -1,6 +1,7 @@
 (function($){
 
-    var YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
+    var VERSION = "v0.0.1",
+        YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
         YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         ADDRBOOK_ENDPOINT = '/address-book',
