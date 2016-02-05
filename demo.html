@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
 <body>
+    <style type="text/css">
+      .hidden {
+        display: none;
+      }
+    </style>
 
     <button id="test">Test</button>
     <button id="post-contacts">Post Contacts</button>
@@ -9,16 +14,22 @@
     <button id="post-invsent">Post Invites Sent</button>
     <button id="post-invacc">Post Invites Accepted</button>
 
+    <pre class="test command hidden">YesGraphAPI.test()</pre>
+    <pre class="post-contacts command hidden">YesGraphAPI.rankContacts()</pre>
+
     <pre id="response"></pre>
 
 <script src="jquery-2.1.4.min.js"></script>
-<script src="yesgraph.js" id="yesgraph" data-app="mytestapp1"></script>
+<script id="yesgraph"
+        data-app="yesgraph-trial"
+        src="https://drkgpt0ot25hx.cloudfront.net/yesgraph.js">
+</script>
 <script>
 
 var rawContacts = {
-  "user_id": "1234",
+  // TODO: ingest source data!
   "source": {
-    "name": "Vincent Driessen",
+    // "name": "Vincent Driessen",
     "email": "vincent@yesgraph.com",
     "type": "gmail"
   },
@@ -73,7 +84,7 @@ var seenContacts = {
 
 var invitesSent = {
     "entries": [{
-        "invitee_name":"kendall",
+        // "invitee_name":"kendall",
         "email": "kendall@yesgraph.com",
         "sent_at": "2015-02-28T20:19:12+00:00"
     }]
@@ -109,7 +120,9 @@ $('#post-invacc').on('click', function () {
 });
 
 $('#test').on('click', function () {
-  YesGraphAPI.test(handleResponse);
+  YesGraphAPI.test(handleResponse).done(function(){alert("done :)")});
+  $('.command').addClass("hidden");
+  $('.test.command').removeClass("hidden");
 });
 
 function handleResponse (data) {
