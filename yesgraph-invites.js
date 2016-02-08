@@ -15,8 +15,6 @@
         var requestParams = {
             response_type: "token",
             client_id: options.integrations.google.clientId,
-            // TODO: if this is to be embedded on multiple pages,
-            // we need to be able to use distinct redirect URLs
             redirect_uri: options.redirectUrl,
             scope: "https://www.google.com/m8/feeds/" // for getting contacts
         }
@@ -25,7 +23,6 @@
     }
 
     function getUrlParams () {
-        // https://developers.google.com/identity/protocols/OAuth2UserAgent#handlingtheresponse
         var params = {},
             queryString = location.hash.substring(1),
             regex = /([^&=]+)=([^&]*)/g, m;
@@ -42,17 +39,14 @@
             yesgraphEntry,
             emails;
 
-        // Aggregate the google contacts into a list of entries
         for (i in contactsFeed.entry) {
             googleEntry = contactsFeed.entry[i];
-            yesgraphEntry = {}
+            yesgraphEntry = {};
 
-            // Add the contact's name
             if (googleEntry.title.$t) {
                 yesgraphEntry.name = googleEntry.title.$t;
-            }
+            };
 
-            // Add the contact's email addresses
             if (googleEntry.gd$email) {
                 yesgraphEntry.emails = [];
                 for (i in googleEntry.gd$email) {
@@ -70,7 +64,7 @@
                 email: contactsFeed.author[0].email.$t
             },
             entries: entries
-        }
+        };
         return contacts;
     }
 
@@ -80,9 +74,6 @@
             $contactsList = $('<div>'),
             $searchField = $('<input>', {placeholder: "Search"}).css({border: "1px solid #ccc", "border-radius": "3px", "padding": "0.5em"}),
             $sendBtn = $('<button>', {text: "Send"});
-
-        // Load each contact entry onto the list
-        window.contacts = rankedContacts;
 
         for (var i=0; i < rankedContacts.length; i++) {
             entry = rankedContacts[i];
@@ -109,7 +100,6 @@
                 $contactRow.data('email', entry.emails[0]);
                 $contactRow.css(contactRowCSS)
 
-                // Handle hover & click events
                 $contactRow.hover(toggleHighlight);
                 $contactRow.click(toggleSelected);
 
@@ -117,8 +107,6 @@
             }
 
         }
-
-        // Setup the Send button
 
         $sendBtn.css({
             "border": "1px solid #CCC",
@@ -129,7 +117,6 @@
         });
 
         $sendBtn.on('click', function () {
-            // Open a mailto for the selected names
             var selectedEmails = getSelectedEmails();
             window.location.href = 'mailto:' + selectedEmails.join(',');
         });
@@ -168,8 +155,6 @@
 
         function searchable ($searchField, $dataList) {
             $(document).on("input", $searchField.selector, function(evt) {
-                // Hide all rows, then show any rows containing
-                // a value that matches the search string
                 var searchString = evt.target.value;
                 $dataList.find('div.contactRow').hide()
                 $dataList.find('div.contactRow:contains("' + searchString + '")').show();
@@ -178,13 +163,10 @@
     }
 
     function displayRankedContacts(contacts) {
-        // Use the app name to get a client_token, then use
-        // the client_token to post/return contacts
         win.YesGraphAPI.rankContacts(contacts).done(function(data){
             rankedContacts = data.data;
             renderContacts(rankedContacts, $inviteDialog);
         });
-        // TODO: handle failure
     }
 
     function fetchContacts(gmailAccessToken) {
@@ -207,8 +189,6 @@
                 d.resolve(contacts);
             },
             error: function (data) {
-                // FIXME: Fail gracefully if for whatever
-                // reason we can't get the gmail contacts
                 d.fail(data);
             }
         });
@@ -217,10 +197,6 @@
     }
 
     $.fn.showContactImportPage = function (options) {
-        // Show the button to import gmail contacts
-        // along with a form to type in email contacts
-
-        // TODO: Use custom styling options
         var $importContactsDiv = $('<div>');
         var $googleContactsBtn = $importContactsDiv.append($('<a>', {
             href: getGoogleAuthUrl(options)
@@ -271,13 +247,10 @@
 
         $sendBtn.on("click", function(evt) {
             evt.preventDefault();
-
-            // Get the input emails & put them in a mailto
             emails = getSelectedEmails($inviteesDiv).join(',');
             window.location.href = "mailto:" + emails;
         });
 
-        // TODO: Allow custom CSS
         var inputCSS = {
             "border": "1px solid #CCC",
             "border-radius": "3px",
@@ -297,7 +270,6 @@
     }
 
     function buildInviteDialog ($dialogBtn) {
-        // Create and initialize the dialog for the invite flow
         var $dialog = $('<div>');
         $dialog.dialog({
             autoOpen: false,
@@ -324,7 +296,6 @@
     }
 
     $.fn.yesgraphInvites = function () {
-        // Wait to have YesGraphAPI loaded with a ClientToken
         $inviteDialog = buildInviteDialog($(this));
         waitForYesGraphLib().done(waitForClientToken)
                             .done(buildWidget);
@@ -345,8 +316,6 @@
                 getWidgetOptions.resolve(data);
             }
         });
-
-        // This is the order we're going to do things in:
         getWidgetOptions.done(checkGmailAuth);
     }
 
@@ -371,7 +340,6 @@
     }
 
     function checkGmailAuth (options) {
-        // Determine what to do based on whether or not we have a valid access token.
         if (gmailAccessToken) {
             validateGmailToken(gmailAccessToken).done(
                 function () {
@@ -405,7 +373,6 @@
     }
 
     function setCookie(key, val, expDays) {
-        // Adapted from http://www.w3schools.com/js/js_cookies.asp
         var cookie = key + '=' + val;
         if (expDays) {
             var expDate = new Date();
@@ -416,7 +383,6 @@
     }
 
     function readCookie(key) {
-        // Adapted from http://www.w3schools.com/js/js_cookies.asp
         var key = key + "=";
         var cookies = document.cookie.split(';');
         for(var i=0; i < cookies.length; i++) {
@@ -427,10 +393,9 @@
     }
 
     function eraseCookie(key) {
-        setCookie(key, '', -1);  // Expiry date is yesterday; Erase immediately
+        setCookie(key, '', -1);
     }
 
     $('.yesgraph').yesgraphInvites();
            
-
 }(jQuery, window));

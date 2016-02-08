@@ -5,9 +5,10 @@ YesGraph uses machine learning and social graph analysis to improve your app's v
 ## Getting Started
 1. Create an app on www.yesgraph.com
 2. Find your unique App ID on the settings page. You'll use this in your client-side Javascript -- do NOT use your Secret Key.
-3. Add the SDK to your webpage and get coding!
+3. The SDK is built on jQuery, so include that and the SDK on your webpage, and get coding!
 ```
-<script id="yesgraph" data-app="YOUR_APP_ID" src="yesgraph.js">
+<script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
+<script id="yesgraph" data-app="YOUR_APP_ID" src="yesgraph.js"></script>
 ```
 
 ## Contents

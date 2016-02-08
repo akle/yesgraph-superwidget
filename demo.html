@@ -14,17 +14,45 @@
     <button id="post-invsent">Post Invites Sent</button>
     <button id="post-invacc">Post Invites Accepted</button>
 
-    <pre class="test command hidden">YesGraphAPI.test()</pre>
-    <pre class="post-contacts command hidden">YesGraphAPI.rankContacts()</pre>
-
     <pre id="response"></pre>
 
-<script src="jquery-2.1.4.min.js"></script>
+<script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
 <script id="yesgraph"
         data-app="yesgraph-trial"
-        src="https://drkgpt0ot25hx.cloudfront.net/yesgraph.js">
+        data-email="carolyn@yesgraph.com"
+        data-phone="+1 222 333 4444"
+        src="yesgraph.js">
 </script>
 <script>
+
+$('#post-contacts').on('click', function () {
+    YesGraphAPI.rankContacts(rawContacts, handleResponse);
+});
+
+$('#get-contacts').on('click', function () {
+    YesGraphAPI.getRankedContacts(handleResponse);
+});
+
+$('#post-sugseen').on('click', function () {
+    YesGraphAPI.postSuggestedSeen(seenContacts, handleResponse);
+});
+
+$('#post-invsent').on('click', function () {
+  YesGraphAPI.postInvitesSent(invitesSent, handleResponse);
+});
+
+$('#post-invacc').on('click', function () {
+  YesGraphAPI.postInvitesAccepted(invitesAccepted, handleResponse);
+});
+
+$('#test').on('click', function () {
+  YesGraphAPI.test(handleResponse);
+});
+
+function handleResponse (data) {
+  $('#response').html(JSON.stringify(data, undefined, 2));
+}
+
 
 var rawContacts = {
   // TODO: ingest source data!
@@ -88,7 +116,7 @@ var invitesSent = {
         "email": "kendall@yesgraph.com",
         "sent_at": "2015-02-28T20:19:12+00:00"
     }]
-}
+};
 
 var invitesAccepted = {
     "entries": [{
@@ -97,37 +125,8 @@ var invitesAccepted = {
         "email": "kendall@yesgraph.com",
         "accepted_at": "2015-03-05T20:16:12+00:00"
     }]
-}
+};
 
-$('#post-contacts').on('click', function () {
-    YesGraphAPI.rankContacts(rawContacts, handleResponse);
-});
-
-$('#get-contacts').on('click', function () {
-    YesGraphAPI.getRankedContacts(handleResponse);
-});
-
-$('#post-sugseen').on('click', function () {
-    YesGraphAPI.postSuggestedSeen(seenContacts, handleResponse);
-});
-
-$('#post-invsent').on('click', function () {
-  YesGraphAPI.postInvitesSent(invitesSent, handleResponse);
-});
-
-$('#post-invacc').on('click', function () {
-  YesGraphAPI.postInvitesAccepted(invitesAccepted, handleResponse);
-});
-
-$('#test').on('click', function () {
-  YesGraphAPI.test(handleResponse).done(function(){alert("done :)")});
-  $('.command').addClass("hidden");
-  $('.test.command').removeClass("hidden");
-});
-
-function handleResponse (data) {
-  $('#response').html(JSON.stringify(data, undefined, 2));
-}
 </script>
 </body>
 </html>

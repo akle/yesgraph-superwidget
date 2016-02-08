@@ -1,7 +1,7 @@
 (function($){
 
     var VERSION = "v0.0.1",
-        YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
+        YESGRAPH_BASE_URL = '//api.yesgraph.com',
         YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         ADDRBOOK_ENDPOINT = '/address-book',
@@ -16,10 +16,12 @@
         setCookie('yg-client-token', data.token);
     }
 
-    function getClientToken () {
+    function getClientToken (userData) {
         CLIENT_TOKEN = readCookie('yg-client-token');
         if (!CLIENT_TOKEN) {
-            return hitAPI(CLIENT_TOKEN_ENDPOINT, "GET", {appName: APP_NAME}, storeToken);
+            var data = {appName: APP_NAME};
+            data.userData = userData ? userData : undefined;
+            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken);
         } else {
             return $.Deferred().resolve().promise();
         };
@@ -51,7 +53,8 @@
 
     function configureAPI () {
         APP_NAME = $('#yesgraph').data("app");
-        getClientToken()
+        userData = $('#yesgraph').data();
+        getClientToken(userData);
         var api = {
             rankContacts: rankContacts,
             getRankedContacts: getRankedContacts,
@@ -92,7 +95,6 @@
     }
 
     function setCookie(key, val, expDays) {
-        // Adapted from http://www.w3schools.com/js/js_cookies.asp
         var cookie = key + '=' + val;
         if (expDays) {
             var expDate = new Date();
@@ -103,7 +105,6 @@
     }
 
     function readCookie(key) {
-        // Adapted from http://www.w3schools.com/js/js_cookies.asp
         var key = key + "=";
         var cookies = document.cookie.split(';');
         for(var i=0; i < cookies.length; i++) {
@@ -114,7 +115,7 @@
     }
 
     function eraseCookie(key) {
-        setCookie(key, '', -1);  // Expiry date is yesterday; Erase immediately
+        setCookie(key, '', -1);
     }
 
 }(jQuery));
