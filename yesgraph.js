@@ -1,23 +1,98 @@
 (function($){
 
     var VERSION = "v0.0.1",
-        YESGRAPH_BASE_URL = '//api.yesgraph.com',
+        YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
         YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         ADDRBOOK_ENDPOINT = '/address-book',
         SUGGESTED_SEEN_ENDPOINT = '/suggested-seen',
         INVITES_SENT_ENDPOINT = '/invites-sent',
         INVITES_ACCEPTED_ENDPOINT = '/invites-accepted',
+        ANALYTICS_ENDPOINT = '/analytics/sdk',
         CLIENT_TOKEN,
         APP_NAME;
 
+    var cookie = (function() {
+
+        function setCookie(key, val, expDays) {
+            var cookie = key + '=' + val;
+            if (expDays) {
+                var expDate = new Date();
+                expDate.setTime(expDate.getTime() + (expDays * 24 * 60 * 60 * 1000));
+                cookie = cookie + '; expires=' + expDate.toGMTString();
+            };
+            window.document.cookie = cookie;
+        }
+
+        function readCookie(key) {
+            var key = key + "=";
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                while (cookie.charAt(0) == ' ') cookie = cookie.substring(1);
+                if (cookie.indexOf(key) == 0) {
+                    var value = cookie.substring(key.length, cookie.length);
+                    if (value != "undefined") return value;
+                };
+            };
+        }
+
+        function eraseCookie(key) {
+            setCookie(key, '#', -1);
+        }
+
+        return {
+            set: setCookie,
+            read: readCookie,
+            erase: eraseCookie
+        };
+    }());
+
+    function logScreenEvent () {
+        var eventData = {
+            "entries": [
+                {
+                    "context": {
+                        "app": {
+                            "name": window.navigator.appName,
+                            "version": window.navigator.appVersion
+                        },
+                        "library": {
+                            "name": "yesgraph.js",
+                            "version": VERSION
+                        },
+                        "device": {
+                            "type": "web"
+                        },
+                        "os": {},
+                        "userAgent": window.navigator.userAgent || null,
+                        "page": {
+                            "path": window.location.pathname,
+                            "referrer": window.document.referrer,
+                            "search": window.location.search,
+                            "title": window.document.title,
+                            "url": window.location.href
+                        },
+                    },
+                    "name": window.document.title + ': ' + window.location.pathname,
+                    "properties": {
+                        "app_name": APP_NAME
+                    },
+                    "timestamp": new Date(),
+                    "type": "screen"
+                },
+            ]
+        };
+        return hitAPI(ANALYTICS_ENDPOINT, "POST", eventData);
+    }
+
     function storeToken (data) {
         CLIENT_TOKEN = data.token;
-        setCookie('yg-client-token', data.token);
+        cookie.set('yg-client-token', data.token);
     }
 
     function getClientToken (userData) {
-        CLIENT_TOKEN = readCookie('yg-client-token');
+        CLIENT_TOKEN = cookie.read('yg-client-token');
         if (!CLIENT_TOKEN) {
             var data = {appName: APP_NAME};
             data.userData = userData ? userData : undefined;
@@ -54,7 +129,8 @@
     function configureAPI () {
         APP_NAME = $('#yesgraph').data("app");
         userData = $('#yesgraph').data();
-        getClientToken(userData);
+        getClientToken(userData).then(logScreenEvent);
+
         var api = {
             rankContacts: rankContacts,
             getRankedContacts: getRankedContacts,
@@ -73,7 +149,6 @@
 
     function hitAPI (endpoint, method, data, done, deferred) {
         var d = deferred || $.Deferred();
-
         if (method.toUpperCase() !== "GET") {
             data = JSON.stringify(data || {});
         }
@@ -87,35 +162,12 @@
             headers: {"Authorization": "ClientToken " + CLIENT_TOKEN},
             complete: function (resp) {
                 var responseTime = new Date().valueOf() - startTime;
-                // TODO: hit analytics API with responseTime
                 d.resolve(resp.responseJSON);
             },
         });
-        return d.promise().done(done);
-    }
-
-    function setCookie(key, val, expDays) {
-        var cookie = key + '=' + val;
-        if (expDays) {
-            var expDate = new Date();
-            expDate.setTime(expDate.getTime() + (expDays*24*60*60*1000));
-            cookie = cookie + '; expires=' + expDate.toGMTString();
+        if (done) {
+            d.done(done);
         }
-        document.cookie = cookie;
+        return d.promise();
     }
-
-    function readCookie(key) {
-        var key = key + "=";
-        var cookies = document.cookie.split(';');
-        for(var i=0; i < cookies.length; i++) {
-            var cookie = cookies[i];
-            while (cookie.charAt(0)==' ') cookie = cookie.substring(1);
-            if (cookie.indexOf(key) == 0) return cookie.substring(key.length,cookie.length);
-        }
-    }
-
-    function eraseCookie(key) {
-        setCookie(key, '', -1);
-    }
-
 }(jQuery));

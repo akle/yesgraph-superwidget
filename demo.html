@@ -16,6 +16,8 @@
 
     <pre id="response"></pre>
 
+    <button class="yesgraph-invites">Invite Friends</button>
+
 <script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
 <script id="yesgraph"
         data-app="yesgraph-trial"
@@ -23,6 +25,7 @@
         data-phone="+1 222 333 4444"
         src="yesgraph.js">
 </script>
+<script src="yesgraph-invites.js"></script>
 <script>
 
 $('#post-contacts').on('click', function () {
@@ -55,9 +58,8 @@ function handleResponse (data) {
 
 
 var rawContacts = {
-  // TODO: ingest source data!
   "source": {
-    // "name": "Vincent Driessen",
+    "name": "Vincent Driessen",
     "email": "vincent@yesgraph.com",
     "type": "gmail"
   },
@@ -112,7 +114,7 @@ var seenContacts = {
 
 var invitesSent = {
     "entries": [{
-        // "invitee_name":"kendall",
+        "invitee_name":"kendall",
         "email": "kendall@yesgraph.com",
         "sent_at": "2015-02-28T20:19:12+00:00"
     }]
