@@ -9,16 +9,44 @@
         GMAIL_ACCESS_TOKEN,
         rankedContacts;
 
+    $.fn.hoverCSS = function(css) {
+        var initialCSS = {};
+        for (prop in css) {
+            if (css.hasOwnProperty(prop)) {
+                initialCSS[prop] = $(this).css(prop);
+            };
+        };
+        return $(this).hover(
+            function(){
+                $(this).css(css);
+            },
+            function(){
+                $(this).css(initialCSS);
+            }
+        );
+    };
+
     function getSelectedRecipients($elem) {
         var recipient;
-        return $elem.find('.selected').map(function () {
-            var $this = $(this);
-            recipient = {
-                "name": $this.data("name") || undefined,
-                "email": $this.data("email") || undefined
-            };
+        if ($elem.prop("type") == "text") {
+            // Take the value of this input
+            recipient = {"email": $elem.val()};
             return recipient;
-        }).get();
+        } else {
+            // Take the data- attributes of checkboxes
+            function isChecked() {return Boolean($(this).prop("checked"));}
+            $checked = $elem.find('input[type="checkbox"]').filter(isChecked);
+
+            // Return a list of "recipient" objects
+            return $checked.map(function(){
+                var $this = $(this);
+                recipient = {
+                    "name": $this.data("name") || undefined,
+                    "email": $this.data("email") || undefined
+                }
+                return recipient;
+            });
+        };
     }
 
     function parseGoogleContactsFeed(contactsFeed) {
@@ -87,24 +115,60 @@
     $.fn.yesgraphInvites = function () {
         // DEFINE VARIABLES
         var $modalTrigger = $(this),
-            $overlay = $('<div>'),
-            $modal = $('<div>', {
-                class: "yg-modal"
-            }),
-            $modalBody = $('<div>', {
-                class: "yg-modal-body"
-            }),
-            $modalFooter = $('<div>', {
-                class: "yg-modal-footer"
-            }),
             is_open = false,
-            // Buttons
-            $closeBtn = $('<div>', {
-                class: "yg-modal-btn yg-modal-close",
-                text: "Close"
-            });
+            $overlay = $('<div>'),
+            $modal = $('<div>', {class: "yg-modal"}),
+            $modalBody = $('<div>', {class: "yg-modal-body"}),
+            $modalHeader = $('<div>', {class: "yg-modal-header"}),
+            $modalTitle = $('<span>', {class: "yg-modal-title"}),
+            $closeBtn = $('<div>', {class: "yg-modal-close", text: "X"}),
+            $contactImportPage = $('<div>'),
+            $contactListPage = $('<div>');
 
         initModal();
+
+        function loadFacebook (options) {
+            var fbAppId = options.integrations.facebook.appId;
+            if (!fbAppId) return;
+            if (options.shareButtons.indexOf("facebook") === -1) return;
+
+            var shareBtn = $('<span>', {
+                "class": "fb-share-button",
+                "data-href": "https://yesgraph.com",
+                "data-layout": "button_count",
+                "text": "Facebook"
+            });
+            shareBtn.insertBefore($modalTrigger);
+            (function(d, s, id) {
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s);
+                js.id = id;
+                js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=" + fbAppId;
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));
+        }
+
+        function loadTwitter (options) {
+            if (options.shareButtons.indexOf("twitter") === -1) return;
+
+            var shareBtn = $('<a>', {
+                "href": "https://twitter.com/share",
+                "class": "twitter-share-button",
+                "text": "Tweet"
+            });
+            shareBtn.insertBefore($modalTrigger);
+            (function(d,s,id){
+                var js,
+                    tjs=d.getElementsByTagName(s)[0],
+                    p=/^http:/.test(d.location)?'http':'https';
+                if (d.getElementById(id)) return;
+                js=d.createElement(s);
+                js.id=id;
+                js.src=p+'://platform.twitter.com/widgets.js';
+                tjs.parentNode.insertBefore(js, tjs);
+            }(document, 'script', 'twitter-wjs'));
+        }
 
         function initModal() {
             // EVENT HANDLERS
@@ -116,20 +180,29 @@
 
             // CONSTRUCT MODAL
             $modal.hide();
+            $overlay.hide();
             $('body').append($modal);
             $('body').append($overlay);
-            $modalFooter.append($closeBtn);
-            $modal.append($modalBody, $modalFooter);
+            $modalHeader.append($closeBtn, $modalTitle);
+            $modal.append($modalHeader, $modalBody);
 
             // STYLING & POSTITION
             applyStyling();
-            centerModal();
 
             // MAIN FUNCTIONALITY
             waitForYesGraphLib()
                 .then(waitForClientToken)
                 .then(getWidgetOptions)
-                .then(renderWidget);
+                .then(function(options){
+                    renderWidget(options);
+                    loadTwitter(options);
+                    loadFacebook(options);
+                });
+
+            // HELPERS
+            $modal.setTitle = function(title){
+                $modalTitle.html(title);
+            }
         }
 
         function getWidgetOptions() {
@@ -149,21 +222,6 @@
                 }
             });
             return d.promise();
-        }
-
-        function renderWidget(options) {
-            gmail.checkAuth().done(
-                function() {
-                    gmail.getContacts(options)
-                        .fail(renderContactImporter) // FIXME: alert google failure
-                        .then(rankContacts)
-                        .then(renderContactList);
-                }
-            ).fail(
-                function() {
-                    renderContactImporter(options);
-                }
-            );
         }
 
         function rankContacts(contacts, options) {
@@ -191,234 +249,182 @@
             return d.promise();
         }
 
-        function renderContactList(options, contacts) {
+        function renderWidget (options) {
             // DEFINE VARIABLES
+            var $authBtnsDiv = $('<div>'),
+                $googleContactsBtn = $('<a>', {href: "#", text: "+ Import Gmail Contacts", class: "yg-import-contacts-btn"}),
+                $inputField = $('<input>', {type: "text", placeholder: "Email Address"}),
+                $manualInputSendBtn = $('<button>', {text: "Send", class: 'yg-modal-btn yg-send-btn'}),
+                $manualInputForm = $('<div>');
+
+            $modalBody.append($contactImportPage, $contactListPage);
+            $contactListPage.hide();
+
+            // BUILD CONTACT IMPORTER
+            $modal.setTitle("Refer A Friend");
+            $manualInputForm.append($inputField, $manualInputSendBtn);
+            $authBtnsDiv.append($googleContactsBtn);
+            $contactImportPage.append($manualInputForm, $authBtnsDiv);
+
             var contact,
                 $contactRow,
-                $contactList = $('<div>'),
-                $searchField = $('<input>', {placeholder: "Search"}),
-                $contactListPage = $('<div>'),
-                $sendBtn = $('<button>', {text: "Send"});
+                $suggestedContacts = $('<div>'),
+                $suggestedContactsHeader = $('<p>', {text: "Suggested"}),
+                $suggestedContactsDiv = $('<div>'),
+                $alphabeticalContacts = $('<div>'),
+                $alphabeticalContactsHeader = $('<p>', {text: "All Contacts"}),
+                $alphabeticalContactsDiv = $('<div>'),
+                $searchField = $('<input>', {type: "text", placeholder: "Search"}),
+                $importedContactSendBtn = $('<button>', {text: "Send", class: 'yg-modal-btn yg-send-btn'});
 
-            // STYLING
-            var contactListCSS = {
-                    "max-height": "500px",
-                    "overflow": "scroll"
-                },
-                contactRowCSS = {
-                    'border-bottom': '1px solid #ccc',
-                    'min-height': '50px',
-                    'padding': '0.5em',
-                    'cursor': 'pointer'
-                },
-                searchFieldCSS = {
-                    "border": "1px solid #CCC",
-                    "border-radius": "3px",
-                    "padding": "0.5em"
-                };
+            // BUILD CONTACT LIST
+            var headerCSS = {
+                "font-weight": "bolder",
+                "padding": "5px auto"
+            };
+            $suggestedContactsHeader.css(headerCSS);
+            $alphabeticalContactsHeader.css(headerCSS);
+            $suggestedContactsDiv.append($suggestedContactsHeader, $suggestedContacts);
+            $alphabeticalContactsDiv.append($alphabeticalContactsHeader, $alphabeticalContacts);
 
-            $contactList.css(contactListCSS);
-            $searchField.css(searchFieldCSS);
-
-            // CONSTRUCT MODAL BODY
-            $contactListPage.append($searchField, $sendBtn, $contactList);
-            searchable($searchField, $contactList);
-            $modalBody.html($contactListPage);
-
-
-            // LOAD CONTACTS
-            // TODO: Include "suggested" & "alphabetical"
-            for (var i=0; i < contacts.length; i++) {
-                contact = contacts[i];
-                if (contact.emails.length !== 0) {
-                    $contactRow = $('<div>', {class: "contactRow"});
-
-                    if (contact.name) {
-                        $contactRow.append($('<span>', {
-                                text: contact.name
-                            }).css({
-                                'font-weight': 'bolder'
-                            }),
-                            $('<br>'),
-                            $('<span>', {
-                                text: contact.email
-                            }));
-                    } else {
-                        $contactRow.append($('<span>', {
-                            text: contact.email
-                        }).css({
-                            'font-weight': 'bolder'
-                        }));
-                    };
-
-                    $contactRow.data("email", contact.emails[0]);
-                    $contactRow.data("name", contact.name || undefined);
-
-                    $contactRow.css(contactRowCSS);
-                    $contactRow.hover(toggleHighlight);
-                    $contactRow.on("click", toggleSelected);
-
-                    $contactList.append($contactRow);
-                };
-            }
+            $contactListPage.append($searchField, $importedContactSendBtn,
+                                    $suggestedContactsDiv, $alphabeticalContactsDiv);
 
             // EVENT HANDLERS
-            $sendBtn.on("click", function(evt){
+            $googleContactsBtn.on("click", function(evt){
+                // If we successfully get authed, show contact list
+                // Otherwise, show contact importer.
                 evt.preventDefault();
-                var recipients = getSelectedRecipients($contactList);
+                gmail.authPopup(options).done(function(){
+                    $contactImportPage.hide();
+                    $contactListPage.show();
+                    gmail.getContacts(options).done(loadContacts);
+                }).fail(function(){
+                    $contactImportPage.show();
+                    $contactListPage.hide();
+                });
+            });
+
+            $manualInputForm.find(".yg-send-btn").on("click", function(evt) {
+                evt.preventDefault();
+                var recipients = getSelectedRecipients($inputField);
                 sendEmailInvites(recipients);
             });
 
-            function toggleHighlight(evt) {
-                var $this = $(this);
-                if (!$this.hasClass('selected')) {
-                    if (evt.type === "mouseenter") {
-                        $this.css({
-                            'background-color': '#F6F6F6'
-                        });
-                    } else if (evt.type === "mouseleave") {
-                        $this.css({
-                            'background-color': 'white'
-                        });
+            applyStyling();
+
+            $suggestedContacts.css({
+                "max-height": "140px",
+                "overflow": "scroll"
+            });
+
+            $alphabeticalContacts.css({
+                "max-height": "400px",
+                "overflow": "scroll"
+            });
+
+            // CONSTRUCT MODAL BODY
+            $modalBody.append($contactListPage);
+
+            $suggestedContacts.addRow = function(contact) {
+
+                if (contact.emails && contact.emails.length !== 0) {
+                    $contactRow = $('<div>', {class: "yg-contact-row"});
+                    $contactRow.append($('<div>', {class: "yg-contact-row-checkbox"}).css({"display": "table-cell", "width": "15px"}));
+                    $contactRow.append($('<div>', {class: "yg-contact-row-name"}).css({"display": "table-cell", "width": "50%"}));
+                    $contactRow.append($('<div>', {class: "yg-contact-row-emails"}).css({"display": "table-cell", "width": "50%"}));
+
+                    var $checkbox = $('<input>', {type: "checkbox"});
+                    $contactRow.children().eq(0).append($checkbox).css({'padding': '0 10px 0 0'});
+                    $contactRow.children().eq(2).append($('<span>', {text: contact.emails[0]}));
+
+                    if (contact.name) $contactRow.children().eq(1).append($('<span>', {text: contact.name}));
+
+                    $checkbox.data("email", contact.emails[0]);
+                    $checkbox.data("name", contact.name || undefined);
+
+                    $contactRow.css({'padding': '0.5em', 'cursor': 'pointer'});
+                    $contactRow.hoverCSS({"background-color": "#F6F6F6"});
+                    $contactRow.on("click", toggleSelected);
+
+                    $(this).append($contactRow);
+
+                    function toggleSelected() {
+                        $checkbox.prop("checked", !$checkbox.prop("checked"));
                     }
                 }
             }
+            $alphabeticalContacts.addRow = $suggestedContacts.addRow;            
 
-            function toggleSelected() {
-                var $this = $(this);
+            function loadContacts(options, contacts) {
+                // Suggested Contacts
+                for (var i=0; i < contacts.entries.length; i++) {
+                    contact = contacts.entries[i];
+                    $suggestedContacts.addRow(contact);
+                }
 
-                if ($this.hasClass('selected')) {
-                    $this.removeClass('selected');
-                    $this.css({
-                        'background-color': 'white'
-                    });
-                } else {
-                    $this.addClass('selected');
-                    $this.css({
-                        'background-color': '#E6E6E6'
+                // Alphabetical Contacts
+                function compareContacts(a, b) {
+                    if (a.name && b.name) {
+                        return a.name <= b.name ? -1 : 1;
+                    } else if (!a.name && !b.name) {
+                        return a.emails[0] <= b.emails[0] ? -1 : 1;
+                    }
+                    return Boolean(b.name) - Boolean(a.name);
+                }
+                var sortedContacts = contacts.entries.sort(compareContacts);
+
+                for (var i=0; i < sortedContacts.length; i++) {
+                    contact = sortedContacts[i];
+                    $alphabeticalContacts.addRow(contact);
+                }
+
+                // EVENT HANDLERS
+                $contactListPage.find(".yg-send-btn").on("click", function(evt){
+                    evt.preventDefault();
+                    var recipients = getSelectedRecipients($contactListPage);
+                    sendEmailInvites(recipients);
+                });
+
+                searchable($searchField, [$suggestedContacts, $alphabeticalContacts]);
+                // $contactListPage.append($searchField, $importedContactSendBtn, $suggestedContacts, $alphabeticalContacts);
+
+                // Uppercase "Contains" is a case-insensitive
+                // version of jQuery "contains" used for search
+                $.expr[':'].Contains = function(a, i, m) {
+                  return jQuery(a).text().toUpperCase()
+                      .indexOf(m[3].toUpperCase()) >= 0;
+                };
+
+                function searchable($searchField, dataLists) {
+                    $(document).on("input", $searchField.selector, function (evt) {
+                        var searchString = evt.target.value;
+                        for (i in dataLists) {
+                            var list = dataLists[i];
+                            list.find('.yg-contact-row').hide();
+                            list.find('.yg-contact-row:Contains("' + searchString + '")').show();
+                        };
                     });
                 }
+                applyStyling();
             }
-
-            // Uppercase "Contains" is a case-insensitive
-            // version of jQuery "contains" used for search
-            $.expr[':'].Contains = function(a, i, m) {
-              return jQuery(a).text().toUpperCase()
-                  .indexOf(m[3].toUpperCase()) >= 0;
-            };
-
-            function searchable($searchField, $dataList) {
-                $(document).on("input", $searchField.selector, function (evt) {
-                    var searchString = evt.target.value;
-                    $dataList.find('div.contactRow').hide()
-                    $dataList.find('div.contactRow:Contains("' + searchString + '")').show();
-                });
-            }
-        }
-
-        function renderContactImporter(options){
-            // DEFINE VARIABLES
-            var $contactImportPage = $('<div>'),
-                $authBtnsDiv = $('<div>'),
-                $googleContactsBtn = $('<button>', {text: "Gmail"}),
-                $inviteesDiv = $('<div>'),
-                $inputField = $('<input>', {placeholder: "Email"}),
-                $addBtn = $('<button>', {text: "Add"}),
-                $clearBtn = $('<button>', {text: "Clear"}),
-                $sendBtn = $('<button>', {text: "Send"}),
-                $manualInputDiv = $('<div>');
-
-            // STYLING
-            var inviteesDivCSS = {
-                "border": "1px solid #CCC",
-                "border-radius": "3px",
-                "margin": "5px",
-                "padding": "0.25em 0.5em",
-                "min-height": "100px",
-                "background-color": "white"
-            };
-
-            $inviteesDiv.css(inviteesDivCSS);
-
-            // CONSTRUCT MODAL BODY
-            $manualInputDiv.append($inputField, $addBtn, $inviteesDiv, $clearBtn, $sendBtn);
-
-            $authBtnsDiv.append($googleContactsBtn);
-            $contactImportPage.append($authBtnsDiv, $manualInputDiv);
-            $modalBody.html($contactImportPage);
-
-            // EVENT HANDLERS
-            $googleContactsBtn.on("click", function(){
-                // If we successfully get authed, show contact list
-                // Otherwise, show contact importer.
-                gmail.authPopup(options).always(renderWidget);
-            });
-
-            $addBtn.on("click", function(evt) {
-                evt.preventDefault();
-
-                var $invitee = $('<p>', {
-                    "class": "selected",
-                    "data-email": $inputField.val(),
-                    "text": $inputField.val()
-                });
-
-                $inviteesDiv.append($invitee);
-                $inputField.val("");
-            });
-
-            $clearBtn.on("click", function(evt) {
-                evt.preventDefault();
-                $inviteesDiv.html("");
-            });
-
-            $sendBtn.on("click", function(evt) {
-                evt.preventDefault();
-                var recipients = getSelectedRecipients($inviteesDiv);
-                sendEmailInvites(recipients);
-            });
         }
 
         function applyStyling() {
             var borderRadius = "3px",
-                modalPadding = "2px",
-                modalColor = "#aaa";
+                borderColor = "#ccc",
+                itemPadding = "3px 7px";
 
-            var modalCSS = {
+            $modal.css({
                 "position": "absolute",
-                "background": modalColor,
                 "border-radius": borderRadius,
-                "padding": modalPadding,
+                "background-color": "white",
                 "width": "500px",
                 "max-width": "90%",
                 "z-index": "10001"
-            };
+            });
 
-            var modalFooterCSS = {
-                "margin-top": modalPadding,
-                "border-radius": borderRadius,
-                "background": "#eee",
-                "padding": modalPadding
-            };
-
-            var modalBodyCSS = {
-                "border-radius": borderRadius,
-                "background": "#fff",
-                "padding": "20px"
-            };
-
-            var modalBtnCSS = {
-                // Size & Position
-                "padding": "5px",
-                "display": "inline-block",
-                // Look & Feel
-                "border": "2px" + " outset " + modalColor,
-                "border-radius": borderRadius,
-                "background-color": "#fff",
-                "cursor": "pointer"
-            };
-
-            var overlayCSS = {
+            $overlay.css({
                 "position": "fixed",
                 "top": "0px",
                 "bottom": "0px",
@@ -427,14 +433,61 @@
                 "opacity": "0.5",
                 "z-index" : "10000",
                 "background-color": "#000000",
-                "display": "none"
-            };
+            });
 
-            $modal.css(modalCSS);
-            $overlay.css(overlayCSS);
-            $modalFooter.css(modalFooterCSS);
-            $modalBody.css(modalBodyCSS);
-            $('.yg-modal-btn').css(modalBtnCSS);
+            $modalHeader.css({
+                "width": "100%",
+                "border-bottom": "1px solid #ddd", 
+                "border-radius": borderRadius + " " + borderRadius + " 0 0",
+                "padding": "7px"
+            });
+
+            $modalTitle.css({
+                "display": "block",
+                "text-align": "center",
+                "font-size": "1.25em",
+                "font-weight": "bold",
+            });
+
+            $closeBtn.css({
+                "position": "static",
+                "float": "right",
+                "margin-right": "10px",
+                "cursor": "pointer",
+                "font-weight": "bold",
+            });
+
+            $modalBody.css({
+                "width": "100%",
+                "border-radius": "0 0 " + borderRadius + " " + borderRadius,
+                "padding": "20px"
+            });
+
+            $modal.find('.yg-modal-btn').css({
+                "padding": itemPadding,
+                "margin": "0.25em 0.25em 0.25em 0",
+                "display": "inline-block",
+                "border": "1px solid " + borderColor,
+                "border-radius": borderRadius,
+                "background-color": "#fff",
+                "cursor": "pointer"
+            });
+
+            $modal.find("input[type='text']").css({
+                "padding": itemPadding,
+                "border-radius": borderRadius,
+                "border": "1px solid " + borderColor,
+                "margin": "0.25em 0.25em 0.25em 0",
+                "min-width": "70%",
+            });
+
+            $modal.find(".yg-import-contacts-btn").css({
+                "text-decoration": "none",
+            }).hoverCSS({
+                "text-decoration": "underline",
+            });
+
+            centerModal();
         }
 
         function centerModal() {
@@ -447,19 +500,22 @@
             });
         }
 
-        function openModal() {
-            $overlay.css("display", "block");
+        function openModal(evt) {
+            if (evt) evt.preventDefault();
+            $overlay.show();
             $modal.show(100);
             is_open = true;
         }
 
-        function closeModal() {
-            $overlay.css("display", "none");
+        function closeModal(evt) {
+            if (evt) evt.preventDefault();
+            $overlay.hide();
             $modal.hide(100);
             is_open = false;
         }
 
-        function toggleModal() {
+        function toggleModal(evt) {
+            if (evt) evt.preventDefault();
             if (is_open) {
                 closeModal();
             } else {
@@ -487,9 +543,7 @@
                 dataType: "jsonp",
                 success: function (data) {
                     contacts = parseGoogleContactsFeed(data.feed);
-                    console.log("Pulled contacts!");
-                    window.contacts = contacts;
-                    d.resolve(contacts, options);
+                    d.resolve(options, contacts);
                 },
                 error: function (data) {
                     // FIXME
@@ -498,7 +552,6 @@
                     d.reject(options);
                 }
             });
-
             return d.promise();
         }
 
@@ -597,7 +650,7 @@
             }
 
             function getOAuthInfo(options) {
-                var REDIRECT = options.redirectUrl,
+                var REDIRECT = options.redirectUrl || "http://localhost:5001", // FIXME
                     params = {
                     response_type: "token",
                     client_id: options.integrations.google.clientId,
