@@ -2,7 +2,7 @@
     var VERSION = 'v0.0.1',
         APP_NAME,
         OPTIONS,
-        YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
+        YESGRAPH_BASE_URL = 'http://localhost:5001' || 'https://api.yesgraph.com',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         CLIENT_TOKEN,
         tokenValidationUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo",
@@ -12,29 +12,21 @@
     $.fn.hoverCSS = function(css) {
         var initialCSS = {};
         for (prop in css) {
-            if (css.hasOwnProperty(prop)) {
-                initialCSS[prop] = $(this).css(prop);
-            };
+            if (css.hasOwnProperty(prop)) initialCSS[prop] = $(this).css(prop);
         };
-        return $(this).hover(
-            function(){
-                $(this).css(css);
-            },
-            function(){
-                $(this).css(initialCSS);
-            }
-        );
+        return $(this).hover(function(){$(this).css(css);}, function(){$(this).css(initialCSS);});
     };
+
+    function isChecked() {return Boolean($(this).prop("checked"));}
 
     function getSelectedRecipients($elem) {
         var recipient;
         if ($elem.prop("type") == "text") {
             // Take the value of this input
             recipient = {"email": $elem.val()};
-            return recipient;
+            return [recipient];
         } else {
             // Take the data- attributes of checkboxes
-            function isChecked() {return Boolean($(this).prop("checked"));}
             $checked = $elem.find('input[type="checkbox"]').filter(isChecked);
 
             // Return a list of "recipient" objects
@@ -43,10 +35,15 @@
                 recipient = {
                     "name": $this.data("name") || undefined,
                     "email": $this.data("email") || undefined
-                }
+                };
                 return recipient;
             });
         };
+    }
+    function sendEmailInvites(recipients) {
+        // FIXME
+        window.recipients = recipients;
+        // YesGraphAPI.hitAPI("/send-email-invites", "POST", {recipients: recipients});
     }
 
     function parseGoogleContactsFeed(contactsFeed) {
@@ -82,10 +79,6 @@
             entries: entries
         };
         return contacts;
-    }
-
-    function sendEmailInvites(recipients) {
-        YesGraphAPI.hitAPI("/send-email-invites", "POST", {recipients: recipients});
     }
 
     function waitForClientToken() {
@@ -127,49 +120,6 @@
 
         initModal();
 
-        function loadFacebook (options) {
-            var fbAppId = options.integrations.facebook.appId;
-            if (!fbAppId) return;
-            if (options.shareButtons.indexOf("facebook") === -1) return;
-
-            var shareBtn = $('<span>', {
-                "class": "fb-share-button",
-                "data-href": "https://yesgraph.com",
-                "data-layout": "button_count",
-                "text": "Facebook"
-            });
-            shareBtn.insertBefore($modalTrigger);
-            (function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s);
-                js.id = id;
-                js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=" + fbAppId;
-                fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-        }
-
-        function loadTwitter (options) {
-            if (options.shareButtons.indexOf("twitter") === -1) return;
-
-            var shareBtn = $('<a>', {
-                "href": "https://twitter.com/share",
-                "class": "twitter-share-button",
-                "text": "Tweet"
-            });
-            shareBtn.insertBefore($modalTrigger);
-            (function(d,s,id){
-                var js,
-                    tjs=d.getElementsByTagName(s)[0],
-                    p=/^http:/.test(d.location)?'http':'https';
-                if (d.getElementById(id)) return;
-                js=d.createElement(s);
-                js.id=id;
-                js.src=p+'://platform.twitter.com/widgets.js';
-                tjs.parentNode.insertBefore(js, tjs);
-            }(document, 'script', 'twitter-wjs'));
-        }
-
         function initModal() {
             // EVENT HANDLERS
             $modalTrigger.on("click", toggleModal);
@@ -195,8 +145,9 @@
                 .then(getWidgetOptions)
                 .then(function(options){
                     renderWidget(options);
-                    loadTwitter(options);
                     loadFacebook(options);
+                    loadTwitter(options);
+                    loadLinkedIn(options);
                 });
 
             // HELPERS
@@ -224,6 +175,69 @@
             return d.promise();
         }
 
+        function loadFacebook (options) {
+            var fbAppId = options.integrations.facebook.appId;
+            if (!fbAppId || options.shareButtons.indexOf("facebook") === -1) return;
+
+            var shareBtn = $('<span>', {
+                "class": "fb-share-button",
+                "data-href": "https://yesgraph.com",
+                "data-layout": "button_count",
+            });
+
+            (function(d, s, id) {
+                var js,
+                    fjs=d.getElementsByTagName(s)[0],
+                    p=/^http:/.test(d.location)?'http':'https';
+                if (d.getElementById(id)) return;
+                js=d.createElement(s);
+                js.id=id;
+                js.src=p+"://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=" + fbAppId;
+                fjs.parentNode.insertBefore(js, fjs);
+                shareBtn.insertAfter($modalTrigger);
+            }(document, 'script', 'facebook-jssdk'));
+        }
+
+        function loadTwitter (options) {
+            if (options.shareButtons.indexOf("twitter") === -1) return;
+
+            var shareBtn = $('<a>', {
+                "href": "https://twitter.com/share",
+                "class": "twitter-share-button",
+                "data-text": options.integrations.twitter.tweetMsg,
+            });
+
+            (function(d,s,id){
+                var js,
+                    tjs=d.getElementsByTagName(s)[0],
+                    p=/^http:/.test(d.location)?'http':'https';
+                if (d.getElementById(id)) return;
+                js=d.createElement(s);
+                js.id=id;
+                js.src=p+'://platform.twitter.com/widgets.js';
+                tjs.parentNode.insertBefore(js, tjs);
+                shareBtn.insertAfter($modalTrigger);
+            }(document, 'script', 'twitter-wjs'));
+        }
+
+        function loadLinkedIn (options) {
+            if (options.shareButtons.indexOf("linkedin") === -1) return;
+
+            var shareBtn = $('<script>', {
+                "src": "//platform.linkedin.com/in.js",
+                "type": "text/javascript",
+                "text": "lang: en_US"
+            });
+
+            var js = $('<script>', {
+                "type": "IN/Share",
+                "data-counter": "right"
+            });
+
+            shareBtn.insertAfter($modalTrigger);
+            js.insertBefore(shareBtn);
+        }
+
         function rankContacts(contacts, options) {
             var d = $.Deferred(),
                 rankedContacts;
@@ -240,8 +254,6 @@
                     }
                 ).always(
                     function(resp) {
-                        console.log("Yesgraph Response:");
-                        console.log(resp);
                         d.resolve(options, rankedContacts);
                     }
                 );
@@ -263,7 +275,8 @@
             // BUILD CONTACT IMPORTER
             $modal.setTitle("Refer A Friend");
             $manualInputForm.append($inputField, $manualInputSendBtn);
-            $authBtnsDiv.append($googleContactsBtn);
+            window.options = options;
+            if (options.redirectUrl && options.integrations.google.clientId) $authBtnsDiv.append($googleContactsBtn);
             $contactImportPage.append($manualInputForm, $authBtnsDiv);
 
             var contact,
@@ -326,7 +339,7 @@
             // CONSTRUCT MODAL BODY
             $modalBody.append($contactListPage);
 
-            $suggestedContacts.addRow = function(contact) {
+            $suggestedContacts.addRow = function(contact, listEmails) {
 
                 if (contact.emails && contact.emails.length !== 0) {
                     $contactRow = $('<div>', {class: "yg-contact-row"});
@@ -336,21 +349,50 @@
 
                     var $checkbox = $('<input>', {type: "checkbox"});
                     $contactRow.children().eq(0).append($checkbox).css({'padding': '0 10px 0 0'});
-                    $contactRow.children().eq(2).append($('<span>', {text: contact.emails[0]}));
+                    
+                    var contactEmail, emailAddress;
+                    if (listEmails && contact.emails.length > 1) {
+                        // Create a dropdown of all available email addresses
+                        contactEmail = $('<select>');
+                        for (var i=0; i < contact.emails.length; i++) {
+                            emailAddress = contact.emails[i];
+                            contactEmail.append($('<option>', {"value": emailAddress, "text": emailAddress})); 
+                        };
+                        // Update data-email when we select a new email address
+                        contactEmail.on("input", function(){
+                            $checkbox.data("email", contactEmail.val());
+                        });
+                    } else {
+                        contactEmail = $('<span>', {text: contact.emails[0]});
+                    }
+
+                    $contactRow.children().eq(2).append(contactEmail);
 
                     if (contact.name) $contactRow.children().eq(1).append($('<span>', {text: contact.name}));
 
                     $checkbox.data("email", contact.emails[0]);
                     $checkbox.data("name", contact.name || undefined);
 
-                    $contactRow.css({'padding': '0.5em', 'cursor': 'pointer'});
+                    $contactRow.css({'padding': '6px', 'cursor': 'pointer'});
                     $contactRow.hoverCSS({"background-color": "#F6F6F6"});
-                    $contactRow.on("click", toggleSelected);
+                    // $contactRow.on("click", toggleSelected);
+                    // $checkbox.on("click", toggleSelected)
 
                     $(this).append($contactRow);
 
-                    function toggleSelected() {
+
+                    function toggleSelectedOld() {
                         $checkbox.prop("checked", !$checkbox.prop("checked"));
+                        // Update send button w/ count of selected people
+                        var $checked = $contactListPage.find('input[type="checkbox"]').filter(isChecked);
+                        if ($checked.length === 0) {
+                            var btnText = "No contacts selected";
+                        } else if ($checked.length === 1) {
+                            var btnText = "Send to 1 contact";
+                        } else {
+                            var btnText = "Send to " + $checked.length + " contacts";
+                        };
+                        $importedContactSendBtn.text(btnText);
                     }
                 }
             }
@@ -368,6 +410,7 @@
                     if (a.name && b.name) {
                         return a.name <= b.name ? -1 : 1;
                     } else if (!a.name && !b.name) {
+                        if (!a.emails || !b.emails) return 0;
                         return a.emails[0] <= b.emails[0] ? -1 : 1;
                     }
                     return Boolean(b.name) - Boolean(a.name);
@@ -376,7 +419,7 @@
 
                 for (var i=0; i < sortedContacts.length; i++) {
                     contact = sortedContacts[i];
-                    $alphabeticalContacts.addRow(contact);
+                    $alphabeticalContacts.addRow(contact, true);
                 }
 
                 // EVENT HANDLERS
@@ -387,7 +430,6 @@
                 });
 
                 searchable($searchField, [$suggestedContacts, $alphabeticalContacts]);
-                // $contactListPage.append($searchField, $importedContactSendBtn, $suggestedContacts, $alphabeticalContacts);
 
                 // Uppercase "Contains" is a case-insensitive
                 // version of jQuery "contains" used for search
@@ -397,7 +439,7 @@
                 };
 
                 function searchable($searchField, dataLists) {
-                    $(document).on("input", $searchField.selector, function (evt) {
+                    $searchField.on("input", function (evt) {
                         var searchString = evt.target.value;
                         for (i in dataLists) {
                             var list = dataLists[i];
@@ -421,7 +463,9 @@
                 "background-color": "white",
                 "width": "500px",
                 "max-width": "90%",
-                "z-index": "10001"
+                "z-index": "10001",
+                "color": "#222",
+                "text-align": "left"
             });
 
             $overlay.css({
@@ -465,20 +509,21 @@
 
             $modal.find('.yg-modal-btn').css({
                 "padding": itemPadding,
-                "margin": "0.25em 0.25em 0.25em 0",
+                "margin": "5px 5px 5px 0",
                 "display": "inline-block",
                 "border": "1px solid " + borderColor,
                 "border-radius": borderRadius,
                 "background-color": "#fff",
-                "cursor": "pointer"
+                "cursor": "pointer",
+                "vertical-align": "top"
             });
 
             $modal.find("input[type='text']").css({
                 "padding": itemPadding,
                 "border-radius": borderRadius,
                 "border": "1px solid " + borderColor,
-                "margin": "0.25em 0.25em 0.25em 0",
-                "min-width": "70%",
+                "margin": "5px 5px 5px 0",
+                "width": "60%",
             });
 
             $modal.find(".yg-import-contacts-btn").css({
@@ -528,7 +573,7 @@
 
         function getContacts(options) {
             var d = $.Deferred(),
-                contactsFeedUrl = 'https://www.google.com/m8/feeds/contacts/default/full',
+                contactsFeedUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=1000000',
                 readContactsScope = 'https://www.googleapis.com/auth/contacts.readonly';
 
             var queryParams = {
@@ -544,11 +589,10 @@
                 success: function (data) {
                     contacts = parseGoogleContactsFeed(data.feed);
                     d.resolve(options, contacts);
+                    window.resp = data;
+                    window.contacts = contacts;
                 },
                 error: function (data) {
-                    // FIXME
-                    console.log("Google error!");
-                    console.log(data);
                     d.reject(options);
                 }
             });
@@ -621,6 +665,8 @@
                             accessDenied = getUrlParam(responseUrl, "error");
 
                         window.clearInterval(pollTimer);
+                        win.close();
+
                         if (accessDenied) {
                             d.reject({"accessDenied": true});
                         } else {
@@ -631,10 +677,9 @@
                                 expires_in: getUrlParam(responseUrl, "expires_in")
                             });
                         };
-                        win.close();
                     }
                 } catch(e) {
-                    // FIXME: handle errors here
+                    if (e.code !== 18) d.reject({"error": e.message});
                 }
             }, 100);
 
@@ -650,7 +695,7 @@
             }
 
             function getOAuthInfo(options) {
-                var REDIRECT = options.redirectUrl || "http://localhost:5001", // FIXME
+                var REDIRECT = options.redirectUrl,
                     params = {
                     response_type: "token",
                     client_id: options.integrations.google.clientId,
