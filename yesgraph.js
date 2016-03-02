@@ -1,7 +1,8 @@
-(function($){
+;(function($){
 
     var VERSION = "v0.0.1",
-        YESGRAPH_BASE_URL = 'https://api.yesgraph.com',
+        YESGRAPH_BASE_URL = (window.location.hostname === 'localhost'
+                             && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://api.yesgraph.com',
         YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         ADDRBOOK_ENDPOINT = '/address-book',
@@ -92,14 +93,11 @@
     }
 
     function getClientToken (userData) {
+        var data = {appName: APP_NAME};
+        data.userData = userData ? userData : undefined;
         CLIENT_TOKEN = cookie.read('yg-client-token');
-        if (!CLIENT_TOKEN) {
-            var data = {appName: APP_NAME};
-            data.userData = userData ? userData : undefined;
-            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken);
-        } else {
-            return $.Deferred().resolve().promise();
-        };
+        data.token = CLIENT_TOKEN ? CLIENT_TOKEN : undefined;
+        return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken);
     }
 
     function rankContacts (rawContacts, done) {
@@ -162,7 +160,7 @@
             headers: {"Authorization": "ClientToken " + CLIENT_TOKEN},
             complete: function (resp) {
                 var responseTime = new Date().valueOf() - startTime;
-                d.resolve(resp.responseJSON);
+                d.resolve(resp.responseJSON || JSON.parse(resp.responseText));
             },
         });
         if (done) {
