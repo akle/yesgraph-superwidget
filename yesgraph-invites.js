@@ -581,6 +581,9 @@
                             success: function(data) {
                                 data = JSON.parse(data);
                                 d.resolve(data);
+                            },
+                            error: function(error) {
+                                alert(jQuery.parseJSON(error.responseText).error + ". Please see the YesGraph SuperWidget Dashboard.");
                             }
                         });
                         return d.promise();

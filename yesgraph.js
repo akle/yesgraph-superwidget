@@ -118,7 +118,9 @@
             data.userData = userData || undefined;
             CLIENT_TOKEN = cookie.read('yg-client-token');
             data.token = CLIENT_TOKEN || undefined;
-            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken);
+            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken).fail(function(data){
+                alert(data.error + " Please see docs.yesgraph.com/javascript-sdk");
+            });
         }
 
         function rankContacts(rawContacts, done) {
