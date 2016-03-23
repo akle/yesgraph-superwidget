@@ -28,16 +28,7 @@
                     YESGRAPH_BASE_URL = (window.location.hostname === 'localhost' && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://www.yesgraph.com',
                     // Sections of the widget UI
                     container = $("<div>", {
-                        "class": "yes-widget-container",
-                        click: function(){
-                            //Add 
-                            try{
-                                if(adroll_pix_id == "C5DLLH525JH3RI4MJBZIMQ"){
-                                    __adroll.record_user({"adroll_segments": "23f0429e"});
-                                    console.log("asdf")
-                                }
-                            } catch(err) {console.log(err)}
-                        }
+                        "class": "yes-widget-container"
                     }),
                     containerHeader = $("<div>", {
                         "class": "yes-header-1"
