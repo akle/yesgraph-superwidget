@@ -1,7 +1,7 @@
 ;
 (function() {
     document.addEventListener("DOMContentLoaded", function() {
-        var protocol = window.location.protocol.includes("http") ? window.location.protocol : "http:";
+        var protocol = window.location.protocol.indexOf("http") !== -1 ? window.location.protocol : "http:";
 
         function withScript(globalVar, script, func) {
             // Get the specified script if it hasn't been loaded already
@@ -24,7 +24,7 @@
             withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {
                 var APP_NAME,
                     target = $(".yesgraph-invites"),
-                    TESTMODE = ["True", "true", true, "1", 1].includes(target.data("testmode")) ? true : false,
+                    TESTMODE = ["True", "true", true, "1", 1].indexOf(target.data("testmode")) !== -1 ? true : false,
                     YESGRAPH_BASE_URL = (window.location.hostname === 'localhost' && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://www.yesgraph.com',
                     // Sections of the widget UI
                     container = $("<div>", {
@@ -53,7 +53,31 @@
                         "text": "YesGraph",
                         "target": "_blank",
                         "style": "color: red !important; text-decoration: none !important;"
-                    }));
+                    })),
+
+                    // Build invite link section
+                    inviteLinkSection = $("<div>", {
+                        "class": "yes-invite-link-section",
+                    }).css({
+                        "display": "table",
+                        "width": "100%",
+                        "font-size": "0.85em"
+                    }).append($("<span>", {
+                        "class": "yes-invite-link-label",
+                        "text": "Referral Link:",
+                    }).css({
+                        "display": "table-cell",
+                        "border": "1px solid #ccc",
+                        "border-right": "none",
+                        "padding": "5px 7px",
+                        "background-color": "#eee"
+                    }), $("<input>", { "readonly": true }).css({
+                        "width": "100%",
+                        "border": "1px solid #ccc",
+                        "text-overflow": "ellipsis",
+                        "padding": "5px 7px",
+                    }).on("click", function(){ this.select(); }));
+
 
                 // Add the YesGraph default styling to the top of the page,
                 // so that any custom styles can still override it
@@ -297,12 +321,12 @@
                             // by name where possible, or otherwise by email;
                             // all nameless contacts appear at the bottom.
                             if (a.name && b.name) {
-                                return a.name <= b.name ? -1 : 1;
+                                return a.name.toUpperCase() <= b.name.toUpperCase() ? -1 : 1;
                             } else if (!a.name && !b.name) {
                                 if (!a.emails || !b.emails) return 0;
-                                return a.emails[0] <= b.emails[0] ? -1 : 1;
+                                return a.emails[0].toUpperCase() <= b.emails[0].toUpperCase() ? -1 : 1;
                             }
-                            return Boolean(b.name) - Boolean(a.name);
+                            return Boolean(String(b.name).toUpperCase()) - Boolean(String(a.name).toUpperCase());
                         }
                         var sortedContacts = contacts.sort(compareContacts);
 
@@ -477,7 +501,7 @@
 
                     function init(options) {
                         target.append(container);
-                        container.append(containerHeader, containerBody, shareBtnSection, flashSection);
+                        container.append(containerHeader, containerBody, shareBtnSection, inviteLinkSection, flashSection);
                         if (options.poweredByYesgraph) { container.append(poweredByYesgraph); };
 
                         var widgetCopy = options.widgetCopy || {};
@@ -515,9 +539,10 @@
                                 "class": "yes-contact-import-btn-text",
                             }),
                             gmailBtnInnerWrapper = $("<div>").css("display", "table").append(gmailIcon, gmailBtnText),
+                            gmailBtnOuterWrapper = $("<div>").css("display", "inline-block").append(gmailBtnInnerWrapper),
                             gmailBtn = $("<button>", {
                                 "class": "yes-default-btn yes-contact-import-btn"
-                            }).append(gmailBtnInnerWrapper),
+                            }).append(gmailBtnOuterWrapper),
                             contactImportSection = $("<div>", {
                                 "class": "yes-contact-import-section"
                             }).append(gmailBtn);
@@ -649,7 +674,7 @@
 
                         for (var i = 0; i < services.length; i++) {
                             service = services[i];
-                            if (!options.shareButtons.includes(service.ID)) continue;
+                            if (options.shareButtons.indexOf(service.ID) === -1) continue;
 
                             shareBtnIcon = $("<span>", {
                                 "class": "yes-share-btn-icon"
@@ -828,13 +853,16 @@
                                         };
                                     };
                                 } catch (e) {
-                                    if (e.code !== 18 || count >= 2000) {
+                                    var okErrorMessages = [
+                                            "Cannot read property 'URL' of undefined",
+                                            "undefined is not an object (evaluating 'win.document.URL')"
+                                        ],
+                                        canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
+
+                                    if (count >= 20000 || !canIgnoreError) {
                                         var msg = e.message;
-                                        if (msg === "Cannot read property 'URL' of undefined") {
-                                            msg = "Gmail authorization failed."
-                                        };
+                                        if (canIgnoreError) { msg = "Gmail authorization failed." };
                                         YesGraphAPI.error(msg, false);
-                                        window.msg = msg;
                                         d.reject({
                                             "error": msg
                                         });
@@ -894,6 +922,7 @@
                     timer = setInterval(function() {
                         if (YesGraphAPI.hasClientToken()) {
                             clearInterval(timer);
+                            inviteLinkSection.find("input").val(YesGraphAPI.getInviteLink());
                             d.resolve();
                         };
                     }, 100);
@@ -1021,21 +1050,15 @@
                 }
 
                 function isTestMode(bool) {
-                    if ([true, false].includes(bool)) TESTMODE = bool;
+                    if ([true, false].indexOf(bool) !== -1) TESTMODE = bool;
                     return TESTMODE;
                 }
 
                 function validateSettings(settings) {
-                    if (settings.hasSendGridApiKey && settings.hasEmailTemplate) {
-                        return true;
-                    };
-                    if (!settings.hasSendGridApiKey) {
-                        flash.error("Email sending credentials have not been configured.");
-                    };
-                    if (!settings.hasEmailTemplate) {
-                        flash.error("No email invite template has been configured.");
-                    };
-                    return false;
+                    var settingsAreValid = settings.hasValidEmailSettings[0],
+                        settingsMessage = settings.hasValidEmailSettings[1];
+                    if (!settingsAreValid) { flash.error(settingsMessage); };
+                    return settingsAreValid;
                 }
 
                 // Main functionality
