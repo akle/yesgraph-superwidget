@@ -56,28 +56,35 @@
                     })),
 
                     // Build invite link section
+                    inviteLinkInput = $("<input>", {
+                        "readonly": true,
+                        "id": "yes-invite-link"
+                    }).css({
+                        "width": "100%",
+                        "border": "1px solid #ccc",
+                        "text-overflow": "ellipsis",
+                        "padding": "5px 7px",
+                    }).on("click", function(){ this.select(); }),
+                    copyInviteLinkBtn = $("<span>", {
+                        "id": "yes-invite-link-copy-btn",
+                        "data-clipboard-target": "#yes-invite-link",
+                        "text": "Copy",
+                    }).css({
+                        "display": "table-cell",
+                        "border": "1px solid #ccc",
+                        "border-left": "none",
+                        "padding": "5px 7px",
+                        "background-color": "#eee",
+                        "cursor": "pointer",
+                    }),
                     inviteLinkSection = $("<div>", {
                         "class": "yes-invite-link-section",
                     }).css({
                         "display": "table",
                         "width": "100%",
-                        "font-size": "0.85em"
-                    }).append($("<span>", {
-                        "class": "yes-invite-link-label",
-                        "text": "Referral Link:",
-                    }).css({
-                        "display": "table-cell",
-                        "border": "1px solid #ccc",
-                        "border-right": "none",
-                        "padding": "5px 7px",
-                        "background-color": "#eee"
-                    }), $("<input>", { "readonly": true }).css({
-                        "width": "100%",
-                        "border": "1px solid #ccc",
-                        "text-overflow": "ellipsis",
-                        "padding": "5px 7px",
-                    }).on("click", function(){ this.select(); }));
-
+                        "font-size": "0.85em",
+                        "margin": "5px 0",
+                    }).append(inviteLinkInput, copyInviteLinkBtn);
 
                 // Add the YesGraph default styling to the top of the page,
                 // so that any custom styles can still override it
@@ -471,7 +478,6 @@
                             itemsToRemove = $(".yes-contact-row").add(".yes-none-found-warning");
                         itemsToDetach.detach();
                         itemsToRemove.remove();
-                        window.warning = $(".yes-none-found-warning");
 
                         modalSendBtn.css("visibility", "hidden");
                         modalTitle.text("Loading contacts...");
@@ -501,7 +507,8 @@
 
                     function init(options) {
                         target.append(container);
-                        container.append(containerHeader, containerBody, shareBtnSection, inviteLinkSection, flashSection);
+                        container.append(containerHeader, containerBody, inviteLinkSection, shareBtnSection, flashSection);
+
                         if (options.poweredByYesgraph) { container.append(poweredByYesgraph); };
 
                         var widgetCopy = options.widgetCopy || {};
@@ -513,6 +520,20 @@
                             });
                             containerHeader.append(headline);
                         };
+
+                        // Enable copy to clipboard
+                        withScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function(){
+                            var clipboard = new Clipboard('#yes-invite-link-copy-btn');
+                            clipboard.on('success', function(e) {
+                                var originalCopy = e.trigger.textContent;
+                                e.trigger.textContent = "Copied!";
+                                setTimeout(function(){ e.trigger.textContent = originalCopy }, 3000);
+                            });
+                            clipboard.on('error', function(e) {
+                                var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
+                                flash.error("Clipboard access denied. Press " + command + " to copy.");
+                            });                            
+                        });
 
                         // Build share button section
                         buildShareButtons(shareBtnSection, options);
@@ -539,7 +560,10 @@
                                 "class": "yes-contact-import-btn-text",
                             }),
                             gmailBtnInnerWrapper = $("<div>").css("display", "table").append(gmailIcon, gmailBtnText),
-                            gmailBtnOuterWrapper = $("<div>").css("display", "inline-block").append(gmailBtnInnerWrapper),
+                            gmailBtnOuterWrapper = $("<div>").css({
+                                "display": "inline-block",
+                                "vertical-align": "middle",
+                            }).append(gmailBtnInnerWrapper),
                             gmailBtn = $("<button>", {
                                 "class": "yes-default-btn yes-contact-import-btn"
                             }).append(gmailBtnOuterWrapper),
@@ -620,7 +644,7 @@
                             .done(function(data) {
                                 d.resolve(data.data);
                             }).fail(function(data) {
-                                d.resolve(contacts);
+                                d.resolve(contacts.entries);
                             });
                         return d.promise();
                     }
@@ -1055,8 +1079,13 @@
                 }
 
                 function validateSettings(settings) {
-                    var settingsAreValid = settings.hasValidEmailSettings[0],
-                        settingsMessage = settings.hasValidEmailSettings[1];
+                    var settingsAreValid, settingsMessage;
+                    if (settings.hasValidEmailSettings !== undefined) {
+                        settingsAreValid = settings.hasValidEmailSettings[0];
+                        settingsMessage = settings.hasValidEmailSettings[1];                        
+                    } else {
+                        settingsAreValid = settings.hasEmailTemplate && settings.hasSendGridApiKey;
+                    };
                     if (!settingsAreValid) { flash.error(settingsMessage); };
                     return settingsAreValid;
                 }
