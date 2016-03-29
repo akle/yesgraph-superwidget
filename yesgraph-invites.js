@@ -93,7 +93,7 @@
                 // Module for "flashing" stateful information
                 // to the user (e.g., success, error, etc.)
                 var flash = (function() {
-                    function flashMessage(msg, type) {
+                    function flashMessage(msg, type, duration) {
                         var flashDiv = $("<div>", {
                             "class": "yes-flash yes-flash-" + type,
                             "text": msg || ""
@@ -105,17 +105,17 @@
                             flashDiv.hide(300, function() {
                                 delete $(this);
                             });
-                        }, 3500);
+                        }, duration || 3500);
                     }
 
-                    function success(msg) {
+                    function success(msg, duration) {
                         msg = msg || "Success!"
-                        flashMessage(msg, "success");
+                        flashMessage(msg, "success", duration);
                     }
 
-                    function error(msg) {
+                    function error(msg, duration) {
                         msg = "Error: " + (msg || "Something went wrong.");
-                        flashMessage(msg, "error");
+                        flashMessage(msg, "error", duration);
                     }
 
                     return {
@@ -531,7 +531,7 @@
                             });
                             clipboard.on('error', function(e) {
                                 var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
-                                flash.error("Clipboard access denied. Press " + command + " to copy.");
+                                flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
                             });                            
                         });
 
