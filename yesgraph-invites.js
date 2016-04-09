@@ -1,6 +1,12 @@
-;
-(function() {
-    document.addEventListener("DOMContentLoaded", function() {
+!function() {
+    var domReadyTimer = setInterval(function(){
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            loadSuperwidget();
+            clearInterval(domReadyTimer);
+        }
+    }, 100);
+
+    function loadSuperwidget () {
         var protocol = window.location.protocol.indexOf("http") !== -1 ? window.location.protocol : "http:";
 
         function withScript(globalVar, script, func) {
@@ -17,11 +23,19 @@
                         func(window[globalVar]);
                     };
                 }(document, 'script'));
-            };
+            }
         }
 
         withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
             withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {
+                if (YesGraphAPI.hasLoadedSuperwidget) {
+                    YesGraphAPI.error("Superwidget has been loaded multiple times.", false);
+                    return;
+                } else {
+                    YesGraphAPI.hasLoadedSuperwidget = true;                    
+                }
+
+                withScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function(Clipboard){
                 var APP_NAME,
                     target = $(".yesgraph-invites"),
                     TESTMODE = ["True", "true", true, "1", 1].indexOf(target.data("testmode")) !== -1 ? true : false,
@@ -63,27 +77,27 @@
                         "width": "100%",
                         "border": "1px solid #ccc",
                         "text-overflow": "ellipsis",
-                        "padding": "5px 7px",
+                        "padding": "5px 7px"
                     }).on("click", function(){ this.select(); }),
                     copyInviteLinkBtn = $("<span>", {
                         "id": "yes-invite-link-copy-btn",
                         "data-clipboard-target": "#yes-invite-link",
-                        "text": "Copy",
+                        "text": "Copy"
                     }).css({
                         "display": "table-cell",
                         "border": "1px solid #ccc",
                         "border-left": "none",
                         "padding": "5px 7px",
                         "background-color": "#eee",
-                        "cursor": "pointer",
+                        "cursor": "pointer"
                     }),
                     inviteLinkSection = $("<div>", {
-                        "class": "yes-invite-link-section",
+                        "class": "yes-invite-link-section"
                     }).css({
                         "display": "table",
                         "width": "100%",
                         "font-size": "0.85em",
-                        "margin": "5px 0",
+                        "margin": "5px 0"
                     }).append(inviteLinkInput, copyInviteLinkBtn);
 
                 // Add the YesGraph default styling to the top of the page,
@@ -146,7 +160,7 @@
                         }),
                         modalCloseBtn = $("<div>", {
                             "html": "&times;",
-                            "class": "yes-modal-close-btn",
+                            "class": "yes-modal-close-btn"
                         }),
                         contactContainer = $("<div>", {
                             "class": "yes-contact-container"
@@ -154,7 +168,7 @@
                         modalSendBtn = $("<input>", {
                             "type": "submit",
                             "value": "Add",
-                            "class": "yes-default-btn yes-modal-submit-btn",
+                            "class": "yes-default-btn yes-modal-submit-btn"
                         }),
                         titleText,
                         modalTitle = $("<p>", {
@@ -163,18 +177,18 @@
                         searchField = $("<input>", {
                             "type": "text",
                             "placeholder": "Search",
-                            "class": "yes-search-field",
+                            "class": "yes-search-field"
                         }),
                         suggestedHeader = $("<p>", {
                             "text": "Suggested",
-                            "class": "yes-contact-list-header",
+                            "class": "yes-contact-list-header"
                         }),
                         suggestedList = $("<div>", {
-                            "class": "yes-suggested-contact-list",
+                            "class": "yes-suggested-contact-list"
                         }),
                         totalHeader = $("<p>", {
                             "text": "All Contacts",
-                            "class": "yes-contact-list-header",
+                            "class": "yes-contact-list-header"
                         }),
                         totalList = $("<div>", {
                             "class": "yes-total-contact-list"
@@ -185,7 +199,7 @@
                         selectAllForm = $("<form>", {
                             "class": "yes-select-all-form"
                         }).append(selectAll, $("<label>", {
-                            "text": "Select All",
+                            "text": "Select All"
                         }));
 
                     function init(options) {
@@ -324,17 +338,15 @@
 
                         // Total Contacts (Alphabetical)
                         function compareContacts(a, b) {
-                            // Custom sorting function alphabetizes contacts
-                            // by name where possible, or otherwise by email;
-                            // all nameless contacts appear at the bottom.
                             if (a.name && b.name) {
-                                return a.name.toUpperCase() <= b.name.toUpperCase() ? -1 : 1;
+                                return a.name <= b.name ? -1 : 1;
                             } else if (!a.name && !b.name) {
                                 if (!a.emails || !b.emails) return 0;
-                                return a.emails[0].toUpperCase() <= b.emails[0].toUpperCase() ? -1 : 1;
+                                return a.emails[0] <= b.emails[0] ? -1 : 1;
                             }
-                            return Boolean(String(b.name).toUpperCase()) - Boolean(String(a.name).toUpperCase());
+                            return Boolean(b.name) - Boolean(a.name);
                         }
+
                         var sortedContacts = contacts.sort(compareContacts);
 
                         for (var i = 0; i < sortedContacts.length; i++) {
@@ -521,18 +533,15 @@
                             containerHeader.append(headline);
                         };
 
-                        // Enable copy to clipboard
-                        withScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function(){
-                            var clipboard = new Clipboard('#yes-invite-link-copy-btn');
-                            clipboard.on('success', function(e) {
-                                var originalCopy = e.trigger.textContent;
-                                e.trigger.textContent = "Copied!";
-                                setTimeout(function(){ e.trigger.textContent = originalCopy }, 3000);
-                            });
-                            clipboard.on('error', function(e) {
-                                var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
-                                flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
-                            });                            
+                        var clipboard = new Clipboard('#yes-invite-link-copy-btn');
+                        clipboard.on('success', function(e) {
+                            var originalCopy = e.trigger.textContent;
+                            e.trigger.textContent = "Copied!";
+                            setTimeout(function(){ e.trigger.textContent = originalCopy }, 3000);
+                        });
+                        clipboard.on('error', function(e) {
+                            var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
+                            flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
                         });
 
                         // Build share button section
@@ -632,7 +641,7 @@
                                 d.resolve(data);
                             },
                             error: function(error) {
-                                alert(jQuery.parseJSON(error.responseText).error + ". Please see the YesGraph SuperWidget Dashboard.");
+                                YesGraphAPI.error(jQuery.parseJSON(error.responseText).error + ". Please see the YesGraph SuperWidget Dashboard.", false);
                             }
                         });
                         return d.promise();
@@ -743,7 +752,7 @@
                                 }).append(shareBtn);
 
                                 shareBtn.on("click", function(){
-                                    // Do this on each click. Otherwise images added 
+                                    // Do this on each click. Otherwise images added
                                     // asynchronously (e.g., by Intercom) will not
                                     // have the desired description when pinned.
                                     $("img").not("[data-pin-description]").each(function(){
@@ -760,11 +769,10 @@
                                 shareBtn.on("click", function(evt) {
                                     targ = $(this);
                                     open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
-                                });                                
+                                });
                                 buttonsDiv.append(shareBtn);
-                            }
+                            };
                         };
-
                         target.append(buttonsDiv);
                     }
 
@@ -944,9 +952,9 @@
                 function waitForClientToken() {
                     var d = $.Deferred();
                     timer = setInterval(function() {
-                        if (YesGraphAPI.hasClientToken()) {
+                        if (YesGraphAPI.hasClientToken() && YesGraphAPI.getInviteLink()) {
+                            inviteLinkInput.val(YesGraphAPI.getInviteLink());
                             clearInterval(timer);
-                            inviteLinkSection.find("input").val(YesGraphAPI.getInviteLink());
                             d.resolve();
                         };
                     }, 100);
@@ -1082,7 +1090,7 @@
                     var settingsAreValid, settingsMessage;
                     if (settings.hasValidEmailSettings !== undefined) {
                         settingsAreValid = settings.hasValidEmailSettings[0];
-                        settingsMessage = settings.hasValidEmailSettings[1];                        
+                        settingsMessage = settings.hasValidEmailSettings[1];
                     } else {
                         settingsAreValid = settings.hasEmailTemplate && settings.hasSendGridApiKey;
                     };
@@ -1093,7 +1101,8 @@
                 // Main functionality
                 waitForYesGraphLib().then(waitForClientToken).then(inviteWidget.init);
 
+                }); // withScript Clipboard.js
             }); // withScript YesGraphAPI
         }); // withScript jQuery
-    }); // DOMContentLoaded
-}());
+    }
+}();

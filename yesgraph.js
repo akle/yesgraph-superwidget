@@ -10,6 +10,7 @@
         INVITES_SENT_ENDPOINT = '/invites-sent',
         INVITES_ACCEPTED_ENDPOINT = '/invites-accepted',
         ANALYTICS_ENDPOINT = '/analytics/sdk',
+        JQUERY_VERSION,
         CLIENT_TOKEN,
         INVITE_LINK,
         APP_NAME;
@@ -33,6 +34,7 @@
 
     // Get jQuery if it hasn't been loaded separately
     withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
+        JQUERY_VERSION = jQuery.fn.jquery;
         var cookie = (function() {
 
             function setCookie(key, val, expDays) {
@@ -118,8 +120,8 @@
             data.userData = userData || undefined;
             CLIENT_TOKEN = cookie.read('yg-client-token');
             data.token = CLIENT_TOKEN || undefined;
-            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken).fail(function(data){
-                alert(data.error + " Please see docs.yesgraph.com/javascript-sdk");
+            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken).fail(function(data) {
+                error(data.error + " Please see docs.yesgraph.com/javascript-sdk", true);
             });
         }
 
@@ -147,18 +149,13 @@
             return hitAPI('/test', "GET", null, done);
         }
 
-        function YesGraphError(msg) {
-            this.message = msg;
-            this.name = "YesGraphError";
-            this.prototype = Error.prototype;
-        }
-
         function error(msg, fail) {
-            var e = new YesGraphError(msg);
             if (fail) {
+                var e = new Error(msg)
+                e.name = "YesGraphError";
                 throw e;
             } else {
-                console.log(e.toString());
+                console.log("YesGraphError: " + msg);
             };
         }
 
@@ -182,22 +179,23 @@
                 hasClientToken: function() {
                     return Boolean(CLIENT_TOKEN);
                 },
+                hasLoadedSuperwidget: false,  // Updated by Superwidget
                 error: error
             };
             return api;
         }
 
-        window.YesGraphAPI = configureAPI();
+        // Don't initialize multiple times
+        if (!window.YesGraphAPI) { window.YesGraphAPI = configureAPI(); };
 
         function hitAPI(endpoint, method, data, done, deferred) {
             var d = deferred || $.Deferred();
             if (method.toUpperCase() !== "GET") {
                 data = JSON.stringify(data || {});
             };
-            $.ajax({
+            var ajaxSettings = {
                 url: YESGRAPH_API_URL + endpoint,
                 data: data,
-                method: method,
                 contentType: "application/json; charset=UTF-8",
                 headers: {
                     "Authorization": "ClientToken " + CLIENT_TOKEN
@@ -209,10 +207,13 @@
                 error: function(data) {
                     d.reject(data.responseJSON);
                 }
-            });
-            if (done) {
-                d.done(done);
-            }
+            };
+            // In jQuery 1.9+, the $.ajax "type" is changed to "method"
+            JQUERY_VERSION < "1.9" ?  ajaxSettings.type = method : ajaxSettings.method = method;
+
+            $.ajax(ajaxSettings);
+            if (done) { d.done(done); };
+
             return d.promise();
         }
     });
