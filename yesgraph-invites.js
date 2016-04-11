@@ -27,7 +27,7 @@
         }
 
         withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-            withScript("YesGraphAPI", "/static/js/yesgraph.js"||"https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {  // FIXME
+            withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {  // FIXME
                 if (YesGraphAPI.hasLoadedSuperwidget) {
                     YesGraphAPI.error("Superwidget has been loaded multiple times.", false);
                     return;
