@@ -15,21 +15,25 @@
     width: 400px;
 }
 
-.yes-header-1 {
+.yes-widget-container .yes-header-1, .yes-widget-container .yes-modal {
     font-size: 24px;
     text-align: center;
 }
 
-.yes-contact-import-section {
+.yes-widget-container .yes-contact-import-section {
     text-align: center;
+}
+
+.yes-widget-container .yes-manual-input-field, .yes-widget-container .yes-default-btn {
+    font-family: inherit;
 }
 
 /* Manual Input Section */
-.yes-manual-input-form {
+.yes-widget-container .yes-manual-input-form {
     text-align: center;
 }
 
-.yes-manual-input-field {
+.yes-widget-container .yes-manual-input-field {
     background: #fff;
     border: 1px solid #ccc;
     border-radius: 3px;
@@ -37,19 +41,15 @@
     -moz-box-shadow: 0px 0px 28px -13px rgba(0,0,0,1);
     box-shadow: 0px 0px 28px -13px rgba(0,0,0,1);
     font-size: 15px;
+    font-style: italic;
     padding: 10px;
     resize: vertical;
     text-align: left;
     width: 100%;
 }
 
-.yes-manual-input-submit:hover {
-    background: repeat-x #1975B3;
-    background-image: linear-gradient(to bottom, #1975b3 0, #16679c 100%);
-}
-
 /* Buttons */
-.yes-default-btn {
+.yes-widget-container .yes-default-btn, .yes-modal .yes-default-btn {
     background: repeat-x #1d89cf;
     background-image: linear-gradient(to bottom,#1e8cd3 0,#1a7ab9 100%);
     border: 0;
@@ -62,7 +62,12 @@
     padding: 7px 15px;
 }
 
-.yes-share-btn-icon, .yes-contact-import-btn-icon {
+.yes-widget-container .yes-default-btn[disabled], .yes-modal .yes-default-btn[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.yes-widget-container .yes-share-btn-icon, .yes-widget-container .yes-contact-import-btn-icon {
     background-position: 0;
     background-repeat: no-repeat;
     background-size: contain;
@@ -72,31 +77,27 @@
     width: 20px;
 }
 
-.yes-share-btn-text, .yes-contact-import-btn-text {
+.yes-widget-container .yes-share-btn-text, .yes-widget-container .yes-contact-import-btn-text {
     display: table-cell;
     padding-left: 5px;
     vertical-align: middle;
 }
 
-.yes-contact-import-btn {
+.yes-widget-container .yes-contact-import-btn {
     padding: 7px 15px;
 }
 
-.yes-contact-import-btn:hover {
-    background: repeat-x #1975b3;
+.yes-widget-container .yes-manual-input-submit:hover:not([disabled]), .yes-widget-container .yes-contact-import-btn:hover:not([disabled]) {
+    background: repeat-x #1975B3;
     background-image: linear-gradient(to bottom, #1975b3 0, #16679c 100%);
 }
 
-.yes-share-btn-section {
+.yes-widget-container .yes-share-btn-section {
     margin-top: 10px;
     text-align: center;
 }
 
-.yes-share-btn, .yes-share-btn-text, .yes-share-btn-icon {
-  cursor: pointer;
-}
-
-.yes-share-btn {
+.yes-widget-container .yes-share-btn {
     color: #fff;
     display: inline-block;
     font-size: 13px;
@@ -104,12 +105,16 @@
     padding: 5px 7px 5px 5px;
 }
 
-.yes-share-btn-text {
+.yes-widget-container .yes-share-btn, .yes-widget-container .yes-share-btn-text, .yes-widget-container .yes-share-btn-icon {
+  cursor: pointer;
+}
+
+.yes-widget-container .yes-share-btn-text {
     font-size: 13px;
 }
 
 /* Flashed Messages */
-.yes-flash {
+.yes-widget-container .yes-flash {
     border-radius: 3px;
     color: #fff;
     font-size: 14px;
@@ -118,12 +123,12 @@
     text-align: center;
 }
 
-.yes-flash-error {
+.yes-widget-container .yes-flash-error {
     background-color: #ff4d4d;
     border: 1px solid #ff0000;
 }
 
-.yes-flash-success {
+.yes-widget-container .yes-flash-success {
     background-color: #00cc00;
     border: 1px solid #008000;
 }
@@ -149,7 +154,7 @@
     z-index: 10000000000;
 }
 
-.yes-modal-header {
+.yes-modal .yes-modal-header {
     border-bottom: 1px solid #ccc;
     font-size: 20px;
     font-weight: bolder;
@@ -158,11 +163,11 @@
     text-align: center;
 }
 
-.yes-modal-title {
+.yes-modal .yes-modal-title {
     margin: 0;
 }
 
-.yes-modal-close-btn {
+.yes-modal .yes-modal-close-btn {
     cursor: pointer;
     float: right;
     position: relative;
@@ -170,73 +175,86 @@
     top: -28px;
 }
 
-.yes-modal-submit-btn {
+.yes-modal .yes-modal-submit-btn {
     width: 100%;
 }
 
-.yes-modal-body {
+.yes-modal .yes-modal-body {
     height: 610px;
     margin: 3px;
     padding: 25px 30px 5px;
 }
 
-.yes-search-field {
+.yes-modal .yes-search-field {
     background: #fff no-repeat url("//cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/svgs/fi-magnifying-glass.svg");
-    background-position: 5px center;
+    background-position: 10px center;
     background-size: 25px;
     border: 1px solid #ccc;
-    border-radius: 3px;
+    border-radius: 20px;
     -webkit-box-shadow: 0px 0px 28px -13px rgba(0,0,0,1);
     -moz-box-shadow: 0px 0px 28px -13px rgba(0,0,0,1);
     box-shadow: 0px 0px 28px -13px rgba(0,0,0,1);
     font-style: italic;
+    font-size: inherit;
     margin: 0 0 10px 0;
     padding: 5px 35px;
     width: 100%;
 }
 
-.yes-contact-container {
+.yes-modal .yes-contact-container {
     display: table;
+    table-layout: fixed;
     height: 100%;
     width: 100%;
 }
 
-.yes-modal-footer {
+.yes-modal .yes-modal-footer {
     background: #fff;
     border-radius: 3px;
-    padding: 0 10px 20px;
+    padding: 0 10px 5px;
 }
 
-.yes-contact-row {
+.yes-modal .yes-contact-row {
     padding: 6px;
     width: 100%;
 }
 
-.yes-contact-row div {
+.yes-modal .yes-contact-row div {
     display: table-cell;
 }
 
-.yes-contact-row:even {
+.yes-modal .yes-contact-row:even {
     background-color: #f1f1f1;
 }
 
-.yes-contact-row-checkbox {
+.yes-modal .yes-contact-row-checkbox {
     padding: 0 10px 0 0;
     width: 15px;
 }
 
-.yes-contact-row-name {
+.yes-modal .yes-contact-row-name {
     font-weight: 600;
-    width: 33%;
+    width: 225px;
+    min-width: 225px;
+    max-width: 225px;
 }
 
-.yes-contact-row-email {
+.yes-modal .yes-contact-row-name span {
+    display: block;
+    overflow: scroll;
+}
+
+.yes-modal .yes-contact-row-email {
     font-style: italic;
     font-weight: 300;
-    width: 67%;
+    white-space: nowrap;
+    width: 330px;
+    max-width: 330px;
+    min-width: 330px;
 }
+
 /* Spinning Loading Icon */
-.yes-loading-icon {
+.yes-modal .yes-loading-icon {
   font-size: 10px;
   margin: 50px auto;
   width: 60px;
@@ -251,7 +269,7 @@
   animation: yes-animate-loader 1.4s infinite linear;
 }
 
-.yes-loading-icon:before {
+.yes-modal .yes-loading-icon:before {
   width: 50%;
   height: 50%;
   background: #fff;
@@ -261,7 +279,8 @@
   left: 0;
   content: '';
 }
-.yes-loading-icon:after {
+
+.yes-modal .yes-loading-icon:after {
   background: #fff;
   width: 75%;
   height: 75%;

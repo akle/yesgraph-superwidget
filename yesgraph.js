@@ -34,7 +34,7 @@
 
     // Get jQuery if it hasn't been loaded separately
     withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-        JQUERY_VERSION = jQuery.fn.jquery;
+        JQUERY_VERSION = $.fn.jquery;
         var cookie = (function() {
 
             function setCookie(key, val, expDays) {
@@ -160,10 +160,6 @@
         }
 
         function configureAPI() {
-            APP_NAME = $('#yesgraph').data("app");
-            userData = $('#yesgraph').data();
-            getClientToken(userData).then(logScreenEvent);
-
             var api = {
                 rankContacts: rankContacts,
                 getRankedContacts: getRankedContacts,
@@ -172,21 +168,36 @@
                 postInvitesAccepted: postInvitesAccepted,
                 hitAPI: hitAPI,
                 test: test,
-                app: APP_NAME,
+                getApp: function(){
+                    return APP_NAME;
+                },
                 getInviteLink: function() {
                     return INVITE_LINK;
                 },
                 hasClientToken: function() {
                     return Boolean(CLIENT_TOKEN);
                 },
-                hasLoadedSuperwidget: false,  // Updated by Superwidget
+                hasLoadedSuperwidget: false, // Updated by Superwidget
                 error: error
             };
+
+            // Don't try to get a client token until we have found
+            // a target element to get the necessary data from
+            waitForYesGraphTarget().done(function(target){
+                APP_NAME = target.data("app");
+                userData = target.data();
+                getClientToken(userData).then(logScreenEvent);
+            });
+
             return api;
         }
 
         // Don't initialize multiple times
-        if (!window.YesGraphAPI) { window.YesGraphAPI = configureAPI(); };
+        if (!window.YesGraphAPI) {
+            window.YesGraphAPI = configureAPI();
+        } else {
+            error("YesGraph API has been loaded multiple times", true);
+        };
 
         function hitAPI(endpoint, method, data, done, deferred) {
             var d = deferred || $.Deferred();
@@ -209,12 +220,23 @@
                 }
             };
             // In jQuery 1.9+, the $.ajax "type" is changed to "method"
-            JQUERY_VERSION < "1.9" ?  ajaxSettings.type = method : ajaxSettings.method = method;
+            JQUERY_VERSION < "1.9" ? ajaxSettings.type = method : ajaxSettings.method = method;
 
             $.ajax(ajaxSettings);
             if (done) { d.done(done); };
-
             return d.promise();
         }
+
+        function waitForYesGraphTarget() {
+            var d = $.Deferred(),
+                timer = setInterval(function() {
+                    if ($("#yesgraph").length > 0) {
+                        d.resolve($("#yesgraph"));
+                        clearInterval(timer);
+                    }
+                }, 100);
+            return d.promise();
+        }
+
     });
 }());
