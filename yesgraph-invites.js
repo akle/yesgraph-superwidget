@@ -27,7 +27,7 @@
         }
 
         withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-            withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {  // FIXME
+            withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) { // FIXME
                 if (YesGraphAPI.hasLoadedSuperwidget) {
                     YesGraphAPI.error("Superwidget has been loaded multiple times.", false);
                     return;
@@ -335,13 +335,21 @@
                             };
 
                             // Suggested Contacts
+                            var seenContacts = { entries: [] };
                             for (var i = 0; i < suggestedContactCount; i++) {
                                 contact = contacts[i];
+                                if (contact.name) {
+                                    entries.push({
+                                        name: contact.name,
+                                        emails: contact.emails,
+                                        seen_at: new Date().toISOString()
+                                    });
+                                }
                                 addRow(suggestedList, contact, false);
                             };
+                            YesGraphAPI.postSuggestedSeen(seenContacts);
 
                             // Total Contacts (Alphabetical)
-
                             function compareContacts(a, b) {
                                 if (a.name && b.name) {
                                     return a.name <= b.name ? -1 : 1;
@@ -641,22 +649,15 @@
                         }
 
                         function getWidgetOptions() {
-                            // Get custom widget options
-                            // we don't use YesGraphAPI.hitAPI here because
-                            // this is not an API endpoint, it's a dashboard one.
                             APP_NAME = YesGraphAPI.getApp();
                             var d = $.Deferred(),
-                                OPTIONS_URL = YESGRAPH_BASE_URL + '/apps/' + APP_NAME + '/js/get-options';
+                                OPTIONS_ENDPOINT = '/apps/' + APP_NAME + '/js/get-options';
 
-                            $.ajax({
-                                url: OPTIONS_URL,
-                                success: function(data) {
-                                    data = JSON.parse(data);
-                                    d.resolve(data);
-                                },
-                                error: function(error) {
-                                    YesGraphAPI.error(jQuery.parseJSON(error.responseText).error + ". Please see the YesGraph SuperWidget Dashboard.", false);
-                                }
+                            YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET").done(function(data) {
+                                d.resolve(data);
+                            }).fail(function(error) {
+                                YesGraphAPI.error(error.error + ". Please see the YesGraph SuperWidget Dashboard.", true);
+                                d.reject(data);
                             });
                             return d.promise();
                         }
@@ -905,7 +906,7 @@
                                         ],
                                             canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
 
-                                        if (count >= 20000 || !canIgnoreError) {
+                                        if (count >= 200 || !canIgnoreError) {
                                             var msg = e.message;
                                             if (canIgnoreError) {
                                                 msg = "Gmail authorization failed."
@@ -921,12 +922,19 @@
                                 }, 100);
 
                             function getOAuthInfo(options) {
-                                var REDIRECT = (window.location.hostname === 'localhost') ? window.location.origin : options.redirectUrl,
-                                    params = {
-                                        response_type: "token",
-                                        client_id: options.integrations.google.clientId,
-                                        redirect_uri: REDIRECT,
-                                    },
+                                var REDIRECT;
+                                if (window.location.hostname === "localhost" || options.integrations.google.usingDefaultCredentials) {
+                                    REDIRECT = window.location.origin;
+                                } else {
+                                    REDIRECT = options.integrations.google.redirectUrl;
+                                }
+
+                                var params = {
+                                    response_type: "token",
+                                    client_id: options.integrations.google.clientId,
+                                    state: window.location.href,
+                                    redirect_uri: options.integrations.google.redirectUrl,
+                                },
                                     scope = concatScopes(["https://www.google.com/m8/feeds/",
                                         "https://www.googleapis.com/auth/userinfo.email"
                                     ]),
@@ -952,6 +960,7 @@
                     }());
 
                     // Helper functions
+
                     function waitForClientToken() {
                         var d = $.Deferred();
                         var timer = setInterval(function() {
@@ -1094,7 +1103,7 @@
                         var settingsAreValid, settingsMessage;
                         if (settings.hasValidEmailSettings !== undefined) {
                             settingsAreValid = settings.hasValidEmailSettings[0];
-                            settingsMes=sage = settings.hasValidEmailSettings[1];
+                            settingsMessage = settings.hasValidEmailSettings[1];
                         } else {
                             settingsAreValid = settings.hasEmailTemplate && settings.hasSendGridApiKey;
                         };
