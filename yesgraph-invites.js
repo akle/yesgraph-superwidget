@@ -309,12 +309,12 @@
                             }
                         }
 
-                        function loadContacts(contacts) {
+                        function loadContacts(contacts, noSuggestions) {
                             // Wrapping and styling allows divs with unspecified
                             // heights to behave like scrollable tables
                             var innerWrapper = $("<div>", {
-                                style: "height: 100%; position: relative; overflow: auto;"
-                            }).append(totalList),
+                                    style: "height: 100%; position: relative; overflow: auto;"
+                                }).append(totalList),
                                 wrappedTotalList = $("<div>", {
                                     style: "height: 100%; display: table-cell; width: 100%;"
                                 }).append(innerWrapper),
@@ -335,19 +335,21 @@
                             };
 
                             // Suggested Contacts
-                            var seenContacts = { entries: [] };
-                            for (var i = 0; i < suggestedContactCount; i++) {
-                                contact = contacts[i];
-                                if (contact.name) {
-                                    entries.push({
-                                        name: contact.name,
-                                        emails: contact.emails,
-                                        seen_at: new Date().toISOString()
-                                    });
-                                }
-                                addRow(suggestedList, contact, false);
-                            };
-                            YesGraphAPI.postSuggestedSeen(seenContacts);
+                            if (!noSuggestions) {
+                                var seenContacts = { entries: [] };
+                                for (var i = 0; i < suggestedContactCount; i++) {
+                                    contact = contacts[i];
+                                    if (contact.name) {
+                                        seenContacts.entries.push({
+                                            name: contact.name,
+                                            emails: contact.emails,
+                                            seen_at: new Date().toISOString()
+                                        });
+                                    }
+                                    addRow(suggestedList, contact, false);
+                                };
+                                YesGraphAPI.postSuggestedSeen(seenContacts);
+                            }
 
                             // Total Contacts (Alphabetical)
                             function compareContacts(a, b) {
@@ -368,16 +370,22 @@
                             };
 
                             totalList.prepend(noContactsWarning.hide());
-                            contactContainer.append(searchField,
-                                selectAllForm,
-                                suggestedHeader,
-                                wrappedSuggestedList,
-                                totalHeader,
-                                wrappedTotalList);
+                            if (noSuggestions) {
+                                contactContainer.append(searchField, selectAllForm, totalHeader, wrappedTotalList);
+                            } else {
+                                contactContainer.append(searchField,
+                                    selectAllForm,
+                                    suggestedHeader,
+                                    wrappedSuggestedList,
+                                    totalHeader,
+                                    wrappedTotalList);
+                            }
                             stopLoading();
 
                             // Autoselect suggested contacts
-                            suggestedList.find("input[type='checkbox']").prop("checked", true);
+                            if (!noSuggestions) {
+                                suggestedList.find("input[type='checkbox']").prop("checked", true);
+                            }
 
                             // Uppercase "Contains" is a case-insensitive
                             // version of jQuery "contains" used for doing
@@ -618,6 +626,8 @@
                                                 rankContacts(contacts).done(function(contacts) {
                                                     if (!contactsModal.isOpen) contactsModal.openModal();
                                                     contactsModal.loadContacts(contacts);
+                                                }).fail(function(contacts) {
+                                                    contactsModal.loadContacts(contacts, true);
                                                 });
                                             }
                                     )
@@ -668,7 +678,7 @@
                                 .done(function(data) {
                                     d.resolve(data.data);
                                 }).fail(function(data) {
-                                    d.resolve(contacts.entries);
+                                    d.reject(contacts.entries);
                                 });
                             return d.promise();
                         }
