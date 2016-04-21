@@ -353,11 +353,35 @@
 
                             // Total Contacts (Alphabetical)
                             function compareContacts(a, b) {
-                                if (a.name && b.name) {
-                                    return a.name <= b.name ? -1 : 1;
-                                } else if (!a.name && !b.name) {
-                                    if (!a.emails || !b.emails) return 0;
-                                    return a.emails[0] <= b.emails[0] ? -1 : 1;
+                                // Sort contact objects alphabetically, prioritizing in this order:
+                                // 1. contacts with names starting with letters
+                                // 2. contacts with names starting with non-letters
+                                // 3. contacts with only emails, starting with letters
+                                // 4. contacts with only emails, starting with non-letters
+                                var nameA = a.name || "", emailsA = a.emails || "",
+                                    nameB = b.name || "", emailsB = b.emails || "",
+                                    matchNumbers = /\b([0-9]*)/,
+                                    matchText = /\b[0-9]*(.*)/,
+                                    matchA, matchB;
+                                if (nameA && nameB) {
+                                    matchA = Number(matchNumbers.exec(nameA)[0]); matchNumbers.lastIndex = 0;
+                                    matchB = Number(matchNumbers.exec(nameB)[0]); matchNumbers.lastIndex = 0;
+                                    if (matchA && !matchB) return 1;
+                                    if (matchB && !matchA) return -1;
+                                    if (matchA && matchB) {
+                                        if (matchA < matchB) return -1;
+                                        if (matchA > matchB) return 1;
+                                        if (matchA == matchB) {
+                                            // Sort the letters
+                                            var textA = matchText.exec(nameA)[0]; matchText.lastIndex = 0;
+                                            var textB = matchText.exec(nameB)[0]; matchText.lastIndex = 0;
+                                            return textA <= textB ? -1 : 1;
+                                        }
+                                    }
+                                    return nameA <= nameB ? -1 : 1;
+                                } else if (!nameA && !nameB) {
+                                    if (!emailsA || !emailsB) return 0;
+                                    return emailsA[0] <= emailsB[0] ? -1 : 1;
                                 }
                                 return Boolean(b.name) - Boolean(a.name);
                             }
@@ -678,6 +702,7 @@
                                 .done(function(data) {
                                     d.resolve(data.data);
                                 }).fail(function(data) {
+                                    YesGraphAPI.error("Contact ranking failed", false);
                                     d.reject(contacts.entries);
                                 });
                             return d.promise();
