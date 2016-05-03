@@ -364,8 +364,14 @@
                                     matchText = /\b[0-9]*(.*)/,
                                     matchA, matchB;
                                 if (nameA && nameB) {
-                                    matchA = Number(matchNumbers.exec(nameA)[0]); matchNumbers.lastIndex = 0;
-                                    matchB = Number(matchNumbers.exec(nameB)[0]); matchNumbers.lastIndex = 0;
+                                    matchA = matchNumbers.exec(nameA);
+                                    matchA = Number(matchA ? matchA[0] : undefined);
+                                    matchNumbers.lastIndex = 0;
+
+                                    matchB = matchNumbers.exec(nameB);
+                                    matchB = Number(matchB ? matchB[0] : undefined);
+                                    matchNumbers.lastIndex = 0;
+
                                     if (matchA && !matchB) return 1;
                                     if (matchB && !matchA) return -1;
                                     if (matchA && matchB) {
@@ -373,8 +379,14 @@
                                         if (matchA > matchB) return 1;
                                         if (matchA == matchB) {
                                             // Sort the letters
-                                            var textA = matchText.exec(nameA)[0]; matchText.lastIndex = 0;
-                                            var textB = matchText.exec(nameB)[0]; matchText.lastIndex = 0;
+                                            var textA = matchText.exec(nameA);
+                                            textA = textA ? textA[0] : undefined;
+                                            matchText.lastIndex = 0;
+
+                                            var textB = matchText.exec(nameB);
+                                            textB = textB ? textB[0] : undefined;
+                                            matchText.lastIndex = 0;
+
                                             return textA <= textB ? -1 : 1;
                                         }
                                     }

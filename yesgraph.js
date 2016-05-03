@@ -150,12 +150,12 @@
         }
 
         function error(msg, fail) {
+            var e = new Error(msg)
+            e.name = "YesGraphError";
             if (fail) {
-                var e = new Error(msg)
-                e.name = "YesGraphError";
                 throw e;
             } else {
-                console.log("YesGraphError: " + msg);
+                console.log("YesGraphError", e);
             };
         }
 
@@ -176,6 +176,9 @@
                 },
                 hasClientToken: function() {
                     return Boolean(CLIENT_TOKEN);
+                },
+                getClientToken: function() {
+                    return CLIENT_TOKEN;
                 },
                 hasLoadedSuperwidget: false, // Updated by Superwidget
                 error: error
