@@ -204,7 +204,10 @@
 
         function hitAPI(endpoint, method, data, done, deferred) {
             var d = deferred || $.Deferred();
-            if (method.toUpperCase() !== "GET") {
+            if (!typeof method == "string") {
+                d.reject({error: "Expected method as string, not " + typeof method})
+                return d.promise();
+            } else if (method.toUpperCase() !== "GET") {
                 data = JSON.stringify(data || {});
             };
             var ajaxSettings = {

@@ -696,11 +696,9 @@
                                         if (!contactsModal.isOpen) contactsModal.openModal();
                                         contactsModal.loadContacts(contacts);
                                     }).fail(function(data){
-                                        flash.error();
-                                        YesGraphAPI.error(data.error);
+                                        flash.error("Outlook Authorization Failed.");
                                     });
                                 });
-
                             }
 
                             function send(evt) {
@@ -884,49 +882,46 @@
                         }
                     }());
 
-                    // Module for all of our gmail functionality
-                    // (e.g., OAuth, contact importing, etc.)
+                    // Module for the Outlook oauth flow & contact importing
                     var outlook = (function() {
+                        var OUTLOOK_ACCESS_TOKEN,
+                            readContactsScope = "https://outlook.office.com/contacts.read",
+                            OUTLOOK_FAILED_MSG = "Outlook Authorization Failed";
 
                         function authPopup(options) {
-                            // Open the Outlook OAuth popup, then redirect to pull ranked contacts
+                            // Open the Outlook OAuth popup & retrieve the access token from it
                             var d = $.Deferred(),
-                                oauthInfo = getOAuthInfo(options)
+                                oauthInfo = getOAuthInfo(options),
                                 url = oauthInfo[0],
                                 redirect = oauthInfo[1],
-                                usingDefaultCredentials = oauthInfo[2],
                                 win = open(url, "Outlook Authorization", 'width=900, height=700'),
                                 count = 0,
-                                token = null,
+                                token,
                                 pollTimer = setInterval(function() {
                                     try {
-                                        if (!win) {
+                                        if (win.document.URL.indexOf(redirect) !== -1) {
+                                            // Stop waiting & resolve or reject with results
+                                            var responseUrl = win.document.URL,
+                                                errorReason = getUrlParam(responseUrl, "error"),
+                                                errorDescription = getUrlParam(responseUrl, "error_description"),
+                                                accessToken = getUrlParam(responseUrl, "access_token");
                                             clearInterval(pollTimer);
-                                            d.reject({error: "Outlook authorization failed."});
-                                            return
+                                            win.close();
 
-                                        } else if (win.document.URL.indexOf(redirect) !== -1) {
-                                            clearInterval(pollTimer);
-                                            // If they're using default credentials, we should have their contacts now.
-                                            // Otherwise, we should redirect them back to YesGraph to pull their contacts
-                                            if (usingDefaultCredentials) {
-                                                // Stop waiting & resolve or reject with results
-                                                var response = getResponse(win.document.URL);
-                                                response.contacts ? d.resolve(response.contacts.data) : d.reject(response);
-                                                win.close();
-                                            } else {
-                                                var srcUrl = win.document.URL,
-                                                    index = srcUrl.indexOf("?"),
-                                                    params = index > 0 ? srcUrl.slice(index) : "",
-                                                    trgUrl = YESGRAPH_BASE_URL + "/oauth" + params,
-                                                    response;
-                                                contactsRedirect(win, trgUrl).done(function(response){
-                                                    response.contacts ? d.resolve(response.contacts.data) : d.reject(response);
+                                            if (accessToken) {
+                                                // Get and rank contacts server-side
+                                                YesGraphAPI.hitAPI("/oauth", "GET", {
+                                                    "service": "outlook",
+                                                    "token_data": JSON.stringify({ "access_token": accessToken })
+                                                }).done(function(response){
+                                                    response.error ? d.reject(response) : d.resolve(response.data);
                                                 }).fail(function(response){
                                                     d.reject(response);
-                                                }).always(function(){
-                                                    win.close();
                                                 });
+                                            } else {
+                                                d.reject({ error: OUTLOOK_FAILED_MSG });
+                                                var msg = errorReason + " - " + (errorDescription || "").replace(/\+/g, " ");
+                                                YesGraphAPI.error(msg);
                                             }
                                         };
                                     } catch (e) {
@@ -938,41 +933,16 @@
                                             canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
 
                                         if (count >= 1000 || !canIgnoreError) {
-                                            clearInterval(pollTimer);
-                                            var msg = canIgnoreError ? "Outlook authorization failed." : e.message;
+                                            var msg = canIgnoreError ? e.message : OUTLOOK_FAILED_MSG;
                                             YesGraphAPI.error(msg, false);
-                                            d.reject({
-                                                "error": msg
-                                            });
+                                            d.reject({ "error": msg });
+                                            win.close();
+                                            clearInterval(pollTimer);
                                         };
                                         count++;
                                     }
                                 }, 100);
 
-                            function contactsRedirect(win, url) {
-                                win.location.href = url;
-                                var d = $.Deferred(),
-                                    responseUrl,
-                                    count
-                                    contactsPollTimer = setInterval(function(){
-                                        try {
-                                            responseUrl = win.document.URL;
-                                            if ((responseUrl.indexOf("response=") !== -1) || count > 5000) {
-                                                // Stop waiting and resolve or reject with 
-                                                var response = getResponse(responseUrl);
-                                                clearInterval(contactsPollTimer);
-                                                d.resolve(response)
-                                            }
-                                        } catch (e) {
-                                            if (count > 5000) {
-                                                clearInterval(contactsPollTimer);
-                                                d.reject({error: "Outlook timed out."});
-                                            }
-                                        }
-                                        count++;
-                                    }, 100);
-                                return d.promise();
-                            }
 
                             function getOAuthInfo(options) {
                                 var REDIRECT;
@@ -984,39 +954,25 @@
 
                                 var authUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?",
                                     params = {
+                                        response_type: "token",
                                         client_id: options.integrations.outlook.clientId,
-                                        response_type: "code",
-                                        state: JSON.stringify({
-                                            "client_token": YesGraphAPI.getClientToken(),
-                                            "service": "outlook",
-                                            "location": window.location.href,
-                                        }),
-                                        scope: "https://outlook.office.com/contacts.read",
+                                        state: window.location.href,
                                         redirect_uri: options.integrations.outlook.redirectUrl,
                                     },
-                                    url = authUrl + $.param(params);
-                                return [url, REDIRECT, Boolean(options.integrations.outlook.usingDefaultCredentials)];
+                                    scope = concatScopes([readContactsScope]),
+                                    authUrl = authUrl + $.param(params) + "&scope=" + scope;
+                                return [authUrl, REDIRECT];
                             }
-                            return d.promise();
-                        }
 
-                        function getResponse(url) {
-                            var result = {},
-                                re = /([^\?&]*=[^&]*)/g,
-                                matches = url.match(re) || [],
-                                match;
-                            for (var i=0; i<matches.length; i++) {
-                                match = matches[i].split("=");
-                                result[match[0]] = match[1];
+                            function concatScopes(scopes) {
+                                var escaped_scopes = [];
+                                for (var i = 0; i < scopes.length; i++) {
+                                    escaped_scopes.push(encodeURIComponent(scopes[i]));
+                                };
+                                return escaped_scopes.join("+");
                             }
-                            if (!result.response) {return {error: "No response."}}
-                            var response = decodeURIComponent(result.response).replace(/\+/g, " ");
-                            try {
-                                response = JSON.parse(response);
-                            } catch (SyntaxError) {
-                                return {error: "Cannot process response."}
-                            }
-                            return response;
+
+                            return d.promise();
                         }
 
                         return {
@@ -1312,10 +1268,7 @@
                         var regexS = "[\?&#]" + name + "=([^&#]*)";
                         var regex = new RegExp(regexS);
                         var results = regex.exec(url);
-                        if (results == null)
-                            return "";
-                        else
-                            return results[1];
+                        return results == null ? null : results[1];
                     }
 
                     function isValidEmail(email) {
