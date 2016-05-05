@@ -27,7 +27,7 @@
         }
 
         withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-            withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) { // FIXME
+            withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {
                 if (YesGraphAPI.hasLoadedSuperwidget) {
                     YesGraphAPI.error("Superwidget has been loaded multiple times.", false);
                     return;
@@ -235,9 +235,9 @@
                         function updateSendBtn() {
                             // Updates the send button with a count of selected contacts
                             var btnText = '',
-                                checked = modalBody.find('input[type="checkbox"]').filter(function() {
-                                    return Boolean($(this).prop("checked"));
-                                });
+                                checked = modalBody.find('input[type="checkbox"]')
+                                                   .filter(":not(.yes-select-all-form *)")
+                                                   .filter(function() { return Boolean($(this).prop("checked"));});
 
                             if (checked.length === 0) {
                                 var btnText = "No contacts selected";
@@ -326,6 +326,7 @@
                                     "class": "yes-none-found-warning"
                                 }),
                                 suggestedContactCount = 5;
+                            noSuggestions = (contacts.length < suggestedContactCount) || noSuggestions;
 
                             if (contacts.length === 0) {
                                 stopLoading();
@@ -352,6 +353,7 @@
                             }
 
                             // Total Contacts (Alphabetical)
+
                             function compareContacts(a, b) {
                                 // Sort contact objects alphabetically, prioritizing in this order:
                                 // 1. contacts with names starting with letters
@@ -363,6 +365,7 @@
                                     matchNumbers = /\b([0-9]*)/,
                                     matchText = /\b[0-9]*(.*)/,
                                     matchA, matchB;
+
                                 if (nameA && nameB) {
                                     matchA = matchNumbers.exec(nameA);
                                     matchA = Number(matchA ? matchA[0] : undefined);
@@ -379,14 +382,10 @@
                                         if (matchA > matchB) return 1;
                                         if (matchA == matchB) {
                                             // Sort the letters
-                                            var textA = matchText.exec(nameA);
-                                            textA = textA ? textA[0] : undefined;
+                                            var textA = matchText.exec(nameA)[0];
                                             matchText.lastIndex = 0;
-
-                                            var textB = matchText.exec(nameB);
-                                            textB = textB ? textB[0] : undefined;
+                                            var textB = matchText.exec(nameB)[0];
                                             matchText.lastIndex = 0;
-
                                             return textA <= textB ? -1 : 1;
                                         }
                                     }
@@ -399,7 +398,6 @@
                             }
 
                             var sortedContacts = contacts.sort(compareContacts);
-
                             for (var i = 0; i < sortedContacts.length; i++) {
                                 contact = sortedContacts[i];
                                 addRow(totalList, contact, true);
@@ -615,66 +613,27 @@
 
                             // Build container body
                             var manualInputForm = $('<form>', {
-                                "class": "yes-manual-input-form"
-                            }),
+                                    "class": "yes-manual-input-form"
+                                }),
                                 manualInputField = $("<textarea>", {
                                     "placeholder": "john@example.com, jane@example.com",
-                                    "rows": 4,
+                                    "rows": 3,
                                     "class": "yes-manual-input-field",
                                 }),
                                 manualInputSubmit = $('<button>', {
                                     "text": widgetCopy.manualInputSendBtn || "Add Emails",
                                     "class": "yes-default-btn yes-manual-input-submit",
                                 }),
-                                gmailIcon = $("<div>", {
-                                    "style": "background-image: url('" + protocol + "//cdn.yesgraph.com/gmail.png')",
-                                    "class": "yes-contact-import-btn-icon",
-                                }),
-                                gmailBtnText = $("<span>", {
-                                    "text": (widgetCopy.contactImportBtnCta || "Find Friends") + " with Gmail",
-                                    "class": "yes-contact-import-btn-text",
-                                }),
-                                gmailBtnInnerWrapper = $("<div>").css("display", "table").append(gmailIcon, gmailBtnText),
-                                gmailBtnOuterWrapper = $("<div>").css({
-                                    "display": "inline-block",
-                                    "vertical-align": "middle",
-                                }).append(gmailBtnInnerWrapper),
-                                gmailBtn = $("<button>", {
-                                    "class": "yes-default-btn yes-contact-import-btn"
-                                }).append(gmailBtnOuterWrapper),
+                                includeOutlook = options.settings.oauthServices.indexOf("outlook") !== -1,
+                                includeGoogle = options.settings.oauthServices.indexOf("google") !== -1,
                                 contactImportSection = $("<div>", {
                                     "class": "yes-contact-import-section"
-                                }).append(gmailBtn);
+                                }),
+                                btnText = "";
 
                             manualInputForm.append(manualInputField, manualInputSubmit);
                             containerBody.append(contactImportSection, manualInputForm);
                             contactsModal.init(options);
-
-                            gmailBtn.on("click", function(evt) {
-                                // Attempt to auth gmail & pull contacts
-                                evt.preventDefault();
-                                gmail.authPopup(options).done(function() {
-                                    contactsModal.openModal();
-                                    contactsModal.loading();
-                                    gmail.getContacts(options)
-                                        .done(
-                                            function(contacts) {
-                                                rankContacts(contacts).done(function(contacts) {
-                                                    if (!contactsModal.isOpen) contactsModal.openModal();
-                                                    contactsModal.loadContacts(contacts);
-                                                }).fail(function(contacts) {
-                                                    contactsModal.loadContacts(contacts, true);
-                                                });
-                                            }
-                                    )
-                                }).fail(function(data) {
-                                    // Handle case where auth failed
-                                    contactsModal.closeModal();
-                                    contactsModal.stopLoading();
-                                    flash.error(data.error);
-                                    YesGraphAPI.error(data.error, false);
-                                });
-                            });
 
                             manualInputSubmit.on("click", function(evt) {
                                 evt.preventDefault();
@@ -684,6 +643,67 @@
                                 };
                             });
 
+
+                            // Set up the contact importing buttons
+                            if (options.settings.oauthServices.length <= 1) {
+                                btnText = (options.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
+                            }
+                            if (includeGoogle) {
+                                var gmailBtn = generateContactImportBtn({
+                                    "id": "gmail",
+                                    "name": "Gmail"
+                                });
+                                contactImportSection.append(gmailBtn);
+                                
+                                // Define oauth behavior for Gmail
+                                gmailBtn.on("click", function(evt) {
+                                    // Attempt to auth gmail & pull contacts
+                                    evt.preventDefault();
+                                    gmail.authPopup(options).done(function() {
+                                        contactsModal.openModal();
+                                        contactsModal.loading();
+                                        gmail.getContacts(options)
+                                            .done(
+                                                function(contacts) {
+                                                    rankContacts(contacts).done(function(contacts) {
+                                                        if (!contactsModal.isOpen) contactsModal.openModal();
+                                                        contactsModal.loadContacts(contacts);
+                                                    }).fail(function(contacts) {
+                                                        contactsModal.loadContacts(contacts, true);
+                                                    });
+                                                }
+                                            );
+                                    }).fail(function(data) {
+                                        // Handle case where auth failed
+                                        contactsModal.closeModal();
+                                        contactsModal.stopLoading();
+                                        flash.error();
+                                        YesGraphAPI.error(data.error);
+                                    });
+                                });
+                            }
+                            if (includeOutlook) {
+                                var outlookBtn = generateContactImportBtn({
+                                    "id": "outlook",
+                                    "name": "Outlook"
+                                });
+                                contactImportSection.append(outlookBtn);
+
+                                // Define oauth behavior for Outlook
+                                outlookBtn.on("click", function(evt){
+                                    // Attempt to auth & pull contacts
+                                    outlook.authPopup(options).done(function(contacts){
+                                        contactsModal.loading();
+                                        if (!contactsModal.isOpen) contactsModal.openModal();
+                                        contactsModal.loadContacts(contacts);
+                                    }).fail(function(data){
+                                        flash.error();
+                                        YesGraphAPI.error(data.error);
+                                    });
+                                });
+
+                            }
+
                             function send(evt) {
                                 try {
                                     evt.preventDefault();
@@ -692,6 +712,26 @@
                                 var recipients = getSelectedRecipients(manualInputField);
                                 sendEmailInvites(recipients);
                             }
+
+                            function generateContactImportBtn(service) {
+                                var icon = $("<div>", {
+                                        "style": "background-image: url('" + protocol + "//cdn.yesgraph.com/" + service.id + ".png')",
+                                        "class": "yes-contact-import-btn-icon",
+                                    }),
+                                    text = $("<span>", {
+                                        "text": btnText + service.name,
+                                        "class": "yes-contact-import-btn-text",
+                                    }),
+                                    innerWrapper = $("<div>").css("display", "table").append(icon, text),
+                                    outerWrapper = $("<div>").css({
+                                        "display": "inline-block",
+                                        "vertical-align": "middle",
+                                    }).append(innerWrapper),
+                                    btn = $("<button>", {
+                                        "class": "yes-default-btn yes-contact-import-btn"
+                                    }).append(outerWrapper);
+                                return btn;
+                            };
                         }
 
                         function getWidgetOptions() {
@@ -847,6 +887,147 @@
 
                     // Module for all of our gmail functionality
                     // (e.g., OAuth, contact importing, etc.)
+                    var outlook = (function() {
+
+                        function authPopup(options) {
+                            // Open the Outlook OAuth popup, then redirect to pull ranked contacts
+                            var d = $.Deferred(),
+                                oauthInfo = getOAuthInfo(options)
+                                url = oauthInfo[0],
+                                redirect = oauthInfo[1],
+                                usingDefaultCredentials = oauthInfo[2],
+                                win = open(url, "Outlook Authorization", 'width=900, height=700'),
+                                count = 0,
+                                token = null,
+                                pollTimer = setInterval(function() {
+                                    try {
+                                        if (!win) {
+                                            clearInterval(pollTimer);
+                                            d.reject({error: "Outlook authorization failed."});
+                                            return
+
+                                        } else if (win.document.URL.indexOf(redirect) !== -1) {
+                                            clearInterval(pollTimer);
+                                            // If they're using default credentials, we should have their contacts now.
+                                            // Otherwise, we should redirect them back to YesGraph to pull their contacts
+                                            if (usingDefaultCredentials) {
+                                                // Stop waiting & resolve or reject with results
+                                                var response = getResponse(win.document.URL);
+                                                response.contacts ? d.resolve(response.contacts.data) : d.reject(response);
+                                                win.close();
+                                            } else {
+                                                var srcUrl = win.document.URL,
+                                                    index = srcUrl.indexOf("?"),
+                                                    params = index > 0 ? srcUrl.slice(index) : "",
+                                                    trgUrl = YESGRAPH_BASE_URL + "/oauth" + params,
+                                                    response;
+                                                contactsRedirect(win, trgUrl).done(function(response){
+                                                    response.contacts ? d.resolve(response.contacts.data) : d.reject(response);
+                                                }).fail(function(response){
+                                                    d.reject(response);
+                                                }).always(function(){
+                                                    win.close();
+                                                });
+                                            }
+                                        };
+                                    } catch (e) {
+                                        var okErrorMessages = [
+                                                "Cannot read property 'URL' of undefined",
+                                                "undefined is not an object (evaluating 'win.document.URL')",
+                                                'Permission denied to access property "document"'
+                                            ],
+                                            canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
+
+                                        if (count >= 1000 || !canIgnoreError) {
+                                            clearInterval(pollTimer);
+                                            var msg = canIgnoreError ? "Outlook authorization failed." : e.message;
+                                            YesGraphAPI.error(msg, false);
+                                            d.reject({
+                                                "error": msg
+                                            });
+                                        };
+                                        count++;
+                                    }
+                                }, 100);
+
+                            function contactsRedirect(win, url) {
+                                win.location.href = url;
+                                var d = $.Deferred(),
+                                    responseUrl,
+                                    count
+                                    contactsPollTimer = setInterval(function(){
+                                        try {
+                                            responseUrl = win.document.URL;
+                                            if ((responseUrl.indexOf("response=") !== -1) || count > 5000) {
+                                                // Stop waiting and resolve or reject with 
+                                                var response = getResponse(responseUrl);
+                                                clearInterval(contactsPollTimer);
+                                                d.resolve(response)
+                                            }
+                                        } catch (e) {
+                                            if (count > 5000) {
+                                                clearInterval(contactsPollTimer);
+                                                d.reject({error: "Outlook timed out."});
+                                            }
+                                        }
+                                        count++;
+                                    }, 100);
+                                return d.promise();
+                            }
+
+                            function getOAuthInfo(options) {
+                                var REDIRECT;
+                                if (window.location.hostname === "localhost" || options.integrations.outlook.usingDefaultCredentials) {
+                                    REDIRECT = window.location.origin;
+                                } else {
+                                    REDIRECT = options.integrations.outlook.redirectUrl;
+                                }
+
+                                var authUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?",
+                                    params = {
+                                        client_id: options.integrations.outlook.clientId,
+                                        response_type: "code",
+                                        state: JSON.stringify({
+                                            "client_token": YesGraphAPI.getClientToken(),
+                                            "service": "outlook",
+                                            "location": window.location.href,
+                                        }),
+                                        scope: "https://outlook.office.com/contacts.read",
+                                        redirect_uri: options.integrations.outlook.redirectUrl,
+                                    },
+                                    url = authUrl + $.param(params);
+                                return [url, REDIRECT, Boolean(options.integrations.outlook.usingDefaultCredentials)];
+                            }
+                            return d.promise();
+                        }
+
+                        function getResponse(url) {
+                            var result = {},
+                                re = /([^\?&]*=[^&]*)/g,
+                                matches = url.match(re) || [],
+                                match;
+                            for (var i=0; i<matches.length; i++) {
+                                match = matches[i].split("=");
+                                result[match[0]] = match[1];
+                            }
+                            if (!result.response) {return {error: "No response."}}
+                            var response = decodeURIComponent(result.response).replace(/\+/g, " ");
+                            try {
+                                response = JSON.parse(response);
+                            } catch (SyntaxError) {
+                                return {error: "Cannot process response."}
+                            }
+                            return response;
+                        }
+
+                        return {
+                            authPopup: authPopup
+                        }
+                    }());
+
+
+                    // Module for all of our gmail functionality
+                    // (e.g., OAuth, contact importing, etc.)
                     var gmail = (function() {
 
                         function getContacts(options) {
@@ -949,11 +1130,12 @@
                                     } catch (e) {
                                         var okErrorMessages = [
                                             "Cannot read property 'URL' of undefined",
-                                            "undefined is not an object (evaluating 'win.document.URL')"
+                                            "undefined is not an object (evaluating 'win.document.URL')",
+                                            'Permission denied to access property "document"'
                                         ],
                                             canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
 
-                                        if (count >= 200 || !canIgnoreError) {
+                                        if (count >= 1000 || !canIgnoreError) {
                                             var msg = e.message;
                                             if (canIgnoreError) {
                                                 msg = "Gmail authorization failed."
@@ -962,6 +1144,7 @@
                                             d.reject({
                                                 "error": msg
                                             });
+                                            win.close();
                                             clearInterval(pollTimer);
                                         };
                                         count++;
@@ -1147,15 +1330,15 @@
                     }
 
                     function validateSettings(settings) {
-                        var settingsAreValid, settingsMessage;
+                        var settingsAreValid, settingsErrors;
                         if (settings.hasValidEmailSettings !== undefined) {
                             settingsAreValid = settings.hasValidEmailSettings[0];
-                            settingsMessage = settings.hasValidEmailSettings[1];
+                            settingsErrors = settings.hasValidEmailSettings[1];
                         } else {
                             settingsAreValid = settings.hasEmailTemplate && settings.hasSendGridApiKey;
                         };
                         if (!settingsAreValid) {
-                            flash.error(settingsMessage);
+                            flash.error(settingsErrors);
                         };
                         return settingsAreValid;
                     }

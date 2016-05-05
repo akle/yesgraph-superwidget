@@ -40,15 +40,14 @@
     font-size: 15px;
     font-style: italic;
     padding: 10px;
-    resize: vertical;
+    resize: none;
     text-align: left;
     width: 100%;
 }
 
 /* Buttons */
 .yes-widget-container .yes-default-btn, .yes-modal .yes-default-btn {
-    background: repeat-x #1d89cf;
-    background-image: linear-gradient(to bottom,#1e8cd3 0,#1a7ab9 100%);
+    background: #1d89cf;
     border: 0;
     border-radius: 3px;
     color: #fff;
@@ -62,6 +61,10 @@
 .yes-widget-container .yes-default-btn[disabled], .yes-modal .yes-default-btn[disabled] {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+.yes-widget-container .yes-default-btn:hover, .yes-modal .yes-default-btn:hover {
+    background: #1975B3;
 }
 
 .yes-widget-container .yes-share-btn-icon, .yes-widget-container .yes-contact-import-btn-icon {
@@ -81,12 +84,16 @@
 }
 
 .yes-widget-container .yes-contact-import-btn {
+    margin: 5px;
     padding: 7px 15px;
 }
 
-.yes-widget-container .yes-manual-input-submit:hover:not([disabled]), .yes-widget-container .yes-contact-import-btn:hover:not([disabled]) {
-    background: repeat-x #1975B3;
-    background-image: linear-gradient(to bottom, #1975b3 0, #16679c 100%);
+.yes-widget-container .yes-contact-import-btn:first-child {
+    margin-left: 0;
+}
+
+.yes-widget-container .yes-contact-import-btn:last-child {
+    margin-right: 0;
 }
 
 .yes-widget-container .yes-share-btn-section {
