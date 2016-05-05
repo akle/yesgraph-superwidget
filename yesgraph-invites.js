@@ -34,7 +34,6 @@
                 } else {
                     YesGraphAPI.hasLoadedSuperwidget = true;
                 }
-
                 withScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function(Clipboard) {
                     var APP_NAME,
                         target,
@@ -63,7 +62,7 @@
                             "text": "Powered by ",
                             "style": "display: block !important; visibility: visible !important; font-size: 12px !important; font-style: italic !important;"
                         }).append($("<a>", {
-                            "href": "https://www.yesgraph.com/demo",
+                            "href": "https://www.yesgraph.com/demo?utm_source=superwidget&utm_medium=superwidget&utm_campaign=superwidget",
                             "text": "YesGraph",
                             "target": "_blank",
                             "style": "color: red !important; text-decoration: none !important;"
