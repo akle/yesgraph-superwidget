@@ -551,6 +551,7 @@
                             modalTitle.text("Loading contacts...");
                             loader.css("display", "block");
                             modal.show()
+                            centerModal();
                             isOpen = true;
                         }
 
@@ -692,10 +693,10 @@
                                 outlookBtn.on("click", function(evt){
                                     // Attempt to auth & pull contacts
                                     outlook.authPopup(options).done(function(contacts){
-                                        contactsModal.loading();
                                         if (!contactsModal.isOpen) contactsModal.openModal();
                                         contactsModal.loadContacts(contacts);
                                     }).fail(function(data){
+                                        if (contactsModal.isOpen) contactsModal.closeModal();
                                         flash.error("Outlook Authorization Failed.");
                                     });
                                 });
@@ -902,17 +903,23 @@
                                         if (win.document.URL.indexOf(redirect) !== -1) {
                                             // Stop waiting & resolve or reject with results
                                             var responseUrl = win.document.URL,
-                                                errorReason = getUrlParam(responseUrl, "error"),
+                                                errorType = getUrlParam(responseUrl, "error"),
                                                 errorDescription = getUrlParam(responseUrl, "error_description"),
                                                 accessToken = getUrlParam(responseUrl, "access_token");
                                             clearInterval(pollTimer);
                                             win.close();
 
                                             if (accessToken) {
+                                                contactsModal.loading();
                                                 // Get and rank contacts server-side
+                                                var tokenData = { "access_token": accessToken };
+                                                if (errorType) {
+                                                    tokenData.error = errorType;
+                                                    tokenData.error_description = errorDescription
+                                                }
                                                 YesGraphAPI.hitAPI("/oauth", "GET", {
                                                     "service": "outlook",
-                                                    "token_data": JSON.stringify({ "access_token": accessToken })
+                                                    "token_data": JSON.stringify(tokenData)
                                                 }).done(function(response){
                                                     response.error ? d.reject(response) : d.resolve(response.data);
                                                 }).fail(function(response){
@@ -920,7 +927,7 @@
                                                 });
                                             } else {
                                                 d.reject({ error: OUTLOOK_FAILED_MSG });
-                                                var msg = errorReason + " - " + (errorDescription || "").replace(/\+/g, " ");
+                                                var msg = errorType + " - " + (errorDescription || "").replace(/\+/g, " ");
                                                 YesGraphAPI.error(msg);
                                             }
                                         };
