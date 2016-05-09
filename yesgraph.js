@@ -13,7 +13,16 @@
         JQUERY_VERSION,
         CLIENT_TOKEN,
         INVITE_LINK,
-        APP_NAME;
+        APP_NAME,
+        settings = {
+            app: null,
+            testmode: false,
+            target: ".yesgraph-invites",
+            contactImporting: true,
+            emailSending: true,
+            inviteLink: true,
+            shareBtns: true
+        };
 
     function withScript(globalVar, script, func) {
         // Get the specified script if it hasn't been loaded already
@@ -32,9 +41,13 @@
         };
     }
 
+    console.log("jQuery loading");
     // Get jQuery if it hasn't been loaded separately
     withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
+        console.log("jQuery ready");
+        var initDeferred = $.Deferred();
         JQUERY_VERSION = $.fn.jquery;
+
         var cookie = (function() {
 
             function setCookie(key, val, expDays) {
@@ -180,18 +193,38 @@
                 getClientToken: function() {
                     return CLIENT_TOKEN;
                 },
+                getSettings: function(){
+                    return settings;
+                },
+                init: function(options) {
+                    // Allows the user to override the default settings
+                    for (prop in options) {
+                        if (settings.hasOwnProperty(prop)) {
+                            settings[prop] = options[prop];
+                        }
+                    }
+                    initDeferred.resolve();
+                },
                 hasLoadedSuperwidget: false, // Updated by Superwidget
-                error: error
+                error: error,
             };
 
             // Don't try to get a client token until we have found
             // a target element to get the necessary data from
             waitForYesGraphTarget().done(function(target){
                 APP_NAME = target.data("app");
-                userData = target.data();
+                var targetData = target.data(),
+                    userData = {};
+                for (prop in targetData) {
+                    if (settings.hasOwnProperty(prop)) {
+                        settings[prop] = targetData[prop];
+                    } else {
+                        userData[prop] = targetData[prop];
+                    }
+                }
                 getClientToken(userData).then(logScreenEvent);
             });
-
+            console.log("API ready");
             return api;
         }
 
@@ -204,10 +237,7 @@
 
         function hitAPI(endpoint, method, data, done, deferred) {
             var d = deferred || $.Deferred();
-            if (!typeof method == "string") {
-                d.reject({error: "Expected method as string, not " + typeof method})
-                return d.promise();
-            } else if (method.toUpperCase() !== "GET") {
+            if (method.toUpperCase() !== "GET") {
                 data = JSON.stringify(data || {});
             };
             var ajaxSettings = {
@@ -234,14 +264,15 @@
         }
 
         function waitForYesGraphTarget() {
-            var d = $.Deferred(),
+            var target,
                 timer = setInterval(function() {
-                    if ($("#yesgraph").length > 0) {
-                        d.resolve($("#yesgraph"));
-                        clearInterval(timer);
+                    target = $("#yesgraph");
+                    if (target.length > 0) {
+                        initDeferred.resolve(target);
                     }
                 }, 100);
-            return d.promise();
+            initDeferred.done(function(){ clearInterval(timer); });
+            return initDeferred.promise();
         }
 
     });

@@ -575,11 +575,17 @@
                     var inviteWidget = (function() {
 
                         function init(options) {
-                            target = $(".yesgraph-invites");
-                            TESTMODE = ["True", "true", true, "1", 1].indexOf(target.data("testmode")) !== -1 ? true : false;
+                            var settings = YesGraphAPI.getSettings() || {},
+                                targetSelector = settings.target || ".yesgraph-invites";
+                            $(targetSelector).append(container);
+                            TESTMODE = settings.testmode || false;
 
-                            target.append(container);
-                            container.append(containerHeader, containerBody, inviteLinkSection, shareBtnSection, flashSection);
+                            var sections = [containerHeader, containerBody];
+                            if (settings.inviteLink) { sections.push(inviteLinkSection); };
+                            if (settings.shareBtns) { sections.push(shareBtnSection); };
+
+                            sections.push(flashSection);
+                            container.append(sections);
 
                             if (options.poweredByYesgraph) {
                                 container.append(poweredByYesgraph);
@@ -632,7 +638,10 @@
                                 btnText = "";
 
                             manualInputForm.append(manualInputField, manualInputSubmit);
-                            containerBody.append(contactImportSection, manualInputForm);
+
+                            if (settings.contactImporting) { containerBody.append(contactImportSection); };
+                            if (settings.emailSending) { containerBody.append(manualInputForm); };
+
                             contactsModal.init(options);
 
                             manualInputSubmit.on("click", function(evt) {
@@ -642,7 +651,6 @@
                                     manualInputField.val("");
                                 };
                             });
-
 
                             // Set up the contact importing buttons
                             if (options.settings.oauthServices.length <= 1) {
@@ -654,7 +662,7 @@
                                     "name": "Gmail"
                                 });
                                 contactImportSection.append(gmailBtn);
-                                
+
                                 // Define oauth behavior for Gmail
                                 gmailBtn.on("click", function(evt) {
                                     // Attempt to auth gmail & pull contacts
@@ -1152,15 +1160,17 @@
                     }());
 
                     // Helper functions
-
-                    function waitForClientToken() {
+                    function waitForAPIConfig() {
                         var d = $.Deferred();
                         var timer = setInterval(function() {
                             if (YesGraphAPI.getApp() && YesGraphAPI.hasClientToken() && YesGraphAPI.getInviteLink()) {
                                 inviteLinkInput.val(YesGraphAPI.getInviteLink());
                                 YesGraphAPI.isTestMode = isTestMode;
-                                clearInterval(timer);
-                                d.resolve();
+
+                                if ($(YesGraphAPI.getSettings().target).length > 0) {
+                                    clearInterval(timer);
+                                    d.resolve();                                    
+                                }
                             };
                         }, 100);
                         return d.promise();
@@ -1303,7 +1313,7 @@
                     }
 
                     // Main functionality
-                    waitForClientToken().then(inviteWidget.init);
+                    waitForAPIConfig().then(inviteWidget.init);
 
                 }); // withScript Clipboard.js
             }); // withScript YesGraphAPI
