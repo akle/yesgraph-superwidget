@@ -211,3 +211,6 @@ var invitesAccepted = {
     }]
 }
 ```
+
+### Tests
+To run the tests, just open tests/test.html in the browser.

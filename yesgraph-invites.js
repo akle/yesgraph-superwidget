@@ -857,7 +857,7 @@
                                         wrapper[0].click();
                                     });
 
-                                    withScript("pinUtils", "//assets.pinterest.com/js/pinit.js", function() {
+                                    withScript("pinUtils", protocol + "//assets.pinterest.com/js/pinit.js", function() {
                                         buttonsDiv.append(wrapper.append(shareBtn));
                                     });
 
