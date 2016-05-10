@@ -1,10 +1,13 @@
 ! function() {
-    var domReadyTimer = setInterval(function() {
-        if (document.readyState === "complete" || document.readyState === "interactive") {
-            loadSuperwidget();
-            clearInterval(domReadyTimer);
-        }
-    }, 100);
+    var VERSION = "v0.0.2",
+        SDK_VERSION = "v0.0.2",
+        CSS_VERSION = "v0.0.2",
+        domReadyTimer = setInterval(function() {
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                loadSuperwidget();
+                clearInterval(domReadyTimer);
+            }
+        }, 100);
 
     function loadSuperwidget() {
         var protocol = window.location.protocol.indexOf("http") !== -1 ? window.location.protocol : "http:";
@@ -27,12 +30,25 @@
         }
 
         withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-            withScript("YesGraphAPI", "https://cdn.yesgraph.com/yesgraph.min.js", function(YesGraphAPI) {
+            withScript("YesGraphAPI", "https://cdn.yesgraph.com/" + SDK_VERSION + "/yesgraph.min.js", function(YesGraphAPI) {
                 if (YesGraphAPI.hasLoadedSuperwidget) {
                     YesGraphAPI.error("Superwidget has been loaded multiple times.", false);
                     return;
                 } else {
                     YesGraphAPI.hasLoadedSuperwidget = true;
+                }
+
+                // Handle backwards compatibility if they loaded an old version of the SDK
+                YesGraphAPI.getSettings = YesGraphAPI.getSettings || function(){
+                    return {
+                        app: null,
+                        testmode: false,
+                        target: ".yesgraph-invites",
+                        contactImporting: true,
+                        emailSending: true,
+                        inviteLink: true,
+                        shareBtns: true
+                    }
                 }
                 withScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function(Clipboard) {
                     var APP_NAME,
@@ -56,7 +72,7 @@
                             "rel": "stylesheet",
                             "type": "text/css",
                             "charset": "utf-8",
-                            "href": protocol + "//cdn.yesgraph.com/yesgraph-invites.min.css"
+                            "href": protocol + "//cdn.yesgraph.com/" + CSS_VERSION + "/yesgraph-invites.min.css"
                         }),
                         poweredByYesgraph = $("<span>", {
                             "id": "powered-by-yesgraph",
