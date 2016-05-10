@@ -1,7 +1,7 @@
 ;
 (function() {
 
-    var VERSION = "v0.0.1",
+    var VERSION = "v0.0.2",
         YESGRAPH_BASE_URL = (window.location.hostname === 'localhost' && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://api.yesgraph.com',
         YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0',
         CLIENT_TOKEN_ENDPOINT = '/client-token',
