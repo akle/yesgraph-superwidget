@@ -237,7 +237,10 @@
 
         function hitAPI(endpoint, method, data, done, deferred) {
             var d = deferred || $.Deferred();
-            if (method.toUpperCase() !== "GET") {
+            if (!typeof method == "string") {
+                d.reject({error: "Expected method as string, not " + typeof method})
+                return d.promise();
+            } else if (method.toUpperCase() !== "GET") {
                 data = JSON.stringify(data || {});
             };
             var ajaxSettings = {
@@ -271,7 +274,7 @@
                         initDeferred.resolve(target);
                     }
                 }, 100);
-            initDeferred.done(function(){ clearInterval(timer); });
+            initDeferred.always(function(){ clearInterval(timer); });
             return initDeferred.promise();
         }
 

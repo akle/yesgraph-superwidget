@@ -1283,9 +1283,12 @@
                             } else {
                                 d.resolve(); // email sending turned off
                             }
-                            msg = "You've added " + recipients.length;
-                            msg += recipients.length === 1 ? " friend!" : " friends!";
-                            flash.success(msg);
+
+                            d.done(function(){
+                                msg = "You've added " + recipients.length;
+                                msg += recipients.length === 1 ? " friend!" : " friends!";
+                                flash.success(msg);
+                            });
                         };
                         return d.promise();
                     }
