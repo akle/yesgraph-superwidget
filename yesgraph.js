@@ -41,10 +41,8 @@
         };
     }
 
-    console.log("jQuery loading");
     // Get jQuery if it hasn't been loaded separately
     withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-        console.log("jQuery ready");
         var initDeferred = $.Deferred();
         JQUERY_VERSION = $.fn.jquery;
 
@@ -207,6 +205,9 @@
                 },
                 hasLoadedSuperwidget: false, // Updated by Superwidget
                 error: error,
+                events: {
+                    RANKED_CONTACTS: "ranked.yesgraph.contacts",
+                }
             };
 
             // Don't try to get a client token until we have found
@@ -224,7 +225,6 @@
                 }
                 getClientToken(userData).then(logScreenEvent);
             });
-            console.log("API ready");
             return api;
         }
 
