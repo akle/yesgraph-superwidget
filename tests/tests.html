@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>YesGraph Superwidget QUnit Tests</title>
+  <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.23.1.css">
+</head>
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <div id="yesgraph" class="yesgraph-invites" data-testmode=true data-app="19185f1f-a583-4c6b-bc5f-8aff04dc1020" data-foo="bar"></div>
+  
+  <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
+  <!-- Tests Local Versions of Superwidget -->
+  <script src="../yesgraph.js" data-cover=true></script>
+  <script src="../yesgraph-invites.js" data-cover=true></script>
+  <script src="test_YesGraphAPI.js"></script>
+  <script src="test_SuperwidgetUI.js"></script>
+  <script src="test_SuperwidgetEvents.js"></script>
+</body>
+</html>
