@@ -38,6 +38,7 @@
                     var APP_NAME,
                         target,
                         TESTMODE,
+                        OPTIONS,
                         YESGRAPH_BASE_URL = (window.location.hostname === 'localhost' && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://www.yesgraph.com',
                         // Sections of the widget UI
                         container = $("<div>", {
@@ -141,8 +142,8 @@
 
                     var contactsModal = (function() {
                         var modal = $("<div>", {
-                            "class": "yes-modal"
-                        }),
+                                "class": "yes-modal"
+                            }),
                             overlay = $("<div>", {
                                 "class": "yes-modal-overlay"
                             }),
@@ -203,8 +204,8 @@
                                 "text": "Select All"
                             }));
 
-                        function init(options) {
-                            var widgetCopy = options.widgetCopy || {};
+                        function init() {
+                            var widgetCopy = OPTIONS.widgetCopy || {};
 
                             titleText = widgetCopy.contactsModalHeader || "Add Friends";
                             modalTitle.text(titleText)
@@ -218,10 +219,7 @@
                             $(window).on("resize", centerModal);
                             modalCloseBtn.on("click", closeModal);
                             overlay.on("click", closeModal);
-
-                            modalSendBtn.on("click", function() {
-                                validateSettings(options.settings || {}) ? send() : closeModal();
-                            });
+                            modalSendBtn.on("click", send);
 
                             selectAll.on("click", function(evt) {
                                 modalBody.find("[type='checkbox']").prop("checked", $(evt.target).prop("checked"));
@@ -574,18 +572,24 @@
 
                     var inviteWidget = (function() {
 
-                        function init(options) {
-                            target = $(".yesgraph-invites");
-                            TESTMODE = ["True", "true", true, "1", 1].indexOf(target.data("testmode")) !== -1 ? true : false;
+                        function init() {
+                            var settings = YesGraphAPI.getSettings() || {},
+                                targetSelector = settings.target || ".yesgraph-invites";
+                            $(targetSelector).append(container);
+                            TESTMODE = settings.testmode || false;
 
-                            target.append(container);
-                            container.append(containerHeader, containerBody, inviteLinkSection, shareBtnSection, flashSection);
+                            var sections = [containerHeader, containerBody];
+                            if (settings.inviteLink) { sections.push(inviteLinkSection); };
+                            if (settings.shareBtns) { sections.push(shareBtnSection); };
 
-                            if (options.poweredByYesgraph) {
+                            sections.push(flashSection);
+                            container.append(sections);
+
+                            if (OPTIONS.poweredByYesgraph) {
                                 container.append(poweredByYesgraph);
                             };
 
-                            var widgetCopy = options.widgetCopy || {};
+                            var widgetCopy = OPTIONS.widgetCopy || {};
                             // Build container header
                             if (widgetCopy.widgetHeadline) {
                                 var headline = $("<p>", {
@@ -609,7 +613,7 @@
                             });
 
                             // Build share button section
-                            buildShareButtons(shareBtnSection, options);
+                            buildShareButtons(shareBtnSection);
 
                             // Build container body
                             var manualInputForm = $('<form>', {
@@ -624,45 +628,46 @@
                                     "text": widgetCopy.manualInputSendBtn || "Add Emails",
                                     "class": "yes-default-btn yes-manual-input-submit",
                                 }),
-                                includeOutlook = options.settings.oauthServices.indexOf("outlook") !== -1,
-                                includeGoogle = options.settings.oauthServices.indexOf("google") !== -1,
+                                includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
+                                includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
                                 contactImportSection = $("<div>", {
                                     "class": "yes-contact-import-section"
                                 }),
                                 btnText = "";
 
                             manualInputForm.append(manualInputField, manualInputSubmit);
-                            containerBody.append(contactImportSection, manualInputForm);
-                            contactsModal.init(options);
+
+                            if (settings.contactImporting) { containerBody.append(contactImportSection); };
+                            if (settings.emailSending) { containerBody.append(manualInputForm); };
+
+                            contactsModal.init();
 
                             manualInputSubmit.on("click", function(evt) {
                                 evt.preventDefault();
-                                if (validateSettings(options.settings || {})) {
-                                    send();
-                                    manualInputField.val("");
-                                };
+                                var recipients = getSelectedRecipients(manualInputField);
+                                sendEmailInvites(recipients);
+                                manualInputField.val("");
                             });
 
-
                             // Set up the contact importing buttons
-                            if (options.settings.oauthServices.length <= 1) {
-                                btnText = (options.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
+                            if (OPTIONS.settings.oauthServices.length <= 1) {
+                                btnText = (OPTIONS.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
                             }
                             if (includeGoogle) {
                                 var gmailBtn = generateContactImportBtn({
-                                    "id": "gmail",
+                                    "id": "google",
                                     "name": "Gmail"
                                 });
                                 contactImportSection.append(gmailBtn);
-                                
+
                                 // Define oauth behavior for Gmail
                                 gmailBtn.on("click", function(evt) {
                                     // Attempt to auth gmail & pull contacts
                                     evt.preventDefault();
-                                    gmail.authPopup(options).done(function() {
+                                    gmail.authPopup().done(function() {
                                         contactsModal.openModal();
                                         contactsModal.loading();
-                                        gmail.getContacts(options)
+                                        gmail.getContacts()
                                             .done(
                                                 function(contacts) {
                                                     rankContacts(contacts).done(function(contacts) {
@@ -692,7 +697,7 @@
                                 // Define oauth behavior for Outlook
                                 outlookBtn.on("click", function(evt){
                                     // Attempt to auth & pull contacts
-                                    outlook.authPopup(options).done(function(contacts){
+                                    outlook.authPopup().done(function(contacts){
                                         if (!contactsModal.isOpen) contactsModal.openModal();
                                         contactsModal.loadContacts(contacts);
                                     }).fail(function(data){
@@ -702,18 +707,8 @@
                                 });
                             }
 
-                            function send(evt) {
-                                try {
-                                    evt.preventDefault();
-                                } catch (e) {};
-
-                                var recipients = getSelectedRecipients(manualInputField);
-                                sendEmailInvites(recipients);
-                            }
-
                             function generateContactImportBtn(service) {
                                 var icon = $("<div>", {
-                                        "style": "background-image: url('" + protocol + "//cdn.yesgraph.com/" + service.id + ".png')",
                                         "class": "yes-contact-import-btn-icon",
                                     }),
                                     text = $("<span>", {
@@ -726,7 +721,7 @@
                                         "vertical-align": "middle",
                                     }).append(innerWrapper),
                                     btn = $("<button>", {
-                                        "class": "yes-default-btn yes-contact-import-btn"
+                                        "class": "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id
                                     }).append(outerWrapper);
                                 return btn;
                             };
@@ -738,6 +733,7 @@
                                 OPTIONS_ENDPOINT = '/apps/' + APP_NAME + '/js/get-options';
 
                             YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET").done(function(data) {
+                                OPTIONS = data;
                                 d.resolve(data);
                             }).fail(function(error) {
                                 YesGraphAPI.error(error.error + ". Please see the YesGraph SuperWidget Dashboard.", true);
@@ -758,8 +754,8 @@
                             return d.promise();
                         }
 
-                        function buildShareButtons(target, options) {
-                            if (options.shareButtons.length === 0) return false;
+                        function buildShareButtons(target) {
+                            if (OPTIONS.shareButtons.length === 0) return false;
                             var buttonsDiv = $("<div>"),
                                 service,
                                 targ,
@@ -773,7 +769,7 @@
                                     "baseURL": "https://www.facebook.com/share.php",
                                     "params": {
                                         u: encodeURI(inviteLink),
-                                        title: options.integrations.twitter.tweetMsg
+                                        title: OPTIONS.integrations.twitter.tweetMsg
                                     },
                                     "colors": ["#3B5998", "#324b81"],
                                 }, {
@@ -781,7 +777,7 @@
                                     "name": "Twitter",
                                     "baseURL": "https://twitter.com/intent/tweet",
                                     "params": {
-                                        text: options.integrations.twitter.tweetMsg + ' ' + inviteLink
+                                        text: OPTIONS.integrations.twitter.tweetMsg + ' ' + inviteLink
                                     },
                                     "colors": ["#55ACEE", "#2E99EA"],
                                 }, {
@@ -791,8 +787,8 @@
                                     "params": {
                                         "mini": true,
                                         "url": inviteLink,
-                                        "title": options.appDisplayName,
-                                        "summary": options.integrations.twitter.tweetMsg
+                                        "title": OPTIONS.appDisplayName,
+                                        "summary": OPTIONS.integrations.twitter.tweetMsg
                                     },
                                     "colors": ["#0077B5", "#006399"],
                                 }, {
@@ -807,7 +803,7 @@
 
                             for (var i = 0; i < services.length; i++) {
                                 service = services[i];
-                                if (options.shareButtons.indexOf(service.ID) === -1) continue;
+                                if (OPTIONS.shareButtons.indexOf(service.ID) === -1) continue;
 
                                 shareBtnIcon = $("<span>", {
                                     "class": "yes-share-btn-icon"
@@ -856,12 +852,12 @@
                                         // asynchronously (e.g., by Intercom) will not
                                         // have the desired description when pinned.
                                         $("img").not("[data-pin-description]").each(function() {
-                                            this.dataset["pinDescription"] = options.integrations.twitter.tweetMsg + " " + inviteLink;
+                                            this.dataset["pinDescription"] = OPTIONS.integrations.twitter.tweetMsg + " " + inviteLink;
                                         });
                                         wrapper[0].click();
                                     });
 
-                                    withScript("pinUtils", "//assets.pinterest.com/js/pinit.js", function() {
+                                    withScript("pinUtils", protocol + "//assets.pinterest.com/js/pinit.js", function() {
                                         buttonsDiv.append(wrapper.append(shareBtn));
                                     });
 
@@ -889,10 +885,10 @@
                             readContactsScope = "https://outlook.office.com/contacts.read",
                             OUTLOOK_FAILED_MSG = "Outlook Authorization Failed";
 
-                        function authPopup(options) {
+                        function authPopup() {
                             // Open the Outlook OAuth popup & retrieve the access token from it
                             var d = $.Deferred(),
-                                oauthInfo = getOAuthInfo(options),
+                                oauthInfo = getOAuthInfo(),
                                 url = oauthInfo[0],
                                 redirect = oauthInfo[1],
                                 win = open(url, "Outlook Authorization", 'width=900, height=700'),
@@ -921,7 +917,16 @@
                                                     "service": "outlook",
                                                     "token_data": JSON.stringify(tokenData)
                                                 }).done(function(response){
-                                                    response.error ? d.reject(response) : d.resolve(response.data);
+                                                    if (response.error) {
+                                                        d.reject(response);
+                                                    } else {
+                                                        $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS,[{
+                                                            name: undefined,
+                                                            email: undefined,
+                                                            type: "outlook"
+                                                        }, response.data ]);
+                                                        d.resolve(response.data);
+                                                    }
                                                 }).fail(function(response){
                                                     d.reject(response);
                                                 });
@@ -951,20 +956,20 @@
                                 }, 100);
 
 
-                            function getOAuthInfo(options) {
+                            function getOAuthInfo() {
                                 var REDIRECT;
-                                if (window.location.hostname === "localhost" || options.integrations.outlook.usingDefaultCredentials) {
+                                if (window.location.hostname === "localhost" || OPTIONS.integrations.outlook.usingDefaultCredentials) {
                                     REDIRECT = window.location.origin;
                                 } else {
-                                    REDIRECT = options.integrations.outlook.redirectUrl;
+                                    REDIRECT = OPTIONS.integrations.outlook.redirectUrl;
                                 }
 
                                 var authUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?",
                                     params = {
                                         response_type: "token",
-                                        client_id: options.integrations.outlook.clientId,
+                                        client_id: OPTIONS.integrations.outlook.clientId,
                                         state: window.location.href,
-                                        redirect_uri: options.integrations.outlook.redirectUrl,
+                                        redirect_uri: OPTIONS.integrations.outlook.redirectUrl,
                                     },
                                     scope = concatScopes([readContactsScope]),
                                     authUrl = authUrl + $.param(params) + "&scope=" + scope;
@@ -992,7 +997,7 @@
                     // (e.g., OAuth, contact importing, etc.)
                     var gmail = (function() {
 
-                        function getContacts(options) {
+                        function getContacts() {
                             var d = $.Deferred(),
                                 contactsFeedUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=1000000',
                                 readContactsScope = 'https://www.googleapis.com/auth/contacts.readonly';
@@ -1009,10 +1014,11 @@
                                 dataType: "jsonp",
                                 success: function(data) {
                                     contacts = parseContactsFeed(data.feed);
+                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [contacts.source, contacts.entries, data]);
                                     d.resolve(contacts);
                                 },
                                 error: function(data) {
-                                    d.reject(options);
+                                    d.reject();
                                 }
                             });
                             return d.promise();
@@ -1053,11 +1059,11 @@
                             return contacts;
                         }
 
-                        function authPopup(options) {
+                        function authPopup() {
                             // Open the Google OAuth popup & retrieve the access token from it
                             var d = $.Deferred(),
-                                url = getOAuthInfo(options)[0],
-                                redirect = getOAuthInfo(options)[1],
+                                url = getOAuthInfo()[0],
+                                redirect = getOAuthInfo()[1],
                                 win = open(url, "Google Authorization", 'width=550, height=550'),
                                 count = 0,
                                 token,
@@ -1113,19 +1119,19 @@
                                     }
                                 }, 100);
 
-                            function getOAuthInfo(options) {
+                            function getOAuthInfo() {
                                 var REDIRECT;
-                                if (window.location.hostname === "localhost" || options.integrations.google.usingDefaultCredentials) {
+                                if (window.location.hostname === "localhost" || OPTIONS.integrations.google.usingDefaultCredentials) {
                                     REDIRECT = window.location.origin;
                                 } else {
-                                    REDIRECT = options.integrations.google.redirectUrl;
+                                    REDIRECT = OPTIONS.integrations.google.redirectUrl;
                                 }
 
                                 var params = {
                                     response_type: "token",
-                                    client_id: options.integrations.google.clientId,
+                                    client_id: OPTIONS.integrations.google.clientId,
                                     state: window.location.href,
-                                    redirect_uri: options.integrations.google.redirectUrl,
+                                    redirect_uri: OPTIONS.integrations.google.redirectUrl,
                                 },
                                     scope = concatScopes(["https://www.google.com/m8/feeds/",
                                         "https://www.googleapis.com/auth/userinfo.email"
@@ -1152,14 +1158,24 @@
                     }());
 
                     // Helper functions
-
-                    function waitForClientToken() {
+                    function waitForAPIConfig() {
                         var d = $.Deferred();
                         var timer = setInterval(function() {
-                            if (YesGraphAPI.getApp() && YesGraphAPI.hasClientToken() && YesGraphAPI.getInviteLink()) {
+                            if (YesGraphAPI.getApp()
+                                && YesGraphAPI.hasClientToken()
+                                && YesGraphAPI.getInviteLink()
+                                && ($(YesGraphAPI.getSettings().target).length > 0)) {
+
+                                clearInterval(timer);
+
                                 inviteLinkInput.val(YesGraphAPI.getInviteLink());
                                 YesGraphAPI.isTestMode = isTestMode;
-                                clearInterval(timer);
+
+                                // Add custom superwidget events
+                                YesGraphAPI.events = $.extend(YesGraphAPI.events, {
+                                    SET_RECIPIENTS: "set.yesgraph.recipients",
+                                    IMPORTED_CONTACTS: "imported.yesgraph.contacts",
+                                });
                                 d.resolve();
                             };
                         }, 100);
@@ -1213,58 +1229,65 @@
                         if (!recipients || recipients.length < 1) {
                             var msg = "No valid recipients specified."
                             flash.error(msg);
-                            d.reject({
-                                "error": msg,
-                            });
+                            d.reject({ "error": msg }); // invalid user input
+
                         } else {
-                            YesGraphAPI.hitAPI("/send-email-invites", "POST", {
-                                recipients: recipients,
-                                test: TESTMODE || undefined,
-                                invite_link: YesGraphAPI.getInviteLink()
-                            }).done(function(resp) {
-                                if (!resp.emails) {
-                                    d.reject(resp);
-                                    flash.error(resp);
-                                    YesGraphAPI.error(resp);
-                                } else {
-                                    if (TESTMODE) {
-                                        flash.success("Testmode: emails not sent.");
-                                    } else {
-                                        var inviteData, invites = {
-                                                "entries": []
+                            // Event only fires if there are valid recipients
+                            $(document).trigger(YesGraphAPI.events.SET_RECIPIENTS, [recipients]);
+
+                            // Only send the emails if `data-email-sending` was not set to `false`
+                            if (YesGraphAPI.getSettings().emailSending) {
+
+                                if (validateSettings(OPTIONS.settings || {})) {
+                                    YesGraphAPI.hitAPI("/send-email-invites", "POST", {
+                                        recipients: recipients,
+                                        test: TESTMODE || undefined,
+                                        invite_link: YesGraphAPI.getInviteLink()
+
+                                    }).done(function(resp) {
+                                        if (!resp.emails) {
+                                            d.reject(resp);
+                                            flash.error(resp);
+                                            YesGraphAPI.error(resp);
+                                        } else {
+                                            if (TESTMODE) {
+                                                flash.success("Testmode: emails not sent.");
+                                            } else {
+                                                var msg,
+                                                    sentCount = resp.sent.length,
+                                                    inviteData,
+                                                    invites = { "entries": [] };
+
+                                                for (var i = 0; i < resp.sent.length; i++) {
+                                                    inviteData = resp.sent[i];
+                                                    invites.entries.push({
+                                                        "invitee_name": inviteData[0] || undefined,
+                                                        "email": inviteData[1],
+                                                        "sent_at": new Date().toISOString(),
+                                                    });
+                                                };
+                                                YesGraphAPI.postInvitesSent(invites);
                                             };
-                                        for (var i = 0; i < resp.emails.succeeded.length; i++) {
-                                            inviteData = resp.emails.succeeded[i];
-                                            invites.entries.push({
-                                                "invitee_name": inviteData[0] || undefined,
-                                                "email": inviteData[1],
-                                                "sent_at": new Date().toISOString(),
-                                            });
+                                            d.resolve();
                                         };
-                                        YesGraphAPI.postInvitesSent(invites);
-                                    };
-                                    // Loop through emails, flashing appropriate results
-                                    var msg,
-                                        successCount = resp.emails.succeeded.length,
-                                        failCount = resp.emails.failed.length;
 
-                                    if (successCount > 0) {
-                                        msg = "You've successfully added " + successCount;
-                                        msg += successCount === 1 ? " friend!" : " friends!";
-                                        flash.success(msg);
-                                    };
+                                    }).fail(function(data) {
+                                        flash.error(data.error);
+                                        YesGraphAPI.error(data.error, false);
+                                        d.reject(data);
+                                    });
 
-                                    if (failCount > 0) {
-                                        msg = failCount + (failCount === 1 ? " email " : " emails ") + "failed";
-                                        flash.error(msg);
-                                        flash.error(resp.emails.failed[0][-1]);
-                                    };
-                                    d.resolve();
-                                };
-                            }).fail(function(data) {
-                                flash.error(data.error);
-                                YesGraphAPI.error(data.error, false);
-                                d.reject(data);
+                                } else {
+                                    d.reject();  // invalid settings
+                                }
+                            } else {
+                                d.resolve(); // email sending turned off
+                            }
+
+                            d.done(function(){
+                                msg = "You've added " + recipients.length;
+                                msg += recipients.length === 1 ? " friend!" : " friends!";
+                                flash.success(msg);
                             });
                         };
                         return d.promise();
@@ -1303,8 +1326,7 @@
                     }
 
                     // Main functionality
-                    waitForClientToken().then(inviteWidget.init);
-
+                    waitForAPIConfig().then(inviteWidget.init);
                 }); // withScript Clipboard.js
             }); // withScript YesGraphAPI
         }); // withScript jQuery
