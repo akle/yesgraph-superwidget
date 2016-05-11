@@ -965,8 +965,8 @@
                                                             name: undefined,
                                                             email: undefined,
                                                             type: "yahoo"
-                                                        }, response.data ]);
-                                                        d.resolve(response.data);
+                                                        }, response.data.raw_contacts ]);
+                                                        d.resolve(response.data.ranked_contacts);
                                                     }
                                                 }).fail(function(response){
                                                     d.reject(response);
@@ -1067,8 +1067,8 @@
                                                             name: undefined,
                                                             email: undefined,
                                                             type: "outlook"
-                                                        }, response.data ]);
-                                                        d.resolve(response.data);
+                                                        }, response.data.raw_contacts ]);
+                                                        d.resolve(response.data.ranked_contacts);
                                                     }
                                                 }).fail(function(response){
                                                     d.reject(response);
@@ -1155,9 +1155,9 @@
                                 url: contactsFeedUrl,
                                 data: queryParams,
                                 dataType: "jsonp",
-                                success: function(data) {
-                                    contacts = parseContactsFeed(data.feed);
-                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [contacts.source, contacts.entries, data]);
+                                success: function(rawContacts) {
+                                    contacts = parseContactsFeed(rawContacts.feed);
+                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [contacts.source, rawContacts]);
                                     d.resolve(contacts);
                                 },
                                 error: function(data) {
@@ -1264,7 +1264,7 @@
 
                             function getOAuthInfo() {
                                 var REDIRECT;
-                                if (window.location.hostname === "localhost" || OPTIONS.integrations.google.usingDefaultCredentials) {
+                                if (["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1 || OPTIONS.integrations.google.usingDefaultCredentials) {
                                     REDIRECT = window.location.origin;
                                 } else {
                                     REDIRECT = OPTIONS.integrations.google.redirectUrl;
