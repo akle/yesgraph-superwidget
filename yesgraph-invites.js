@@ -55,7 +55,7 @@
                         target,
                         TESTMODE,
                         OPTIONS,
-                        YESGRAPH_BASE_URL = (window.location.hostname === 'localhost' && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://www.yesgraph.com',
+                        YESGRAPH_BASE_URL,
                         // Sections of the widget UI
                         container = $("<div>", {
                             "class": "yes-widget-container"
@@ -117,6 +117,12 @@
                             "font-size": "0.85em",
                             "margin": "5px 0"
                         }).append(inviteLinkInput, copyInviteLinkBtn);
+
+                    if (window.document.title === "YesGraph" && ["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1) {
+                        YESGRAPH_BASE_URL = window.location.origin;
+                    } else {
+                        YESGRAPH_BASE_URL = 'https://www.yesgraph.com'
+                    }
 
                     // Add the YesGraph default styling to the top of the page,
                     // so that any custom styles can still override it

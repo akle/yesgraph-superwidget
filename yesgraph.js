@@ -2,8 +2,8 @@
 (function() {
 
     var VERSION = "v0.0.2",
-        YESGRAPH_BASE_URL = (window.location.hostname === 'localhost' && window.document.title === 'YesGraph') ? 'http://localhost:5001' : 'https://api.yesgraph.com',
-        YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0',
+        YESGRAPH_BASE_URL,
+        YESGRAPH_API_URL,
         CLIENT_TOKEN_ENDPOINT = '/client-token',
         ADDRBOOK_ENDPOINT = '/address-book',
         SUGGESTED_SEEN_ENDPOINT = '/suggested-seen',
@@ -23,6 +23,13 @@
             inviteLink: true,
             shareBtns: true
         };
+
+    if (["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1 && window.document.title === 'YesGraph') {
+        YESGRAPH_BASE_URL = window.location.origin;
+    } else {
+        YESGRAPH_BASE_URL = "https://api.yesgraph.com";
+    }
+    YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0';
 
     function withScript(globalVar, script, func) {
         // Get the specified script if it hasn't been loaded already
