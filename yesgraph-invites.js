@@ -287,7 +287,7 @@
                                     };
 
                                     contactEmail = $("<span>", {
-                                        text: contact.emails[i]
+                                        html: contact.emails[i]
                                     });
                                     checkbox = $('<input>', {
                                         type: "checkbox"
@@ -308,8 +308,8 @@
                                         class: "yes-contact-row-email"
                                     }).append(contactEmail));
 
-                                    if (contact.name) contactRow.children().eq(1).append($('<span>', {
-                                        text: contact.name
+                                    if (contact.name) contactRow.find(".yes-contact-row-name").append($('<span>', {
+                                        html: contact.name
                                     }));
 
                                     checkbox.data("email", contact.emails[0]);
@@ -646,6 +646,7 @@
                                 }),
                                 includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
                                 includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
+                                includeYahoo = OPTIONS.settings.oauthServices.indexOf("yahoo") !== -1,
                                 contactImportSection = $("<div>", {
                                     "class": "yes-contact-import-section"
                                 }),
@@ -721,6 +722,26 @@
                                         flash.error("Outlook Authorization Failed.");
                                     });
                                 });
+                            }
+
+                            if (includeYahoo) {
+                                var yahooBtn = generateContactImportBtn({
+                                    "id": "yahoo",
+                                    "name": "Yahoo"
+                                });
+                                contactImportSection.append(yahooBtn);
+
+                                // Define oauth behavior for Yahoo
+                                yahooBtn.on("click", function(evt){
+                                    // Attempt to auth & pull contacts
+                                    yahoo.authPopup().done(function(contacts){
+                                        if (!contactsModal.isOpen) contactsModal.openModal();
+                                        contactsModal.loadContacts(contacts);
+                                    }).fail(function(data){
+                                        if (contactsModal.isOpen) contactsModal.closeModal();
+                                        flash.error("Yahoo Authorization Failed.");
+                                    });
+                                })
                             }
 
                             function generateContactImportBtn(service) {
@@ -892,6 +913,106 @@
                             init: function() {
                                 getWidgetOptions().done(init);
                             }
+                        }
+                    }());
+
+                    // Module for the Yahoo oauth flow & contact importing
+                    var yahoo = (function(){
+
+                        function authPopup() {
+                            // Open the Yahoo OAuth popup & retrieve the access token from it
+                            var d = $.Deferred(),
+                                oauthInfo = getOAuthInfo(),
+                                url = oauthInfo[0],
+                                redirect = oauthInfo[1],
+                                win = open(url, "Yahoo Authorization", 'width=900, height=700'),
+                                count = 0,
+                                token,
+                                pollTimer = setInterval(function() {
+                                    try {
+                                        window.win = win;
+                                        if (win.document.URL.indexOf(redirect) !== -1) {
+                                            // Stop waiting & resolve or reject with results
+                                            var responseUrl = win.document.URL,
+                                                errorType = getUrlParam(responseUrl, "error"),
+                                                errorDescription = getUrlParam(responseUrl, "error_description"),
+                                                accessToken = getUrlParam(responseUrl, "access_token");
+                                            clearInterval(pollTimer);
+                                            win.close();
+
+                                            if (accessToken) {
+                                                contactsModal.loading();
+                                                // Get and rank contacts server-side
+                                                var tokenData = { "access_token": accessToken };
+                                                if (errorType) {
+                                                    tokenData.error = errorType;
+                                                    tokenData.error_description = errorDescription
+                                                }
+                                                YesGraphAPI.hitAPI("/oauth", "GET", {
+                                                    "service": "yahoo",
+                                                    "token_data": JSON.stringify(tokenData)
+                                                }).done(function(response){
+                                                    if (response.error) {
+                                                        d.reject(response);
+                                                    } else {
+                                                        $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS,[{
+                                                            name: undefined,
+                                                            email: undefined,
+                                                            type: "yahoo"
+                                                        }, response.data ]);
+                                                        d.resolve(response.data);
+                                                    }
+                                                }).fail(function(response){
+                                                    d.reject(response);
+                                                });
+                                            } else {
+                                                d.reject({ error: OUTLOOK_FAILED_MSG });
+                                                var msg = errorType + " - " + (errorDescription || "").replace(/\+/g, " ");
+                                                YesGraphAPI.error(msg);
+                                            }
+                                        };
+                                    } catch (e) {
+                                        var okErrorMessages = [
+                                                "Cannot read property 'URL' of undefined",
+                                                "undefined is not an object (evaluating 'win.document.URL')",
+                                                'Permission denied to access property "document"'
+                                            ],
+                                            canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
+
+                                        if (count >= 1000 || !canIgnoreError) {
+                                            var msg = canIgnoreError ? e.message : OUTLOOK_FAILED_MSG;
+                                            YesGraphAPI.error(msg, false);
+                                            d.reject({ "error": msg });
+                                            win.close();
+                                            clearInterval(pollTimer);
+                                        };
+                                        count++;
+                                    }
+                                }, 100);
+
+                            function getOAuthInfo() {
+                                var REDIRECT;
+                                if (window.location.hostname === "localhost" || OPTIONS.integrations.yahoo.usingDefaultCredentials) {
+                                    REDIRECT = window.location.origin;
+                                } else {
+                                    REDIRECT = OPTIONS.integrations.yahoo.redirectUrl;
+                                }
+
+                                var authUrl = "https://api.login.yahoo.com/oauth2/request_auth?",
+                                    params = {
+                                        response_type: "token",
+                                        client_id: OPTIONS.integrations.yahoo.clientId,
+                                        redirect_uri: OPTIONS.integrations.yahoo.redirectUrl,
+                                        state: window.location.href
+                                    },
+                                    authUrl = authUrl + $.param(params);
+                                return [authUrl, REDIRECT];
+                            }
+
+                            return d.promise();
+                        }
+                        return {
+                            authPopup: authPopup
                         }
                     }());
 
