@@ -104,6 +104,10 @@
     background-image: url("https://cdn.yesgraph.com/outlook.png");
 }
 
+.yes-widget-container .yes-contact-import-btn-yahoo .yes-contact-import-btn-icon {
+    background-image: url("https://cdn.yesgraph.com/yahoo.png");
+}
+
 .yes-widget-container .yes-share-btn-section {
     margin-top: 10px;
     text-align: center;
