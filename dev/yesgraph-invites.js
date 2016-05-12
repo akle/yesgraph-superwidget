@@ -939,7 +939,6 @@
                                 token,
                                 pollTimer = setInterval(function() {
                                     try {
-                                        window.win = win;
                                         if (win.document.URL.indexOf(redirect) !== -1) {
                                             // Stop waiting & resolve or reject with results
                                             var responseUrl = win.document.URL,
