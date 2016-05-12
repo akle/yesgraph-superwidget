@@ -1,5 +1,5 @@
 /* YesGraph Superwidget CSS
- * version: v0.0.2
+ * version: dev/v0.0.2
  */
 
 /* General Styles */
@@ -157,6 +157,10 @@
 .yes-widget-container .yes-flash-success {
     background-color: #00cc00;
     border: 1px solid #008000;
+}
+
+.yes-widget-container #yes-invite-link-copy-btn {
+  line-height: 1;
 }
 
 /* Contacts Modal */
