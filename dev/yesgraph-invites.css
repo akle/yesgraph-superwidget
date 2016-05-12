@@ -4,7 +4,11 @@
 
 /* General Styles */
 .yes-widget-container, .yes-modal {
-  font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.yes-widget-container *, .yes-modal * {
+    box-sizing: border-box;
 }
 
 .yes-widget-container {
