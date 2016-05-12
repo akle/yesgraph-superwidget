@@ -1,7 +1,7 @@
 ;
 (function() {
 
-    var VERSION = "v0.0.2",
+    var VERSION = "dev/v0.0.2",
         YESGRAPH_BASE_URL,
         YESGRAPH_API_URL,
         CLIENT_TOKEN_ENDPOINT = '/client-token',
