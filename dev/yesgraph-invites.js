@@ -548,10 +548,13 @@
                             try {
                                 evt.preventDefault();
                             } catch (e) {};
-                            var top, left;
-                            top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
-                            left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
-
+                            var top = 20,
+                                left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
+                            // If the doctype is set to HTML, we can center the modal vertically
+                            // based on the viewport size (rather than use the default 20px set above).
+                            if (window.document.doctype && (window.document.doctype === "html")) {
+                                top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;                                
+                            }
                             modal.css({
                                 top: top + $(window).scrollTop(),
                                 left: left + $(window).scrollLeft()
