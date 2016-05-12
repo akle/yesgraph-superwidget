@@ -548,10 +548,13 @@
                             try {
                                 evt.preventDefault();
                             } catch (e) {};
-                            var top, left;
-                            top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
-                            left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
-
+                            var top = 20,
+                                left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
+                            // If the doctype is set to HTML, we can center the modal vertically
+                            // based on the viewport size (rather than use the default 20px set above).
+                            if (window.document.doctype && (window.document.doctype === "html")) {
+                                top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;                                
+                            }
                             modal.css({
                                 top: top + $(window).scrollTop(),
                                 left: left + $(window).scrollLeft()
@@ -965,8 +968,8 @@
                                                             name: undefined,
                                                             email: undefined,
                                                             type: "yahoo"
-                                                        }, response.data ]);
-                                                        d.resolve(response.data);
+                                                        }, response.data.raw_contacts ]);
+                                                        d.resolve(response.data.ranked_contacts);
                                                     }
                                                 }).fail(function(response){
                                                     d.reject(response);
@@ -1067,8 +1070,8 @@
                                                             name: undefined,
                                                             email: undefined,
                                                             type: "outlook"
-                                                        }, response.data ]);
-                                                        d.resolve(response.data);
+                                                        }, response.data.raw_contacts ]);
+                                                        d.resolve(response.data.ranked_contacts);
                                                     }
                                                 }).fail(function(response){
                                                     d.reject(response);
@@ -1155,9 +1158,9 @@
                                 url: contactsFeedUrl,
                                 data: queryParams,
                                 dataType: "jsonp",
-                                success: function(data) {
-                                    contacts = parseContactsFeed(data.feed);
-                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [contacts.source, contacts.entries, data]);
+                                success: function(rawContacts) {
+                                    contacts = parseContactsFeed(rawContacts.feed);
+                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [contacts.source, rawContacts]);
                                     d.resolve(contacts);
                                 },
                                 error: function(data) {
@@ -1264,7 +1267,7 @@
 
                             function getOAuthInfo() {
                                 var REDIRECT;
-                                if (window.location.hostname === "localhost" || OPTIONS.integrations.google.usingDefaultCredentials) {
+                                if (["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1 || OPTIONS.integrations.google.usingDefaultCredentials) {
                                     REDIRECT = window.location.origin;
                                 } else {
                                     REDIRECT = OPTIONS.integrations.google.redirectUrl;
