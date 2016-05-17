@@ -140,6 +140,9 @@
   background-color: #00cc00;
   border: 1px solid #008000;
 }
+.yes-widget-container #yes-copy-invite-link-btn {
+  line-height: 1;
+}
 .yes-modal {
   background: white;
   border-radius: 3px;
