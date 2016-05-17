@@ -19,6 +19,7 @@
             testmode: false,
             target: ".yesgraph-invites",
             contactImporting: true,
+            promoteMatchingDomain: false,
             emailSending: true,
             inviteLink: true,
             shareBtns: true
@@ -144,10 +145,16 @@
         }
 
         function rankContacts(rawContacts, done) {
+            var matchDomain = settings.promoteMatchingDomain,
+                domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
+            rawContacts["promote_matching_domain"] = domainVal;
             return hitAPI(ADDRBOOK_ENDPOINT, "POST", rawContacts, done);
         }
 
         function getRankedContacts(done) {
+            var matchDomain = settings.promoteMatchingDomain,
+                domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
+            rawContacts["promote_matching_domain"] = domainVal;
             return hitAPI(ADDRBOOK_ENDPOINT, "GET", null, done);
         }
 

@@ -696,9 +696,9 @@
                                         gmail.getContacts()
                                             .done(
                                                 function(contacts) {
-                                                    rankContacts(contacts).done(function(contacts) {
+                                                    rankContacts(contacts).done(function(contacts, noSuggestions) {
                                                         if (!contactsModal.isOpen) contactsModal.openModal();
-                                                        contactsModal.loadContacts(contacts);
+                                                        contactsModal.loadContacts(contacts, noSuggestions);
                                                     }).fail(function(contacts) {
                                                         contactsModal.loadContacts(contacts, true);
                                                     });
@@ -723,9 +723,9 @@
                                 // Define oauth behavior for Outlook
                                 outlookBtn.on("click", function(evt){
                                     // Attempt to auth & pull contacts
-                                    outlook.authPopup().done(function(contacts){
+                                    outlook.authPopup().done(function(contacts, noSuggestions){
                                         if (!contactsModal.isOpen) contactsModal.openModal();
-                                        contactsModal.loadContacts(contacts);
+                                        contactsModal.loadContacts(contacts, noSuggestions);
                                     }).fail(function(data){
                                         if (contactsModal.isOpen) contactsModal.closeModal();
                                         flash.error("Outlook Authorization Failed.");
@@ -743,9 +743,9 @@
                                 // Define oauth behavior for Yahoo
                                 yahooBtn.on("click", function(evt){
                                     // Attempt to auth & pull contacts
-                                    yahoo.authPopup().done(function(contacts){
+                                    yahoo.authPopup().done(function(contacts, noSuggestions){
                                         if (!contactsModal.isOpen) contactsModal.openModal();
-                                        contactsModal.loadContacts(contacts);
+                                        contactsModal.loadContacts(contacts, noSuggestions);
                                     }).fail(function(data){
                                         if (contactsModal.isOpen) contactsModal.closeModal();
                                         flash.error("Yahoo Authorization Failed.");
@@ -789,10 +789,12 @@
                         }
 
                         function rankContacts(contacts) {
-                            var d = $.Deferred();
+                            var d = $.Deferred(),
+                                noSuggestions;
                             YesGraphAPI.rankContacts(contacts)
                                 .done(function(data) {
-                                    d.resolve(data.data);
+                                    noSuggestions = Boolean(data.meta.exception_matching_email_domain);
+                                    d.resolve(data.data, noSuggestions);
                                 }).fail(function(data) {
                                     YesGraphAPI.error("Contact ranking failed", false);
                                     d.reject(contacts.entries);
@@ -968,7 +970,8 @@
                                                             email: undefined,
                                                             type: "yahoo"
                                                         }, response.data.raw_contacts ]);
-                                                        d.resolve(response.data.ranked_contacts);
+                                                        var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
+                                                        d.resolve(response.data.ranked_contacts, noSuggestions);
                                                     }
                                                 }).fail(function(response){
                                                     d.reject(response);
@@ -1070,7 +1073,8 @@
                                                             email: undefined,
                                                             type: "outlook"
                                                         }, response.data.raw_contacts ]);
-                                                        d.resolve(response.data.ranked_contacts);
+                                                        var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
+                                                        d.resolve(response.data.ranked_contacts, noSuggestions);
                                                     }
                                                 }).fail(function(response){
                                                     d.reject(response);
@@ -1308,7 +1312,6 @@
                         var timer = setInterval(function() {
                             if (YesGraphAPI.getApp()
                                 && YesGraphAPI.hasClientToken()
-                                && YesGraphAPI.getInviteLink()
                                 && ($(YesGraphAPI.getSettings().target).length > 0)) {
 
                                 clearInterval(timer);
