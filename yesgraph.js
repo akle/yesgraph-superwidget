@@ -51,7 +51,8 @@
 
     // Get jQuery if it hasn't been loaded separately
     withScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function($) {
-        var initDeferred = $.Deferred();
+        var initDeferred = $.Deferred(),
+            clientTokenDeferred = $.Deferred();
         JQUERY_VERSION = $.fn.jquery;
 
         var cookie = (function() {
@@ -127,9 +128,10 @@
         }
 
         function storeToken(data) {
-            CLIENT_TOKEN = data.token;
             INVITE_LINK = data.inviteLink;
+            CLIENT_TOKEN = data.token;
             cookie.set('yg-client-token', data.token);
+            clientTokenDeferred.resolve();
         }
 
         function getClientToken(userData) {
@@ -200,7 +202,7 @@
                     return INVITE_LINK;
                 },
                 hasClientToken: function() {
-                    return Boolean(CLIENT_TOKEN);
+                    return clientTokenDeferred.state() === "resolved";
                 },
                 getClientToken: function() {
                     return CLIENT_TOKEN;

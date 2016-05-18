@@ -1315,7 +1315,6 @@
                                 && ($(YesGraphAPI.getSettings().target).length > 0)) {
 
                                 clearInterval(timer);
-
                                 inviteLinkInput.val(YesGraphAPI.getInviteLink());
                                 YesGraphAPI.isTestMode = isTestMode;
 
