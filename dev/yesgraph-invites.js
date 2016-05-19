@@ -39,7 +39,7 @@
                 }
 
                 // Handle backwards compatibility if they loaded an old version of the SDK
-                YesGraphAPI.getSettings = YesGraphAPI.getSettings || function(){
+                YesGraphAPI.getSettings = YesGraphAPI.getSettings || function() {
                     return {
                         app: null,
                         testmode: false,
@@ -254,17 +254,19 @@
                         function updateSendBtn() {
                             // Updates the send button with a count of selected contacts
                             var btnText = '',
+                                btnTextOptions = OPTIONS.widgetCopy.modalSendBtn || {},
                                 checked = modalBody.find('input[type="checkbox"]')
                                                    .filter(":not(.yes-select-all-form *)")
-                                                   .filter(function() { return Boolean($(this).prop("checked"));});
+                                                   .filter(function() { return Boolean($(this).prop("checked")); });
 
                             if (checked.length === 0) {
-                                var btnText = "No contacts selected";
+                                btnText = btnTextOptions.noneSelected || "No contacts selected";
                             } else if (checked.length === 1) {
-                                var btnText = "Send to 1 contact";
+                                btnText = btnTextOptions.oneSelected || "Send 1 Email";
                             } else {
-                                var btnText = "Send to " + checked.length + " contacts";
+                                btnText = btnTextOptions.manySelected || "Send {{ count }} Emails";
                             };
+                            btnText = btnText.replace("{{ count }}", checked.length);
                             modalSendBtn.val(btnText);
                         }
 
@@ -553,7 +555,7 @@
                             // If the doctype is set to HTML, we can center the modal vertically
                             // based on the viewport size (rather than use the default 20px set above).
                             if (window.document.doctype && (window.document.doctype === "html")) {
-                                top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;                                
+                                top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
                             }
                             modal.css({
                                 top: top + $(window).scrollTop(),
@@ -721,12 +723,12 @@
                                 contactImportSection.append(outlookBtn);
 
                                 // Define oauth behavior for Outlook
-                                outlookBtn.on("click", function(evt){
+                                outlookBtn.on("click", function(evt) {
                                     // Attempt to auth & pull contacts
-                                    outlook.authPopup().done(function(contacts, noSuggestions){
+                                    outlook.authPopup().done(function(contacts, noSuggestions) {
                                         if (!contactsModal.isOpen) contactsModal.openModal();
                                         contactsModal.loadContacts(contacts, noSuggestions);
-                                    }).fail(function(data){
+                                    }).fail(function(data) {
                                         if (contactsModal.isOpen) contactsModal.closeModal();
                                         flash.error("Outlook Authorization Failed.");
                                     });
@@ -741,12 +743,12 @@
                                 contactImportSection.append(yahooBtn);
 
                                 // Define oauth behavior for Yahoo
-                                yahooBtn.on("click", function(evt){
+                                yahooBtn.on("click", function(evt) {
                                     // Attempt to auth & pull contacts
-                                    yahoo.authPopup().done(function(contacts, noSuggestions){
+                                    yahoo.authPopup().done(function(contacts, noSuggestions) {
                                         if (!contactsModal.isOpen) contactsModal.openModal();
                                         contactsModal.loadContacts(contacts, noSuggestions);
-                                    }).fail(function(data){
+                                    }).fail(function(data) {
                                         if (contactsModal.isOpen) contactsModal.closeModal();
                                         flash.error("Yahoo Authorization Failed.");
                                     });
@@ -928,7 +930,7 @@
                     }());
 
                     // Module for the Yahoo oauth flow & contact importing
-                    var yahoo = (function(){
+                    var yahoo = (function() {
 
                         function authPopup() {
                             // Open the Yahoo OAuth popup & retrieve the access token from it
@@ -961,19 +963,19 @@
                                                 YesGraphAPI.hitAPI("/oauth", "GET", {
                                                     "service": "yahoo",
                                                     "token_data": JSON.stringify(tokenData)
-                                                }).done(function(response){
+                                                }).done(function(response) {
                                                     if (response.error) {
                                                         d.reject(response);
                                                     } else {
-                                                        $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS,[{
-                                                            name: undefined,
-                                                            email: undefined,
-                                                            type: "yahoo"
-                                                        }, response.data.raw_contacts ]);
+                                                        $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [{
+                                                                name: undefined,
+                                                                email: undefined,
+                                                                type: "yahoo"
+                                                            }, response.data.raw_contacts ]);
                                                         var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
                                                         d.resolve(response.data.ranked_contacts, noSuggestions);
                                                     }
-                                                }).fail(function(response){
+                                                }).fail(function(response) {
                                                     d.reject(response);
                                                 });
                                             } else {
@@ -993,7 +995,9 @@
                                         if (count >= 1000 || !canIgnoreError) {
                                             var msg = canIgnoreError ? e.message : OUTLOOK_FAILED_MSG;
                                             YesGraphAPI.error(msg, false);
-                                            d.reject({ "error": msg });
+                                            d.reject({
+                                                "error": msg
+                                            });
                                             win.close();
                                             clearInterval(pollTimer);
                                         };
@@ -1064,11 +1068,11 @@
                                                 YesGraphAPI.hitAPI("/oauth", "GET", {
                                                     "service": "outlook",
                                                     "token_data": JSON.stringify(tokenData)
-                                                }).done(function(response){
+                                                }).done(function(response) {
                                                     if (response.error) {
                                                         d.reject(response);
                                                     } else {
-                                                        $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS,[{
+                                                        $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [{
                                                             name: undefined,
                                                             email: undefined,
                                                             type: "outlook"
@@ -1076,7 +1080,7 @@
                                                         var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
                                                         d.resolve(response.data.ranked_contacts, noSuggestions);
                                                     }
-                                                }).fail(function(response){
+                                                }).fail(function(response) {
                                                     d.reject(response);
                                                 });
                                             } else {
@@ -1246,10 +1250,10 @@
                                         };
                                     } catch (e) {
                                         var okErrorMessages = [
-                                            "Cannot read property 'URL' of undefined",
-                                            "undefined is not an object (evaluating 'win.document.URL')",
-                                            'Permission denied to access property "document"'
-                                        ],
+                                                "Cannot read property 'URL' of undefined",
+                                                "undefined is not an object (evaluating 'win.document.URL')",
+                                                'Permission denied to access property "document"'
+                                            ],
                                             canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
 
                                         if (count >= 1000 || !canIgnoreError) {
@@ -1258,9 +1262,7 @@
                                                 msg = "Gmail authorization failed."
                                             };
                                             YesGraphAPI.error(msg, false);
-                                            d.reject({
-                                                "error": msg
-                                            });
+                                            d.reject({ "error": msg });
                                             win.close();
                                             clearInterval(pollTimer);
                                         };
@@ -1307,6 +1309,7 @@
                     }());
 
                     // Helper functions
+
                     function waitForAPIConfig() {
                         var d = $.Deferred();
                         var timer = setInterval(function() {
@@ -1428,10 +1431,10 @@
                                     d.reject();  // invalid settings
                                 }
                             } else {
-                                d.resolve(); // email sending turned off
+                                d.resolve();  // email sending turned off
                             }
 
-                            d.done(function(){
+                            d.done(function() {
                                 msg = "You've added " + recipients.length;
                                 msg += recipients.length === 1 ? " friend!" : " friends!";
                                 flash.success(msg);
