@@ -266,7 +266,7 @@
                             } else {
                                 btnText = btnTextOptions.manySelected || "Send {{ count }} Emails";
                             };
-                            btnText = btnText.replace("{{ count }}", checked.length);
+                            btnText = btnText.replace(/{{[\s]*count[\s]*}}/i, checked.length);
                             modalSendBtn.val(btnText);
                         }
 
@@ -717,20 +717,24 @@
                             }
                             if (includeOutlook) {
                                 var outlookBtn = generateContactImportBtn({
-                                    "id": "outlook",
-                                    "name": "Outlook"
-                                });
-                                contactImportSection.append(outlookBtn);
+                                        "id": "outlook",
+                                        "name": "Outlook"
+                                    }),
+                                    hotmailBtn = generateContactImportBtn({
+                                        "id": "hotmail",
+                                        "name": "Hotmail"
+                                    });
+                                contactImportSection.append(outlookBtn, hotmailBtn);
 
                                 // Define oauth behavior for Outlook
-                                outlookBtn.on("click", function(evt) {
+                                outlookBtn.add(hotmailBtn).on("click", function(evt) {
                                     // Attempt to auth & pull contacts
                                     outlook.authPopup().done(function(contacts, noSuggestions) {
                                         if (!contactsModal.isOpen) contactsModal.openModal();
                                         contactsModal.loadContacts(contacts, noSuggestions);
                                     }).fail(function(data) {
                                         if (contactsModal.isOpen) contactsModal.closeModal();
-                                        flash.error("Outlook Authorization Failed.");
+                                        flash.error($(this).data("serviceName") + " Authorization Failed.");
                                     });
                                 });
                             }
@@ -769,7 +773,8 @@
                                         "vertical-align": "middle",
                                     }).append(innerWrapper),
                                     btn = $("<button>", {
-                                        "class": "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id
+                                        "class": "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
+                                        "data-service-name": service.name
                                     }).append(outerWrapper);
                                 return btn;
                             };
