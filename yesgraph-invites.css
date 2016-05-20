@@ -75,6 +75,10 @@
 .yes-modal .yes-contact-import-btn-outlook .yes-contact-import-btn-icon {
   background-image: url("https://cdn.yesgraph.com/outlook.png");
 }
+.yes-widget-container .yes-contact-import-btn-hotmail .yes-contact-import-btn-icon,
+.yes-modal .yes-contact-import-btn-hotmail .yes-contact-import-btn-icon {
+  background-image: url("https://cdn.yesgraph.com/hotmail.png");
+}
 .yes-widget-container .yes-contact-import-btn-yahoo .yes-contact-import-btn-icon,
 .yes-modal .yes-contact-import-btn-yahoo .yes-contact-import-btn-icon {
   background-image: url("https://cdn.yesgraph.com/yahoo.png");
@@ -139,6 +143,9 @@
 .yes-widget-container .yes-flash-success {
   background-color: #00cc00;
   border: 1px solid #008000;
+}
+.yes-widget-container #yes-copy-invite-link-btn {
+  line-height: 1;
 }
 .yes-modal {
   background: white;
