@@ -1,5 +1,5 @@
 /* YesGraph Superwidget CSS
- * version: dev/v0.0.2
+ * version: dev/v0.0.3
  */
 .yes-widget-container,
 .yes-modal {
@@ -46,6 +46,46 @@
 .yes-widget-container .yes-contact-import-btn:last-child,
 .yes-modal .yes-contact-import-btn:last-child {
   margin-right: 0;
+}
+.yes-widget-container .yes-contact-import-btn.yes-no-label,
+.yes-modal .yes-contact-import-btn.yes-no-label {
+  background: none;
+  padding: 2px 10px;
+}
+.yes-widget-container .yes-contact-import-btn.yes-no-label:hover,
+.yes-modal .yes-contact-import-btn.yes-no-label:hover {
+  background: none;
+  position: relative;
+}
+.yes-widget-container .yes-contact-import-btn.yes-no-label:hover:after,
+.yes-modal .yes-contact-import-btn.yes-no-label:hover:after {
+  content: attr(title);
+  color: white;
+  background: black;
+  padding: 2px 8px;
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  border-radius: 3px;
+}
+.yes-widget-container .yes-contact-import-btn.yes-no-label:hover:before,
+.yes-modal .yes-contact-import-btn.yes-no-label:hover:before {
+  content: "";
+  border-bottom: 10px solid black;
+  position: absolute;
+  transform: rotate(45deg);
+  width: 10px;
+  bottom: 90%;
+  left: 50%;
+}
+.yes-widget-container .yes-contact-import-btn.yes-no-label .yes-contact-import-btn-icon,
+.yes-modal .yes-contact-import-btn.yes-no-label .yes-contact-import-btn-icon {
+  width: 40px;
+  height: 40px;
+}
+.yes-widget-container .yes-contact-import-btn.yes-no-label .yes-contact-import-btn-text,
+.yes-modal .yes-contact-import-btn.yes-no-label .yes-contact-import-btn-text {
+  display: none;
 }
 .yes-widget-container .yes-share-btn-icon,
 .yes-modal .yes-share-btn-icon,
@@ -144,7 +184,7 @@
   background-color: #00cc00;
   border: 1px solid #008000;
 }
-.yes-widget-container #yes-copy-invite-link-btn {
+.yes-widget-container #yes-invite-link-copy-btn {
   line-height: 1;
 }
 .yes-modal {

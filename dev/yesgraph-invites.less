@@ -1,5 +1,5 @@
 /* YesGraph Superwidget CSS
- * version: dev/v0.0.2
+ * version: dev/v0.0.3
  */
 
 .animation (@animation) {
@@ -97,6 +97,42 @@
         }
         &:last-child{
             margin-right: 0;
+        }
+        &.yes-no-label {
+            background: none;
+            padding: 2px 10px;
+
+            &:hover {
+                background: none;
+                position: relative;
+
+                &:after {
+                    content: attr(title);
+                    color: white;
+                    background: black;
+                    padding: 2px 8px;
+                    position: absolute;
+                    left: 0;
+                    bottom: 100%;
+                    border-radius: 3px;
+                }
+                &:before {
+                    content: "";
+                    border-bottom: 10px solid black;
+                    position: absolute;
+                    transform: rotate(45deg);
+                    width: 10px;
+                    bottom: 90%;
+                    left: 50%;
+                }
+            }
+            .yes-contact-import-btn-icon {
+                width: 40px;
+                height: 40px;
+            }
+            .yes-contact-import-btn-text {
+                display: none;
+            }
         }
     }
 
@@ -201,7 +237,7 @@
         border: 1px solid #008000;
     }
 
-    #yes-copy-invite-link-btn {
+    #yes-invite-link-copy-btn {
         line-height: 1;
     }
 }

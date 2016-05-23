@@ -1,7 +1,7 @@
 ! function() {
     var VERSION = "dev/v0.0.2",
         SDK_VERSION = "dev/v0.0.2",
-        CSS_VERSION = "dev/v0.0.2",
+        CSS_VERSION = "dev/v0.0.3",
         domReadyTimer = setInterval(function() {
             if (document.readyState === "complete" || document.readyState === "interactive") {
                 loadSuperwidget();
@@ -124,9 +124,18 @@
                         YESGRAPH_BASE_URL = 'https://www.yesgraph.com'
                     }
 
-                    // Add the YesGraph default styling to the top of the page,
-                    // so that any custom styles can still override it
-                    $("head").prepend(yesgraphCSS);
+                    // If we haven't loaded the css already, add the YesGraph default styling
+                    // to the top of the page, so that any custom styles can still override it
+                    loadCssIfNotFound();
+                    function loadCssIfNotFound() {
+                        var stylesheets = document.styleSheets,
+                            link;
+                        for (var i=0; i < stylesheets.length; i++) {
+                            link = stylesheets[i].href || "";
+                            if (link.match(/yesgraph-invites[\S]*.css\b/)) return;
+                        }
+                        $("head").prepend(yesgraphCSS);
+                    }
 
                     // Module for "flashing" stateful information
                     // to the user (e.g., success, error, etc.)
@@ -658,6 +667,7 @@
                                 includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
                                 includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
                                 includeYahoo = OPTIONS.settings.oauthServices.indexOf("yahoo") !== -1,
+                                btnCount = 0 + Number(includeGoogle) + Number(includeYahoo) + (Number(includeOutlook) * 2),
                                 contactImportSection = $("<div>", {
                                     "class": "yes-contact-import-section"
                                 }),
@@ -734,7 +744,7 @@
                                         contactsModal.loadContacts(contacts, noSuggestions);
                                     }).fail(function(data) {
                                         if (contactsModal.isOpen) contactsModal.closeModal();
-                                        flash.error($(this).data("serviceName") + " Authorization Failed.");
+                                        flash.error($(this).prop("title") + " Authorization Failed.");
                                     });
                                 });
                             }
@@ -772,9 +782,10 @@
                                         "display": "inline-block",
                                         "vertical-align": "middle",
                                     }).append(innerWrapper),
+                                    btnClass = "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
                                     btn = $("<button>", {
-                                        "class": "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
-                                        "data-service-name": service.name
+                                        "class": btnClass + (btnCount > 3 ? " yes-no-label" : ""), // Only show the icon if there are more than 3 btns
+                                        "title": service.name
                                     }).append(outerWrapper);
                                 return btn;
                             };
