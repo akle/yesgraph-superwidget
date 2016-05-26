@@ -1,0 +1,38 @@
+{
+  "name": "yesgraph-superwidget",
+  "version": "1.0.0",
+  "description": "YesGraph uses machine learning and social graph analysis to improve your app's viral growth. Given an address book, we rank your users' contacts so that they start sending more invites and you win!",
+  "main": "yesgraph-invites.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "karma": "^0.13.22",
+    "karma-firefox-launcher": "^1.0.0",
+    "jasmine-core": "^2.4.1",
+    "karma-jasmine": "^1.0.2"
+  },
+  "devDependencies": {
+    "jasmine-jquery": "^2.1.1",
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-coverage": "^1.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-jasmine-jquery": "^0.1.1",
+    "karma-phantomjs-launcher": "^1.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YesGraph/yesgraph-superwidget.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YesGraph/yesgraph-superwidget/issues"
+  },
+  "homepage": "https://github.com/YesGraph/yesgraph-superwidget#readme"
+}
