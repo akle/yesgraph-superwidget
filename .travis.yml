@@ -7,3 +7,7 @@ before_install:
     - sh -e /etc/init.d/xvfb start
 before_script:
     - npm install
+notifications:
+  slack:
+    rooms:
+      - yesgraph:Ozpbr6IIOfkmUjw79ZPrOC6d#general
