@@ -30,7 +30,6 @@ module.exports = function(config) {
     preprocessors: {
     },
 
-
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
@@ -59,7 +58,6 @@ module.exports = function(config) {
       'karma-jasmine-jquery',
       'karma-jasmine',
       'karma-coverage',
-      'karma-phantomjs-launcher',
       'karma-chrome-launcher',
 
     ],
@@ -69,6 +67,25 @@ module.exports = function(config) {
     // browsers: ['Chrome'],
     browsers: ['PhantomJS'],
 
+    // you can define custom flags 
+    customLaunchers: {
+      'PhantomJS_custom': {
+        base: 'PhantomJS',
+        options: {
+          windowName: 'window',
+          settings: {
+            webSecurityEnabled: false
+          },
+        },
+        flags: ['--load-images=true'],
+        debug: true
+      }
+    },
+ 
+    phantomjsLauncher: {
+      // Have phantomjs exit if a ResourceError is encountered (useful if karma exits without killing phantom) 
+      exitOnResourceError: true
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
