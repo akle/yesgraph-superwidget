@@ -1,5 +1,5 @@
 ! function() {
-    var VERSION = "v0.0.2",
+    var VERSION = "v0.0.3",
         SDK_VERSION = "v0.0.2",
         CSS_VERSION = "v0.0.3",
         domReadyTimer = setInterval(function() {
