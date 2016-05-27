@@ -720,7 +720,7 @@
                                         // Handle case where auth failed
                                         contactsModal.closeModal();
                                         contactsModal.stopLoading();
-                                        flash.error();
+                                        flash.error(data.error);
                                         YesGraphAPI.error(data.error);
                                     });
                                 });
@@ -1253,18 +1253,16 @@
                                                 });
                                                 clearInterval(pollTimer);
                                                 win.close();
-                                            } else {
-                                                if (errorMessage === "Cannot read property 'URL' of undefined") {
-                                                    d.reject({
-                                                        "error": errorMessage
-                                                    });
-                                                };
-                                                else {
-                                                    d.reject({
-                                                        "error": "Google Oauth failed."
-                                                    });
-                                                };
+                                            } else if (errorMessage === "access_denied") {
+                                                d.reject({
+                                                    "error": "Access Denied"
+                                                });
+                                                clearInterval(pollTimer);
+                                                win.close();
                                             };
+                                            // If access was neither granted nor denied, keep waiting.
+                                            // This occurs in some versions of Safari before the oauth
+                                            // flow occurs, so we should keep polling in those cases.
                                         };
                                     } catch (e) {
                                         var okErrorMessages = [
