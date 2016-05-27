@@ -1255,9 +1255,13 @@
                                                 win.close();
                                             } else {
                                                 if (errorMessage === "Cannot read property 'URL' of undefined") {
-                                                    errorMessage = "Authorization failed."
                                                     d.reject({
                                                         "error": errorMessage
+                                                    });
+                                                };
+                                                else {
+                                                    d.reject({
+                                                        "error": "Google Oauth failed."
                                                     });
                                                 };
                                             };
