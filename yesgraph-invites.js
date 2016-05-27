@@ -1244,9 +1244,6 @@
                                                 errorMessage = getUrlParam(responseUrl, "error"),
                                                 token = getUrlParam(responseUrl, "access_token");
 
-                                            clearInterval(pollTimer);
-                                            win.close();
-
                                             if (token) {
                                                 GMAIL_ACCESS_TOKEN = token;
                                                 d.resolve({
@@ -1254,14 +1251,15 @@
                                                     type: getUrlParam(responseUrl, "token_type"),
                                                     expires_in: getUrlParam(responseUrl, "expires_in")
                                                 });
-
+                                                clearInterval(pollTimer);
+                                                win.close();
                                             } else {
                                                 if (errorMessage === "Cannot read property 'URL' of undefined") {
                                                     errorMessage = "Authorization failed."
+                                                    d.reject({
+                                                        "error": errorMessage
+                                                    });
                                                 };
-                                                d.reject({
-                                                    "error": errorMessage
-                                                });
                                             };
                                         };
                                     } catch (e) {
