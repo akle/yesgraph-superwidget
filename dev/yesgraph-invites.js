@@ -1,5 +1,5 @@
 ! function() {
-    var VERSION = "dev/v0.0.2",
+    var VERSION = "dev/v0.0.3",
         SDK_VERSION = "dev/v0.0.2",
         CSS_VERSION = "dev/v0.0.3",
         domReadyTimer = setInterval(function() {
@@ -720,7 +720,7 @@
                                         // Handle case where auth failed
                                         contactsModal.closeModal();
                                         contactsModal.stopLoading();
-                                        flash.error();
+                                        flash.error(data.error);
                                         YesGraphAPI.error(data.error);
                                     });
                                 });
@@ -1244,9 +1244,6 @@
                                                 errorMessage = getUrlParam(responseUrl, "error"),
                                                 token = getUrlParam(responseUrl, "access_token");
 
-                                            clearInterval(pollTimer);
-                                            win.close();
-
                                             if (token) {
                                                 GMAIL_ACCESS_TOKEN = token;
                                                 d.resolve({
@@ -1254,15 +1251,18 @@
                                                     type: getUrlParam(responseUrl, "token_type"),
                                                     expires_in: getUrlParam(responseUrl, "expires_in")
                                                 });
-
-                                            } else {
-                                                if (errorMessage === "Cannot read property 'URL' of undefined") {
-                                                    errorMessage = "Authorization failed."
-                                                };
+                                                clearInterval(pollTimer);
+                                                win.close();
+                                            } else if (errorMessage === "access_denied") {
                                                 d.reject({
-                                                    "error": errorMessage
+                                                    "error": "Access Denied"
                                                 });
+                                                clearInterval(pollTimer);
+                                                win.close();
                                             };
+                                            // If access was neither granted nor denied, keep waiting.
+                                            // This occurs in some versions of Safari before the oauth
+                                            // flow occurs, so we should keep polling in those cases.
                                         };
                                     } catch (e) {
                                         var okErrorMessages = [
