@@ -82,24 +82,28 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    // browsers: ['Chrome'],
+    browsers: ['Chrome'],
     // browsers: ['PhantomJS', 'Chrome'],
-    browsers: ['PhantomJS'],
+    // browsers: ['PhantomJS'],
 
     // you can define custom flags 
     customLaunchers: {
-      'PhantomJS_custom': {
-        base: 'PhantomJS',
-        options: {
-          windowName: 'window',
-          content: '<div id="yesgraph" class="yesgraph-invites" data-testmode=true data-app="19185f1f-a583-4c6b-bc5f-8aff04dc1020" data-foo="bar"></div>',
-          settings: {
-            webSecurityEnabled: false
-          },
+        Chrome_travis_ci: {
+            base: 'Chrome',
+            flags: ['--no-sandbox']
         },
-        flags: ['--load-images=true'],
-        debug: true
-      }
+        'PhantomJS_custom': {
+            base: 'PhantomJS',
+            options: {
+                windowName: 'window',
+                content: '<div id="yesgraph" class="yesgraph-invites" data-testmode=true data-app="19185f1f-a583-4c6b-bc5f-8aff04dc1020" data-foo="bar"></div>',
+                settings: {
+                    webSecurityEnabled: false
+                },
+            },
+            flags: ['--load-images=true'],
+            debug: true
+        }
     },
  
     phantomjsLauncher: {
@@ -115,4 +119,8 @@ module.exports = function(config) {
     // how many browser should be started simultaneous
     concurrency: Infinity
   });
+
+    if (process.env.TRAVIS) {
+        config.browsers = ['Chrome_travis_ci'];
+    }
 };

@@ -1,10 +1,12 @@
 language: node_js
 node_js:
     - "0.10"
-script: node_modules/karma/bin/karma start karma-sauce.conf.js --single-run
+script: node_modules/karma/bin/karma start karma.conf.js --single-run
 before_install:
+    - export CHROME_BIN=chromium-browser
     - export DISPLAY=:99.0
     - sh -e /etc/init.d/xvfb start
+      
 before_script:
     - npm install
 notifications:
@@ -12,6 +14,7 @@ notifications:
     rooms:
       - yesgraph:Ozpbr6IIOfkmUjw79ZPrOC6d#general
 
+# For SauceLabs
 env:
   global:
     - secure: BSNPuURkZHyeTFUX9Ot5UFVBogPJDLVCD38gsnNPB1NeXkU5dcg7NgiQyodPRHRMBz3ExvPPwHpvjVowS/kbYklizqWdODDsOTTFU+KF/lmxmtsOGdTKvB+HU42GaRra1HWUiSqZEG07ocvSxMuaccrgOqQmZ5ysh6ULFk1L1XgsFhbcny/xKUL2QWnRhD6/yMgsYz2T5jDSCdKDJAAe8chFziYiCKlKfCDl3Zf3YjncQdxxOfLBsjYdSErLbSRrwtF+JBVYROdFNIPoebe0+08DBkqcT/zjsSoRvFywLo0kNzpO8eeDwMFcZ+30oMaKVE2TC9B2RLJdfsXAbK79mq0HEANvuyk7uSYfozT1NR4IVnyde0IpivL60S6Q0FS751fk2J98THO8rk7n1RLZ499mfjlvJibOK5HDFnmxMkM2q3noLT6DvaTH5r5q9iySR2Uhp5PHH8KJSp+cSYO/1ufFvR6eXL5mwvb4qR/1AU3OgQDoVY4l8z8gOjCNB98WZ2ouNEtJl8HUlRKS13uHpdt/6znMBYi1vC58f7NmyacrkECbbFfvbolY+FAmP96Wug8p7qqp49WMdVRqxNIcGRIbeWQtPnorUGSJUOmvpcGVB24R6HNMHqTlLUshF7vSCjEwmyRG/VihRqwVN9erULKsgEaEvZ+z32anWT8RMoo
