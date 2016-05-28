@@ -16,7 +16,22 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'dev/*.js', 'tests/*.js'
+      'tests/*.html',
+      'tests/*.js',
+      'dev/yesgraph-invites.js', 
+      'dev/yesgraph.js', 
+      //'tests/*.js', 
+      //'tests/*.html', 
+    // Source and spec files
+    // Fixtures
+
+//    {
+//      pattern: 'tests/*.html',
+//      watched: false,
+//      served: true,
+//      included: false
+//    }
+      
     ],
 
 
@@ -28,6 +43,8 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
+      '**/*.html': ['html2js']
+      //'**/*.html': []
     },
 
     // test results reporter to use
@@ -59,13 +76,15 @@ module.exports = function(config) {
       'karma-jasmine',
       'karma-coverage',
       'karma-chrome-launcher',
+      'karma-html2js-preprocessor',
 
     ],
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    // browsers: ['Chrome'],
-    browsers: ['PhantomJS'],
+    browsers: ['Chrome'],
+    // browsers: ['PhantomJS', 'Chrome'],
+    // browsers: ['PhantomJS'],
 
     // you can define custom flags 
     customLaunchers: {
@@ -73,6 +92,7 @@ module.exports = function(config) {
         base: 'PhantomJS',
         options: {
           windowName: 'window',
+          content: '<div id="yesgraph" class="yesgraph-invites" data-testmode=true data-app="19185f1f-a583-4c6b-bc5f-8aff04dc1020" data-foo="bar"></div>',
           settings: {
             webSecurityEnabled: false
           },
@@ -94,5 +114,5 @@ module.exports = function(config) {
     // Concurrency level
     // how many browser should be started simultaneous
     concurrency: Infinity
-  })
-}
+  });
+};
