@@ -43,15 +43,20 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      '**/*.html': ['html2js']
-      //'**/*.html': []
+      '**/*.html': ['html2js'],
+      'dev/*.js': ['coverage']
     },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
+    reporters: ['progress', 'coverage', 'coveralls'],
 
+    coverageReporter: {
+        type: 'lcov', // lcov or lcovonly are required for generating lcov.info files
+        dir: 'coverage/'
+    },
+    
 
     // web server port
     port: 9876,
@@ -77,12 +82,16 @@ module.exports = function(config) {
       'karma-coverage',
       'karma-chrome-launcher',
       'karma-html2js-preprocessor',
-
+      'karma-firefox-launcher',
+      'karma-safari-launcher',
+      'karma-coveralls',
     ],
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    //browsers: ['Chrome'],
+    //browsers: ['Chrome'],
+    browsers: ['Chrome', 'Firefox', 'Safari'],
     // browsers: ['PhantomJS', 'Chrome'],
     // browsers: ['PhantomJS'],
 
@@ -121,6 +130,8 @@ module.exports = function(config) {
   });
 
     if (process.env.TRAVIS) {
+    // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
+        
         config.browsers = ['Chrome_travis_ci'];
     }
 };
