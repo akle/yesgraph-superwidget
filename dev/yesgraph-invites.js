@@ -1,6 +1,8 @@
 ! function() {
+    "use strict";
+
     var VERSION = "dev/v0.0.3",
-        SDK_VERSION = "dev/v0.0.2",
+        SDK_VERSION = "dev/v0.0.3",
         CSS_VERSION = "dev/v0.0.3",
         domReadyTimer = setInterval(function() {
             if (document.readyState === "complete" || document.readyState === "interactive") {
@@ -795,7 +797,6 @@
                             APP_NAME = YesGraphAPI.getApp();
                             var d = $.Deferred(),
                                 OPTIONS_ENDPOINT = '/apps/' + APP_NAME + '/js/get-options';
-
                             YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET").done(function(data) {
                                 OPTIONS = data;
                                 d.resolve(data);
@@ -1329,14 +1330,14 @@
                     function waitForAPIConfig() {
                         var d = $.Deferred();
                         var timer = setInterval(function() {
-                            if (YesGraphAPI.getApp()
-                                && YesGraphAPI.hasClientToken()
-                                && ($(YesGraphAPI.getSettings().target).length > 0)) {
-
+                            if (YesGraphAPI.isReady) {
                                 clearInterval(timer);
                                 inviteLinkInput.val(YesGraphAPI.getInviteLink());
                                 YesGraphAPI.isTestMode = isTestMode;
-
+                                YesGraphAPI.Raven.setTagsContext({
+                                    superwidget_version: VERSION,
+                                    css_version: CSS_VERSION
+                                });
                                 // Add custom superwidget events
                                 YesGraphAPI.events = $.extend(YesGraphAPI.events, {
                                     SET_RECIPIENTS: "set.yesgraph.recipients",
