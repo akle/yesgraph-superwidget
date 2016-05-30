@@ -11,7 +11,6 @@
         INVITES_SENT_ENDPOINT = '/invites-sent',
         INVITES_ACCEPTED_ENDPOINT = '/invites-accepted',
         ANALYTICS_ENDPOINT = '/analytics/sdk',
-        INVITE_LINK,
         settings = {
             app: null,
             testmode: false,
@@ -66,7 +65,7 @@
         var ravenDeferred = $.Deferred(),
             clientTokenDeferred = $.Deferred();
 
-        // Wait for each part of the setup to be complete, before adding
+        // Wait for all parts of the setup to be complete, before adding
         // the methods dependent on that setup, and setting isReady = true
         $.when(ravenDeferred, clientTokenDeferred).done(function(){
             YesGraphAPI.hitAPI = hitAPI;
@@ -80,6 +79,7 @@
             YesGraphAPI.isReady = true;
         });
 
+        // Raven.js logs our errors to Sentry
         loadRaven().done(function(_Raven){
             YesGraphAPI.Raven = _Raven;
             ravenDeferred.resolve();
@@ -99,7 +99,7 @@
         });
 
         function storeClientToken(data) {
-            INVITE_LINK = data.inviteLink;
+            YesGraphAPI.inviteLink = data.inviteLink;
             YesGraphAPI.clientToken = data.token;
             setCookie('yg-client-token', data.token);
             clientTokenDeferred.resolve();
@@ -112,6 +112,9 @@
             data.userData = userData || undefined;
             YesGraphAPI.clientToken = readCookie('yg-client-token');
             data.token = YesGraphAPI.clientToken || undefined;
+            // If there is a client token available in the user's cookies,
+            // hitting the API will validate the token and return the same one.
+            // Otherwise, the API will create a new client token.
             return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeClientToken).fail(function(data) {
                 error(data.error + " Please see docs.yesgraph.com/javascript-sdk", true);
             });
@@ -150,54 +153,12 @@
         function error(msg, fail, noLog) {
             var e = new Error(msg)
             e.name = "YesGraphError";
-            e.noLog = Boolean(noLog);
             if (fail) {
+                e.noLog = Boolean(noLog);// Optionally don't log to Sentry
                 throw e;
             } else {
                 console.log("YesGraphError", e);
             };
-        }
-
-        function configureAPI() {
-            var api = {
-                rankContacts: rankContacts,
-                getRankedContacts: getRankedContacts,
-                postSuggestedSeen: postSuggestedSeen,
-                postInvitesSent: postInvitesSent,
-                postInvitesAccepted: postInvitesAccepted,
-                hitAPI: hitAPI,
-                test: test,
-                getApp: function(){
-                    return YesGraphAPI.app;
-                },
-                getInviteLink: function() {
-                    return INVITE_LINK;
-                },
-                hasClientToken: function() {
-                    return clientTokenDeferred.state() === "resolved";
-                },
-                getClientToken: function() {
-                    return CLIENT_TOKEN;
-                },
-                getSettings: function(){
-                    return settings;
-                },
-                init: function(options) {
-                    // Allows the user to override the default settings
-                    for (prop in options) {
-                        if (settings.hasOwnProperty(prop)) {
-                            settings[prop] = options[prop];
-                        }
-                    }
-                    initDeferred.resolve();
-                },
-                hasLoadedSuperwidget: false, // Updated by Superwidget
-                error: error,
-                events: {
-                    RANKED_CONTACTS: "ranked.yesgraph.contacts",
-                }
-            };
-            return api;
         }
 
         function hitAPI(endpoint, method, data, done, deferred) {
@@ -241,6 +202,9 @@
                     if (target.length > 0) {
                         targetData = target.data();
                         YesGraphAPI.app = targetData.app;
+
+                        // Update the YesGraphAPI.settings based on any
+                        // data- params included on the target element
                         for (var opt in targetData) {
                             if (settings.hasOwnProperty(opt)) {
                                 YesGraphAPI.settings[opt] = targetData[opt];
@@ -256,6 +220,9 @@
         }
 
         function loadRaven() {
+            // Load a local version of Raven, accessible as YesGraphAPI.Raven
+            // Use Raven.noConflict() to make sure that we don't overwrite
+            // any existing instance of Raven.
             var d = $.Deferred(),
                 oldRaven = window.Raven ? window.Raven.noConflict() : undefined,
                 newRaven,
@@ -267,6 +234,7 @@
                         /https?:\/\/cdn\.yesgraph\.com*/
                     ],
                     shouldSendCallback: function(data) {
+                        // Don't send the error to Sentry if the property noLog was set to true
                         return !(data.hasOwnProperty("noLog") && (!data.noLog))
                     }
                 };
