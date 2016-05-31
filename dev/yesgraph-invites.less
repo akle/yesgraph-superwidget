@@ -329,9 +329,18 @@
     .yes-contact-row-name,
     .yes-contact-row-email {
         white-space: nowrap;
-        overflow: scroll;
+
         &::-webkit-scrollbar {
             display: none;
+        }
+
+        >div {
+            overflow: auto;
+            display: block;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
     }
 

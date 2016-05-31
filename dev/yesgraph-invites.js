@@ -320,12 +320,16 @@
 
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-name"
-                                    }));
+                                    }).append($("<div>", {
+                                        style: "display: block; overflow: auto;"
+                                    })));
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-email"
-                                    }).append(contactEmail));
+                                    }).append($("<div>", {
+                                        style: "display: block; overflow: auto;"
+                                    }).append(contactEmail)));
 
-                                    if (contact.name) contactRow.find(".yes-contact-row-name").append($('<span>', {
+                                    if (contact.name) contactRow.find(".yes-contact-row-name>div").append($('<span>', {
                                         html: contact.name
                                     }));
 
