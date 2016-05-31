@@ -294,5 +294,49 @@
             return initDeferred.promise();
         }
 
+        function AnalyticsManager() {
+            // Description:
+            // Generated as soon as the SDK loads.
+            // Loads events, tries to POST them immediately.
+            // Stores any events that fail
+            // Tries to post all failed events individually before the window closes
+            this.events = [];
+            this.superwidgetSettings = {}
+            this.sdkSettings = {
+                "context": {
+                    "app": {
+                        "name": window.navigator.appName,
+                        "version": window.navigator.appVersion
+                    },
+                    "library": {
+                        "name": "yesgraph.js",
+                        "version": VERSION
+                    },
+                    "device": {
+                        "type": "web"
+                    },
+                    "os": {},
+                    "userAgent": window.navigator.userAgent || null,
+                    "page": {
+                        "path": window.location.pathname,
+                        "referrer": window.document.referrer,
+                        "search": window.location.search,
+                        "title": window.document.title,
+                        "url": window.location.href
+                    },
+                },
+                "name": window.document.title + ': ' + window.location.pathname,
+                "properties": {
+                    "app_name": APP_NAME
+                },
+                "timestamp": new Date(),
+                "type": "screen"
+            }
+
+            this.log = function(evt) {
+
+            }
+        }
+
     });
 }());
