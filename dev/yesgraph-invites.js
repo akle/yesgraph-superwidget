@@ -1,7 +1,7 @@
 ! function() {
     var VERSION = "dev/v0.0.3",
         SDK_VERSION = "dev/v0.0.2",
-        CSS_VERSION = "dev/v0.0.3",
+        CSS_VERSION = "dev/v0.0.4",
         domReadyTimer = setInterval(function() {
             if (document.readyState === "complete" || document.readyState === "interactive") {
                 loadSuperwidget();
@@ -320,14 +320,10 @@
 
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-name"
-                                    }).append($("<div>", {
-                                        style: "display: block; overflow: auto;"
-                                    })));
+                                    }).append($("<div>")));
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-email"
-                                    }).append($("<div>", {
-                                        style: "display: block; overflow: auto;"
-                                    }).append(contactEmail)));
+                                    }).append($("<div>").append(contactEmail)));
 
                                     if (contact.name) contactRow.find(".yes-contact-row-name>div").append($('<span>', {
                                         html: contact.name

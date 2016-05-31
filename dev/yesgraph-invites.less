@@ -1,5 +1,5 @@
 /* YesGraph Superwidget CSS
- * version: dev/v0.0.3
+ * version: dev/v0.0.4
  */
 
 .animation (@animation) {
@@ -365,6 +365,17 @@
         top: 35%;
         margin: auto;
     }
+}
+
+@-moz-document url-prefix() { 
+  .yes-modal {
+        .yes-contact-row-name,
+        .yes-contact-row-email {
+            &>div {
+                overflow: hidden;
+            }
+        }
+  }
 }
 
 .yes-modal-overlay {
