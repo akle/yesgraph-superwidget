@@ -127,23 +127,31 @@
             return hitAPI(ANALYTICS_ENDPOINT, "POST", eventData);
         }
 
-        function storeToken(data) {
+        function storeClientToken(data, done) {
+            var d = deferred || $.Deferred();
             INVITE_LINK = data.inviteLink;
             CLIENT_TOKEN = data.token;
             cookie.set('yg-client-token', data.token);
             clientTokenDeferred.resolve();
+            if (done) { d.done(done); }
+            return d.promise();
+
         }
 
-        function getClientToken(userData) {
+        function fetchClientToken(userData, done) {
+            var d = deferred || $.Deferred();
             var data = {
                 appName: APP_NAME
             };
             data.userData = userData || undefined;
             CLIENT_TOKEN = cookie.read('yg-client-token');
             data.token = CLIENT_TOKEN || undefined;
-            return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeToken).fail(function(data) {
-                error(data.error + " Please see docs.yesgraph.com/javascript-sdk", true);
+            hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, storeClientToken).fail(function(data) {
+                d.reject({error: data.error + " Please see docs.yesgraph.com/javascript-sdk"});
             });
+
+            if (done) { d.done(done); }
+            return d.promise();
         }
 
         function rankContacts(rawContacts, done) {
@@ -186,6 +194,11 @@
             };
         }
 
+        function enableTestMode(api) {
+            api. = 
+        }
+
+
         function configureAPI() {
             var api = {
                 rankContacts: rankContacts,
@@ -212,7 +225,7 @@
                 },
                 init: function(options) {
                     // Allows the user to override the default settings
-                    for (prop in options) {
+                    for (var prop in options) {
                         if (settings.hasOwnProperty(prop)) {
                             settings[prop] = options[prop];
                         }
@@ -232,14 +245,19 @@
                 APP_NAME = target.data("app");
                 var targetData = target.data(),
                     userData = {};
-                for (prop in targetData) {
+                for (var prop in targetData) {
                     if (settings.hasOwnProperty(prop)) {
                         settings[prop] = targetData[prop];
+                        if (settings.testmode) {
+                            api.fetchClientToken = fetchClientToken;
+                            api.storeClientToken = storeClientToken;
+                            api.logScreenEvent = logScreenEvent;
+                        }
                     } else {
                         userData[prop] = targetData[prop];
                     }
                 }
-                getClientToken(userData).then(logScreenEvent);
+                fetchClientToken(userData).then(logScreenEvent);
             });
             return api;
         }
@@ -258,7 +276,7 @@
                 return d.promise();
             } else if (method.toUpperCase() !== "GET") {
                 data = JSON.stringify(data || {});
-            };
+            }
             var ajaxSettings = {
                 url: YESGRAPH_API_URL + endpoint,
                 data: data,
@@ -278,7 +296,7 @@
             JQUERY_VERSION < "1.9" ? ajaxSettings.type = method : ajaxSettings.method = method;
 
             $.ajax(ajaxSettings);
-            if (done) { d.done(done); };
+            if (done) { d.done(done); }
             return d.promise();
         }
 

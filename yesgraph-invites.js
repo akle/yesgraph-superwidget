@@ -603,7 +603,7 @@
                             loadContacts: loadContacts,
                             loading: loading,
                             stopLoading: stopLoading
-                        }
+                        };
                     }());
 
                     var inviteWidget = (function() {
@@ -623,7 +623,7 @@
 
                             if (OPTIONS.poweredByYesgraph) {
                                 container.append(poweredByYesgraph);
-                            };
+                            }
 
                             var widgetCopy = OPTIONS.widgetCopy || {};
                             // Build container header
@@ -633,14 +633,14 @@
                                     "text": widgetCopy.widgetHeadline
                                 });
                                 containerHeader.append(headline);
-                            };
+                            }
 
                             var clipboard = new Clipboard('#yes-invite-link-copy-btn');
                             clipboard.on('success', function(e) {
                                 var originalCopy = e.trigger.textContent;
                                 e.trigger.textContent = "Copied!";
                                 setTimeout(function() {
-                                    e.trigger.textContent = originalCopy
+                                    e.trigger.textContent = originalCopy;
                                 }, 3000);
                             });
                             clipboard.on('error', function(e) {
@@ -675,8 +675,8 @@
 
                             manualInputForm.append(manualInputField, manualInputSubmit);
 
-                            if (settings.contactImporting) { containerBody.append(contactImportSection); };
-                            if (settings.emailSending) { containerBody.append(manualInputForm); };
+                            if (settings.contactImporting) { containerBody.append(contactImportSection); }
+                            if (settings.emailSending) { containerBody.append(manualInputForm); }
 
                             contactsModal.init();
 
@@ -766,7 +766,7 @@
                                         if (contactsModal.isOpen) contactsModal.closeModal();
                                         flash.error("Yahoo Authorization Failed.");
                                     });
-                                })
+                                });
                             }
 
                             function generateContactImportBtn(service) {
@@ -788,7 +788,7 @@
                                         "title": service.name
                                     }).append(outerWrapper);
                                 return btn;
-                            };
+                            }
                         }
 
                         function getWidgetOptions() {

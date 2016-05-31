@@ -134,7 +134,7 @@
             clientTokenDeferred.resolve();
         }
 
-        function getClientToken(userData) {
+        function getOrFetchClientToken(userData) {
             var data = {
                 appName: APP_NAME
             };
@@ -238,8 +238,14 @@
                     } else {
                         userData[prop] = targetData[prop];
                     }
+                    if (settings.testmode) {
+                        api.getOrFetchClientToken = getOrFetchClientToken;
+                        api.storeToken = storeToken;
+                        api.logScreenEvent = logScreenEvent;
+                    }
+
                 }
-                getClientToken(userData).then(logScreenEvent);
+                getOrFetchClientToken(userData).then(logScreenEvent);
             });
             return api;
         }
