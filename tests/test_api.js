@@ -4,11 +4,9 @@ describe('testAPI', function() {
 
     jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
     jasmine.getFixtures().load('fixtures.html.js');   // load a template
-   
+
     beforeEach(function (done) {
-        if (window.YesGraphAPI.getApp() && 
-            window.YesGraphAPI.hasClientToken() && 
-            (window.YesGraphAPI.getSettings().target.length > 0)) {
+        if (window.YesGraphAPI.isReady) {
             done();
         }
         else {
@@ -91,8 +89,7 @@ describe('testAPI', function() {
     });
 
     it('Should store client token', function() {
-        expect(window.YesGraphAPI.getClientToken()).toBeDefined();
-        expect(window.YesGraphAPI.hasClientToken()).toBe(true);
+        expect(window.YesGraphAPI.clientToken).toBeDefined();
     });
 
 });
