@@ -53,8 +53,7 @@
                     }
                 }
                 withScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function(Clipboard) {
-                    var APP_NAME,
-                        target,
+                    var target,
                         TESTMODE,
                         OPTIONS,
                         YESGRAPH_BASE_URL,
@@ -794,9 +793,8 @@
                         }
 
                         function getWidgetOptions() {
-                            APP_NAME = YesGraphAPI.getApp();
                             var d = $.Deferred(),
-                                OPTIONS_ENDPOINT = '/apps/' + APP_NAME + '/js/get-options';
+                                OPTIONS_ENDPOINT = '/apps/' + YesGraphAPI.app + '/js/get-options';
                             YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET").done(function(data) {
                                 OPTIONS = data;
                                 d.resolve(data);
@@ -829,7 +827,7 @@
                                 shareBtn,
                                 shareBtnIcon,
                                 shareBtnText,
-                                inviteLink = YesGraphAPI.getInviteLink(),
+                                inviteLink = YesGraphAPI.inviteLink,
                                 services = [{
                                     "ID": "facebook",
                                     "name": "Facebook",
@@ -1332,7 +1330,7 @@
                         var timer = setInterval(function() {
                             if (YesGraphAPI.isReady) {
                                 clearInterval(timer);
-                                inviteLinkInput.val(YesGraphAPI.getInviteLink());
+                                inviteLinkInput.val(YesGraphAPI.inviteLink);
                                 YesGraphAPI.isTestMode = isTestMode;
                                 YesGraphAPI.Raven.setTagsContext({
                                     superwidget_version: VERSION,
@@ -1409,7 +1407,7 @@
                                     YesGraphAPI.hitAPI("/send-email-invites", "POST", {
                                         recipients: recipients,
                                         test: TESTMODE || undefined,
-                                        invite_link: YesGraphAPI.getInviteLink()
+                                        invite_link: YesGraphAPI.inviteLink
 
                                     }).done(function(resp) {
                                         if (!resp.emails) {
