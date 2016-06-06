@@ -220,7 +220,7 @@
                         var widgetCopy = OPTIONS.widgetCopy || {};
 
                         titleText = widgetCopy.contactsModalHeader || "Add Friends";
-                        modalTitle.text(titleText)
+                        modalTitle.text(titleText);
                         modalHeader.append(modalTitle, modalCloseBtn);
                         modalBody.append(contactContainer);
                         modalFooter.append(modalSendBtn);

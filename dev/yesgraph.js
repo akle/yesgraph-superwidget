@@ -225,7 +225,7 @@
 
         this.noConflict = function() {
             delete window.YesGraphAPI;
-            return self
+            return self;
         };
 
         this.install = function(options) {
@@ -283,14 +283,15 @@
 
         this.utils = {
             readCookie: function(key) {
-                var key = key + "=";
+                var cookieName = key + "=";
                 var cookies = document.cookie.split(';');
                 for (var i = 0; i < cookies.length; i++) {
                     var cookie = cookies[i];
                     while (cookie.charAt(0) == ' ') cookie = cookie.substring(1);
-                    if (cookie.indexOf(key) == 0) {
-                        var value = cookie.substring(key.length, cookie.length);
-                        if (value != "undefined") return value;
+                    if (cookie.indexOf(cookieName) == 0) {
+                        var value = cookie.substring(cookieName.length, cookie.length);
+                        if (value !== "undefined") return value;
+                        return undefined;
                     };
                 };
             },
@@ -314,7 +315,7 @@
                 };
                 data.userData = userData || undefined;
                 self.clientToken = self.utils.readCookie('yg-client-token');
-                data.token = self.clientToken || undefined;
+                data.token = self.clientToken;
                 // If there is a client token available in the user's cookies,
                 // hitting the API will validate the token and return the same one.
                 // Otherwise, the API will create a new client token.
