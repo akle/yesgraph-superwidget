@@ -1,7 +1,7 @@
 ! function() {
     var VERSION = "dev/v0.0.3",
         SDK_VERSION = "dev/v0.0.2",
-        CSS_VERSION = "dev/v0.0.3",
+        CSS_VERSION = "dev/v0.0.4",
         domReadyTimer = setInterval(function() {
             if (document.readyState === "complete" || document.readyState === "interactive") {
                 loadSuperwidget();
@@ -320,12 +320,12 @@
 
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-name"
-                                    }));
+                                    }).append($("<div>")));
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-email"
-                                    }).append(contactEmail));
+                                    }).append($("<div>").append(contactEmail)));
 
-                                    if (contact.name) contactRow.find(".yes-contact-row-name").append($('<span>', {
+                                    if (contact.name) contactRow.find(".yes-contact-row-name>div").append($('<span>', {
                                         html: contact.name
                                     }));
 
@@ -343,13 +343,13 @@
                             // Wrapping and styling allows divs with unspecified
                             // heights to behave like scrollable tables
                             var innerWrapper = $("<div>", {
-                                    style: "height: 100%; position: relative; overflow: auto;"
+                                    style: "height: 100%; position: relative;  overflow-y: auto; overflow-x: hidden;"
                                 }).append(totalList),
                                 wrappedTotalList = $("<div>", {
                                     style: "height: 100%; display: table-cell; width: 100%;"
                                 }).append(innerWrapper),
                                 wrappedSuggestedList = $("<div>", {
-                                    style: "max-height: 180px; overflow: scroll;"
+                                    style: "max-height: 180px; overflow-y: auto; overflow-x: hidden; max-width: 100%;"
                                 }).append(suggestedList),
                                 noContactsWarning = $("<p>", {
                                     "text": "None found!",
