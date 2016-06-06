@@ -28,6 +28,10 @@ describe('testAPI', function() {
         expect(window.YesGraphAPI).toBeDefined();
     });
 
+    it('Should have YesGraphAPI.Raven', function() {
+        expect(window.YesGraphAPI.Raven).toBeDefined();
+    });
+
     it('Should hit test endpoint', function() {
         var result = window.YesGraphAPI.test();
         console.info('result' + result);

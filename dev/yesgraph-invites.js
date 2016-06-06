@@ -586,7 +586,8 @@
                         closeModal: closeModal,
                         loadContacts: loadContacts,
                         loading: loading,
-                        stopLoading: stopLoading
+                        stopLoading: stopLoading,
+                        container: modal
                     }
                 }());
 
@@ -595,7 +596,6 @@
                     function init() {
                         var settings = YesGraphAPI.settings,
                             targetSelector = settings.target || ".yesgraph-invites";
-                        $(targetSelector).append(container);
                         TESTMODE = settings.testmode || false;
 
                         var sections = [containerHeader, containerBody];
@@ -750,8 +750,11 @@
                                     if (contactsModal.isOpen) contactsModal.closeModal();
                                     flash.error("Yahoo Authorization Failed.");
                                 });
-                            })
+                            });
                         }
+
+                        $(targetSelector).append(container);
+                        YesGraphAPI.Superwidget.isReady = true;
 
                         function generateContactImportBtn(service) {
                             var icon = $("<div>", {
@@ -772,7 +775,7 @@
                                     "title": service.name
                                 }).append(outerWrapper);
                             return btn;
-                        };
+                        }
                     }
 
                     function getWidgetOptions() {
@@ -1471,6 +1474,14 @@
                         flash.error(settingsErrors);
                     };
                     return settingsAreValid;
+                }
+
+
+                // Initialize Superwidget config
+                YesGraphAPI.Superwidget = {
+                    isReady: false,
+                    container: container,
+                    modal: contactsModal
                 }
 
                 // Main functionality
