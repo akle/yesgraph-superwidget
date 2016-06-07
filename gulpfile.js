@@ -5,8 +5,16 @@ var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
 var less = require("gulp-less");
 var cleanCSS = require('gulp-clean-css');
+var jshint = require('gulp-jshint');
+var reporter = require('./lint-reporter');
 var del = require("del");
 
+gulp.task('lint', function() {
+  gulp.src('example.js')
+    .pipe(jshint())
+    .pipe(jshint.reporter('jshint-stylish'))
+    .pipe(exitOnJshintError);
+});
 gulp.task("minifyScripts", function(){
     function minify(src, dest) {
         return gulp.src(src)
@@ -23,7 +31,7 @@ gulp.task("compileLess", function(){
         return gulp.src(src)
             .pipe(less())
             .pipe(rename({extname: ".css"}))
-            .pipe(gulp.dest(dest))
+            .pipe(gulp.dest(dest));
     }
     compile("src/dev/yesgraph-invites.less", "src/dev/");
     return compile("src/yesgraph-invites.less", "src/");
@@ -34,14 +42,21 @@ gulp.task("minifyCss", ["compileLess"], function(){
         return gulp.src(src)
             .pipe(cleanCSS())
             .pipe(rename({suffix: ".min"}))
-            .pipe(gulp.dest(dest))
+            .pipe(gulp.dest(dest));
     }
-    minify("src/dev/yesgraph-invites.css", "src/dev/")
-    return minify("src/yesgraph-invites.css", "src/")
+    minify("src/dev/yesgraph-invites.css", "src/dev/");
+    return minify("src/yesgraph-invites.css", "src/");
 });
 
 gulp.task("clean", function(){
     del(["dist/", "src/*.css", "src/dev/*.css", "src/*.min.*", "src/dev/*.min.*"]);
+});
+
+gulp.task("lint", function(){
+    return gulp.src(["src/dev/yesgraph.js", "src/dev/yesgraph-invites.js"])
+        .pipe(jshint())
+        .pipe(jshint.reporter(reporter, {outputFile: "./lint-report.txt"}))
+        .pipe(jshint.reporter("fail"));
 });
 
 gulp.task("build", ["compileLess", "minifyCss", "minifyScripts"], function(){
@@ -51,7 +66,7 @@ gulp.task("build", ["compileLess", "minifyCss", "minifyScripts"], function(){
             "src/yesgraph-invites*css",
             "src/yesgraph*js"
         ], {base: "./src"})
-        .pipe(gulp.dest("dist"))
+        .pipe(gulp.dest("dist"));
 });
 
 gulp.task("watch", function(){
