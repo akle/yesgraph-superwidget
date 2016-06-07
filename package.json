@@ -37,7 +37,9 @@
     "watchify": "^3.7.0"
   },
   "scripts": {
-    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run"
+    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run",
+    "start": "gulp watch",
+    "build": "gulp build"
   },
   "repository": {
     "type": "git",

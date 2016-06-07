@@ -58,8 +58,6 @@ gulp.task("watch", function(){
     gulp.watch(["src/dev/yesgraph-invites.less", "src/yesgraph-invites.less"], ["compileLess"]);
 });
 
-gulp.task("serve", ["watch"]);
-
 gulp.task("default", ["clean"], function(){
     gulp.start("build");
 });
