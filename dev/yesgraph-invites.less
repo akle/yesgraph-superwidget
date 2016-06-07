@@ -1,13 +1,6 @@
 /* YesGraph Superwidget CSS
- * version: dev/v0.0.3
+ * version: dev/v0.0.4
  */
-
-.animation (@animation) {
-  -webkit-animation: @animation;
-  -moz-animation: @animation;
-  -o-animation: @animation;
-  animation: @animation;
-}
 
 .btn-icon(@service) {
     .yes-contact-import-btn-icon {
@@ -326,58 +319,56 @@
         width: 15px;
     }
 
+    .yes-contact-row-name,
+    .yes-contact-row-email {
+        white-space: nowrap;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        >div {
+            overflow: auto;
+            display: block;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
+        }
+    }
+
     .yes-contact-row-name {
         font-weight: 600;
-        white-space: nowrap;
-        overflow: scroll;
         .strict-width(225px);
     }
 
     .yes-contact-row-email {
         font-style: italic;
         font-weight: 300;
-        white-space: nowrap;
+        padding-left: 1em;
         .strict-width(330px);
     }
     .yes-loading-icon {
-        font-size: 10px;
-        margin: 50px auto;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: -moz-linear-gradient(white, black);
-        background: -webkit-linear-gradient(white, black);
-        background: -o-linear-gradient(white, black);
-        background: -ms-linear-gradient(white, black);
-        background: linear-gradient(white, black);
-        .animation(yes-animate-loader 1.4s infinite linear);
-
-        &:before {
-            width: 50%;
-            height: 50%;
-            background: #fff;
-            border-radius: 100% 0 0 0;
-            position: absolute;
-            top: 0;
-            left: 0;
-            content: '';
-        }
-
-        &:after {
-            background: #fff;
-            width: 75%;
-            height: 75%;
-            border-radius: 50%;
-            content: '';
-            margin: auto;
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-        }
-
+        background-image: url("https://cdn.yesgraph.com/loading.svg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        height: 100px;
+        width: 100px;
+        position: relative;
+        top: 35%;
+        margin: auto;
     }
+}
+
+@-moz-document url-prefix() { 
+  .yes-modal {
+        .yes-contact-row-name,
+        .yes-contact-row-email {
+            &>div {
+                overflow: hidden;
+            }
+        }
+  }
 }
 
 .yes-modal-overlay {
@@ -391,4 +382,3 @@
     z-index: 10000000000;
 }
 
-.keyframes(yes-animate-loader, { .transform(rotate(0deg)) });

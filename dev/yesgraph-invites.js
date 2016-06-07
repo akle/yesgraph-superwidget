@@ -309,10 +309,10 @@
 
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-name"
-                                    }));
+                                    }).append($("<div>")));
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-email"
-                                    }).append(contactEmail));
+                                    }).append($("<div>").append(contactEmail)));
 
                                     if (contact.name) {
                                         contactRow.find(".yes-contact-row-name").append($('<span>', {
