@@ -5,6 +5,7 @@ var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
 var less = require("gulp-less");
 var cleanCSS = require('gulp-clean-css');
+var del = require("del");
 
 gulp.task("minifyScripts", function(){
     function minify(src, dest) {
@@ -13,8 +14,8 @@ gulp.task("minifyScripts", function(){
             .pipe(rename({suffix: ".min"}))
             .pipe(gulp.dest(dest));
     }
-    minify(["dev/yesgraph.js","dev/yesgraph-invites.js"], "dev/");
-    return minify(["yesgraph.js","yesgraph-invites.js"], ".");
+    minify(["src/dev/yesgraph.js","src/dev/yesgraph-invites.js"], "src/dev/");
+    return minify(["src/yesgraph.js","src/yesgraph-invites.js"], "src/");
 });
 
 gulp.task("compileLess", function(){
@@ -24,8 +25,8 @@ gulp.task("compileLess", function(){
             .pipe(rename({extname: ".css"}))
             .pipe(gulp.dest(dest))
     }
-    compile("dev/yesgraph-invites.less", "dev/");
-    return compile("yesgraph-invites.less", ".");
+    compile("src/dev/yesgraph-invites.less", "src/dev/");
+    return compile("src/yesgraph-invites.less", "src/");
 });
 
 gulp.task("minifyCss", ["compileLess"], function(){
@@ -35,16 +36,30 @@ gulp.task("minifyCss", ["compileLess"], function(){
             .pipe(rename({suffix: ".min"}))
             .pipe(gulp.dest(dest))
     }
-    minify("dev/yesgraph-invites.css", "dev/")
-    return minify("yesgraph-invites.css", ".")
+    minify("src/dev/yesgraph-invites.css", "src/dev/")
+    return minify("src/yesgraph-invites.css", "src/")
 });
 
-gulp.task("watchLess", function(){
-    var filesToWatch = ["dev/yesgraph-invites.less", "yesgraph-invites.less"];
-    console.log("Watching Files: " + filesToWatch.join(", "));
-    gulp.watch(filesToWatch, ["compileLess"]);
+gulp.task("clean", function(){
+    del(["dist/", "src/*.css", "src/dev/*.css", "src/*.min.*", "src/dev/*.min.*"]);
 });
 
-gulp.task("build", ["compileLess", "minifyCss", "minifyScripts"]);
+gulp.task("build", ["compileLess", "minifyCss", "minifyScripts"], function(){
+    return gulp.src([
+            "src/dev/yesgraph-invites*css",
+            "src/dev/yesgraph*js",
+            "src/yesgraph-invites*css",
+            "src/yesgraph*js"
+        ], {base: "./src"})
+        .pipe(gulp.dest("dist"))
+});
 
-gulp.task("default", ["build"]);
+gulp.task("watch", function(){
+    gulp.watch(["src/dev/yesgraph-invites.less", "src/yesgraph-invites.less"], ["compileLess"]);
+});
+
+gulp.task("serve", ["watch"]);
+
+gulp.task("default", ["clean"], function(){
+    gulp.start("build");
+});
