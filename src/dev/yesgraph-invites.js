@@ -655,7 +655,7 @@
                                 "class": "yes-manual-input-form"
                             }),
                             manualInputField = $("<textarea>", {
-                                "placeholder": "john@example.com, jane@example.com",
+                                "placeholder": widgetCopy.manual_input_placeholder || "Enter emails here",
                                 "rows": 3,
                                 "class": "yes-manual-input-field"
                             }),
@@ -835,7 +835,7 @@
                                 "baseURL": "https://www.facebook.com/share.php",
                                 "params": {
                                     u: encodeURI(inviteLink),
-                                    title: OPTIONS.integrations.twitter.tweetMsg
+                                    title: OPTIONS.widgetCopy.shareMessage
                                 },
                                 "colors": ["#3B5998", "#324b81"]
                             }, {
@@ -843,7 +843,7 @@
                                 "name": "Twitter",
                                 "baseURL": "https://twitter.com/intent/tweet",
                                 "params": {
-                                    text: OPTIONS.integrations.twitter.tweetMsg + ' ' + inviteLink
+                                    text: OPTIONS.widgetCopy.shareMessage + ' ' + inviteLink
                                 },
                                 "colors": ["#55ACEE", "#2E99EA"]
                             }, {
@@ -854,7 +854,7 @@
                                     "mini": true,
                                     "url": inviteLink,
                                     "title": OPTIONS.appDisplayName,
-                                    "summary": OPTIONS.integrations.twitter.tweetMsg
+                                    "summary": OPTIONS.widgetCopy.shareMessage
                                 },
                                 "colors": ["#0077B5", "#006399"]
                             }, {
