@@ -6,15 +6,9 @@ var rename = require("gulp-rename");
 var less = require("gulp-less");
 var cleanCSS = require('gulp-clean-css');
 var jshint = require('gulp-jshint');
-var reporter = require('./lint-reporter');
+var reporter = require('./jshint-reporter');
 var del = require("del");
 
-gulp.task('lint', function() {
-  gulp.src('example.js')
-    .pipe(jshint())
-    .pipe(jshint.reporter('jshint-stylish'))
-    .pipe(exitOnJshintError);
-});
 gulp.task("minifyScripts", function(){
     function minify(src, dest) {
         return gulp.src(src)
@@ -49,13 +43,13 @@ gulp.task("minifyCss", ["compileLess"], function(){
 });
 
 gulp.task("clean", function(){
-    del(["dist/", "src/*.css", "src/dev/*.css", "src/*.min.*", "src/dev/*.min.*"]);
+    del(["lint-report.txt","dist/", "src/*.css", "src/dev/*.css", "src/*.min.*", "src/dev/*.min.*"]);
 });
 
 gulp.task("lint", function(){
     return gulp.src(["src/dev/yesgraph.js", "src/dev/yesgraph-invites.js"])
         .pipe(jshint())
-        .pipe(jshint.reporter(reporter, {outputFile: "./lint-report.txt"}))
+        .pipe(jshint.reporter(reporter, {outputFile: "./jshint-report.txt"}))
         .pipe(jshint.reporter("fail"));
 });
 

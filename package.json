@@ -43,7 +43,8 @@
     "test": "node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
     "start": "gulp watch",
     "build": "gulp build",
-    "lint": "gulp lint"
+    "lint": "gulp lint",
+    "clean": "gulp clean"
   },
   "repository": {
     "type": "git",

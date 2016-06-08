@@ -3,3 +3,6 @@ node_modules
 sauce.json
 coverage
 dist
+src/dev/*.css
+src/*.css
+jshint-report.txt

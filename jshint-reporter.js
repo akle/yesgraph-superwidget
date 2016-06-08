@@ -14,7 +14,7 @@ module.exports = {
     // Overwrite settings
     for (var opt in opts) {
       if (settings.hasOwnProperty(opt)) {
-        settings[opt] = opts[opt]
+        settings[opt] = opts[opt];
       }
     }
 
@@ -48,7 +48,7 @@ module.exports = {
         });
       }
     } else {
-      summary = "No linting errors found. You go girl!"
+      summary = "No linting errors found. You go girl!";
     }
     console.log(summary);
   }
