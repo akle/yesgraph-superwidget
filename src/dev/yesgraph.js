@@ -1,4 +1,3 @@
-;
 (function() {
     "use strict";
 
@@ -51,14 +50,14 @@
     function rankContacts(rawContacts, done) {
         var matchDomain = settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
-        rawContacts["promote_matching_domain"] = domainVal;
+        rawContacts.promote_matching_domain = domainVal;
         return hitAPI(ADDRBOOK_ENDPOINT, "POST", rawContacts, done);
     }
 
     function getRankedContacts(done) {
         var matchDomain = settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
-        rawContacts["promote_matching_domain"] = domainVal;
+        rawContacts.promote_matching_domain = domainVal;
         return hitAPI(ADDRBOOK_ENDPOINT, "GET", null, done);
     }
 
@@ -80,12 +79,12 @@
 
     function hitAPI(endpoint, method, data, done, deferred) {
         var d = deferred || jQuery.Deferred();
-        if (!typeof method == "string") {
-            d.reject({error: "Expected method as string, not " + typeof method})
+        if (typeof method !== "string") {
+            d.reject({error: "Expected method as string, not " + typeof method});
             return d.promise();
         } else if (method.toUpperCase() !== "GET") {
             data = JSON.stringify(data || {});
-        };
+        }
         var ajaxSettings = {
             url: YESGRAPH_API_URL + endpoint,
             data: data,
@@ -102,10 +101,14 @@
             }
         };
         // In jQuery 1.9+, the jQuery.ajax "type" is changed to "method"
-        jQuery.fn.jquery < "1.9" ? ajaxSettings.type = method : ajaxSettings.method = method;
+        if (jQuery.fn.jquery < "1.9") {
+            ajaxSettings.type = method;
+        } else {
+            ajaxSettings.method = method;
+        }
 
         jQuery.ajax(ajaxSettings);
-        if (done) { d.done(done); };
+        if (done) { d.done(done); }
         return d.promise();
     }
 
@@ -142,11 +145,11 @@
                 ],
                 shouldSendCallback: function(data) {
                     // Don't send the error to Sentry if the property noLog was set to true
-                    return !(data.hasOwnProperty("noLog") && (!data.noLog))
+                    return !(data.hasOwnProperty("noLog") && (!data.noLog));
                 }
             };
         jQuery.getScript(src, function(){
-            newRaven = window.Raven.noConflict()
+            newRaven = window.Raven.noConflict();
             if (!RUNNING_LOCALLY) { newRaven.config(PUBLIC_RAVEN_DSN, options).install(); }
             if (oldRaven) { window.Raven = oldRaven; }
             d.resolve(newRaven);
@@ -204,7 +207,7 @@
                     func(window[globalVar]);
                 };
             }(document, 'script'));
-        };
+        }
     }
 
     function YesGraphAPIConstructor() {
@@ -288,12 +291,12 @@
                 for (var i = 0; i < cookies.length; i++) {
                     var cookie = cookies[i];
                     while (cookie.charAt(0) == ' ') cookie = cookie.substring(1);
-                    if (cookie.indexOf(cookieName) == 0) {
+                    if (cookie.indexOf(cookieName) === 0) {
                         var value = cookie.substring(cookieName.length, cookie.length);
                         if (value !== "undefined") return value;
                         return undefined;
-                    };
-                };
+                    }
+                }
             },
             setCookie: function (key, val, expDays) {
                 var cookie = key + '=' + val;
@@ -301,7 +304,7 @@
                     var expDate = new Date();
                     expDate.setTime(expDate.getTime() + (expDays * 24 * 60 * 60 * 1000));
                     cookie = cookie + '; expires=' + expDate.toGMTString();
-                };
+                }
                 window.document.cookie = cookie;
             },
             storeClientToken: function (data) {
@@ -324,14 +327,14 @@
                 });
             },
             error: function (msg, fail, noLog) {
-                var e = new Error(msg)
+                var e = new Error(msg);
                 e.name = "YesGraphError";
                 if (fail) {
                     e.noLog = Boolean(noLog);// Optionally don't log to Sentry
                     throw e;
                 } else {
                     console.log("YesGraphError", e);
-                };
+                }
             }
         };
     }

@@ -18,8 +18,8 @@ module.exports = function(config) {
     files: [
       'tests/*.html',
       'tests/*.js',
-      'dev/yesgraph-invites.js', 
-      'dev/yesgraph.js', 
+      'src/dev/yesgraph-invites.js', 
+      'src/dev/yesgraph.js', 
       //'tests/*.js', 
       //'tests/*.html', 
     // Source and spec files
@@ -44,7 +44,7 @@ module.exports = function(config) {
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
       '**/*.html': ['html2js'],
-      'dev/*.js': ['coverage']
+      'src/dev/*.js': ['coverage']
     },
 
     // test results reporter to use

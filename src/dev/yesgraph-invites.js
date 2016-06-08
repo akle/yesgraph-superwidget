@@ -3,7 +3,7 @@
 
     var VERSION = "dev/v0.0.3";
     var SDK_VERSION = "dev/v0.0.3";
-    var CSS_VERSION = "dev/v0.0.3";
+    var CSS_VERSION = "dev/v0.0.4";
     var domReadyTimer = setInterval(function () {
         if (document.readyState === "complete" || document.readyState === "interactive") {
             loadSuperwidget();
@@ -867,10 +867,8 @@
                                 "colors": ["#BD081C", "#AB071A"]
                             }];
 
-                        var i;
                         var wrapper;
-                        for (i = 0; i < services.length; i += 1) {
-                            service = services[i];
+                        services.forEach(function(service, index, array){
                             if (OPTIONS.shareButtons.indexOf(service.ID) !== -1) {
                                 shareBtnIcon = $("<span>", {
                                     "class": "yes-share-btn-icon"
@@ -908,7 +906,7 @@
                                         "data-pin-custom": true
                                     }).append(shareBtn);
 
-                                    shareBtn.on("click", function () {
+                                    shareBtn.on("click", function () { // jshint ignore:line
                                         // Do this on each click. Otherwise images added
                                         // asynchronously (e.g., by Intercom) will not
                                         // have the desired description when pinned.
@@ -918,25 +916,26 @@
                                         wrapper[0].click();
                                     });
 
-                                    requireScript("pinUtils", protocol + "//assets.pinterest.com/js/pinit.js", function () {
+                                    requireScript("pinUtils", protocol + "//assets.pinterest.com/js/pinit.js", function () { // jshint ignore:line
                                         buttonsDiv.append(wrapper.append(shareBtn));
                                     });
 
                                 } else {
-                                    shareBtn.on("click", function (evt) {
+                                    shareBtn.on("click", function (evt) { //jshint ignore:line
                                         targ = $(this);
                                         open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
                                     });
                                     buttonsDiv.append(shareBtn);
                                 }
                             }
-                        }
+                        });
+
                         function shareBtnHoverOnHandler () {
-                            var $this = $(this);
+                            var $this = $(this); // jshint ignore:line
                             $this.css("background-color", $this.data("hover-color"));
                         }
                         function shareBtnHoverOffHandler () {
-                            var $this = $(this);
+                            var $this = $(this); // jshint ignore:line
                             $this.css("background-color", $this.data("color"));
                         }
                         target.append(buttonsDiv);
@@ -1163,10 +1162,9 @@
 
                         function concatScopes(scopes) {
                             var escaped_scopes = [];
-                            var i;
-                            for (i = 0; i < scopes.length; i += 1) {
-                                escaped_scopes.push(encodeURIComponent(scopes[i]));
-                            }
+                            scopes.forEach(function(scope){
+                                escaped_scopes.push(encodeURIComponent(scope));
+                            });
                             return escaped_scopes.join("+");
                         }
 
@@ -1326,10 +1324,9 @@
 
                         function concatScopes(scopes) {
                             var escaped_scopes = [];
-                            var i;
-                            for (i = 0; i < scopes.length; i += 1) {
-                                escaped_scopes.push(encodeURIComponent(scopes[i]));
-                            }
+                            scopes.forEach(function(scope){
+                                escaped_scopes.push(encodeURIComponent(scope));
+                            });
                             return escaped_scopes.join("+");
                         }
 
@@ -1440,20 +1437,16 @@
                                         if (TESTMODE) {
                                             flash.success("Testmode: emails not sent.");
                                         } else {
-                                            var sentCount = resp.sent.length;
-                                            var inviteData;
                                             var invites = {
                                                 entries: []
                                             };
-                                            var i;
-                                            for (i = 0; i < resp.sent.length; i += 1) {
-                                                inviteData = resp.sent[i];
+                                            resp.sent.forEach(function(inviteData){
                                                 invites.entries.push({
                                                     "invitee_name": inviteData[0] || undefined,
                                                     "email": inviteData[1],
                                                     "sent_at": new Date().toISOString()
                                                 });
-                                            }
+                                            });
                                             YesGraphAPI.postInvitesSent(invites);
                                         }
                                         d.resolve();
@@ -1477,7 +1470,7 @@
                             msg += recipients.length === 1 ? " friend!" : " friends!";
                             flash.success(msg);
                         });
-                    };
+                    }
                     return d.promise();
                 }
 
@@ -1486,7 +1479,7 @@
                     var regexS = "[\?&#]" + name + "=([^&#]*)";
                     var regex = new RegExp(regexS);
                     var results = regex.exec(url);
-                    return results == null ? null : results[1];
+                    return results == null ? null : results[1]; // jshint ignore:line
                 }
 
                 function isValidEmail(email) {
