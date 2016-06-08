@@ -3,7 +3,7 @@
 
     var VERSION = "dev/v0.0.3";
     var SDK_VERSION = "dev/v0.0.3";
-    var CSS_VERSION = "dev/v0.0.3";
+    var CSS_VERSION = "dev/v0.0.4";
     var domReadyTimer = setInterval(function () {
         if (document.readyState === "complete" || document.readyState === "interactive") {
             loadSuperwidget();
@@ -868,8 +868,7 @@
                             }];
 
                         var wrapper;
-                        for (var i = 0; i < services.length; i += 1) {
-                            service = services[i];
+                        services.forEach(function(service, index, array){
                             if (OPTIONS.shareButtons.indexOf(service.ID) !== -1) {
                                 shareBtnIcon = $("<span>", {
                                     "class": "yes-share-btn-icon"
@@ -929,7 +928,8 @@
                                     buttonsDiv.append(shareBtn);
                                 }
                             }
-                        }
+                        });
+
                         function shareBtnHoverOnHandler () {
                             var $this = $(this); // jshint ignore:line
                             $this.css("background-color", $this.data("hover-color"));
@@ -1162,10 +1162,9 @@
 
                         function concatScopes(scopes) {
                             var escaped_scopes = [];
-                            var i;
-                            for (i = 0; i < scopes.length; i += 1) {
-                                escaped_scopes.push(encodeURIComponent(scopes[i]));
-                            }
+                            scopes.forEach(function(scope){
+                                escaped_scopes.push(encodeURIComponent(scope));
+                            });
                             return escaped_scopes.join("+");
                         }
 
@@ -1325,10 +1324,9 @@
 
                         function concatScopes(scopes) {
                             var escaped_scopes = [];
-                            var i;
-                            for (i = 0; i < scopes.length; i += 1) {
-                                escaped_scopes.push(encodeURIComponent(scopes[i]));
-                            }
+                            scopes.forEach(function(scope){
+                                escaped_scopes.push(encodeURIComponent(scope));
+                            });
                             return escaped_scopes.join("+");
                         }
 
@@ -1439,20 +1437,16 @@
                                         if (TESTMODE) {
                                             flash.success("Testmode: emails not sent.");
                                         } else {
-                                            var sentCount = resp.sent.length;
-                                            var inviteData;
                                             var invites = {
                                                 entries: []
                                             };
-                                            var i;
-                                            for (i = 0; i < resp.sent.length; i += 1) {
-                                                inviteData = resp.sent[i];
+                                            resp.sent.forEach(function(inviteData){
                                                 invites.entries.push({
                                                     "invitee_name": inviteData[0] || undefined,
                                                     "email": inviteData[1],
                                                     "sent_at": new Date().toISOString()
                                                 });
-                                            }
+                                            });
                                             YesGraphAPI.postInvitesSent(invites);
                                         }
                                         d.resolve();
