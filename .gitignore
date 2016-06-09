@@ -7,4 +7,5 @@ src/dev/*.css
 src/*.css
 src/dev/*.min*
 src/*.min*
-jshint-report.txt
+gulptools/jshint-report.txt
+config.json
