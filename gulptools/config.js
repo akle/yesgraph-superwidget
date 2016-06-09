@@ -1,11 +1,11 @@
 var root = ".";
 var src = {
-    dev: "../src/dev",
-    root: "../src"
+    dev: "./src/dev",
+    root: "./src"
 };
 var dest = {
-    dev: "../dist/dev",
-    root: "../dist"
+    dev: "./dist/dev",
+    root: "./dist"
 };
 
 module.exports = {
@@ -15,20 +15,16 @@ module.exports = {
     tasks: {
         build: {
             files: [
-                src.dev + "/yesgraph-invites*css",
-                src.dev + "/yesgraph*js",
-                src + "/yesgraph-invites*css",
-                src + "/yesgraph*js",
+                src + "/**/yesgraph-invites*css",
+                src + "/**/yesgraph*js",
             ]
         },
         clean: {
             files: [
                 root + "/jshint-report.txt",
                 dest.root,
-                src.root + "/*.css",
-                src.dev + "/*.css",
-                src.root + "/*.min.*",
-                src.dev + "/*.min.*"
+                src.root + "/**/*.css",
+                src.root + "/**/*.min.*",
             ]
         },
         compileLess: {
@@ -71,10 +67,10 @@ module.exports = {
             }
         },
         watch: {
-            files: [
-                src.dev + "/yesgraph-invites.less",
-                src.root + "/yesgraph-invites.less"
-            ]
+            files: src.root + "/**/yesgraph-invites.less"
+        },
+        version: {
+            files: src.root + "/**/*"
         }
     }
 }

@@ -1,7 +1,7 @@
 (function() {
     "use strict";
 
-    var VERSION = "dev/v0.0.3";
+    var VERSION = "dev/__SDK_VERSION__";
     var YESGRAPH_BASE_URL;
     var YESGRAPH_API_URL;
     var RUNNING_LOCALLY;

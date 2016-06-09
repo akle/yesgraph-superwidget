@@ -1,9 +1,9 @@
 ;(function () {
     "use strict";
 
-    var VERSION = "dev/v0.0.3";
-    var SDK_VERSION = "dev/v0.0.3";
-    var CSS_VERSION = "dev/v0.0.4";
+    var VERSION = "dev/__SUPERWIDGET_VERSION__";
+    var SDK_VERSION = "dev/__SDK_VERSION__";
+    var CSS_VERSION = "dev/__CSS_VERSION__";
     var domReadyTimer = setInterval(function () {
         if (document.readyState === "complete" || document.readyState === "interactive") {
             loadSuperwidget();
