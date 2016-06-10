@@ -5,25 +5,17 @@ var cleanCSS = require("gulp-clean-css");
 var config = require("../config");
 
 gulp.task("minifyScripts", function(){
-    function minify(src, dest) {
-        return gulp.src(src)
-            .pipe(uglify())
-            .pipe(rename({suffix: ".min"}))
-            .pipe(gulp.dest(dest));
-    }
-    minify(config.tasks.minifyScripts.files.dev, config.src.dev);
-    return minify(config.tasks.minifyScripts.files.root, config.src.root);
+    return gulp.src(config.tasks.minifyScripts.files, {base: config.src.root})
+        .pipe(uglify({preserveComments: "license"}))
+        .pipe(rename({suffix: ".min"}))
+        .pipe(gulp.dest(config.src.root));
 });
 
 gulp.task("minifyCss", ["compileLess"], function(){
-    function minify(src, dest) {
-        return gulp.src(src)
-            .pipe(cleanCSS())
-            .pipe(rename({suffix: ".min"}))
-            .pipe(gulp.dest(dest));
-    }
-    minify(config.tasks.minifyCss.files.dev, config.src.dev);
-    return minify(config.tasks.minifyCss.files.root, config.src.root);
+    return gulp.src(config.tasks.minifyCss.files, {base: config.src.root})
+        .pipe(cleanCSS({keepSpecialComments: 1}))
+        .pipe(rename({suffix: ".min"}))
+        .pipe(gulp.dest(config.src.root));
 });
 
 gulp.task("minify", ["minifyScripts", "minifyCss"]);

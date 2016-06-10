@@ -1,3 +1,12 @@
+/*!
+ * YesGraph Superwidget __SUPERWIDGET_VERSION__
+ *
+ * https://www.yesgraph.com
+ * https://docs.yesgraph.com/docs/superwidget
+ * 
+ * Date: __BUILD_DATE__
+ */
+
 ;(function () {
     "use strict";
 

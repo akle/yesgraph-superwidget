@@ -4,12 +4,8 @@ var less = require("gulp-less");
 var config = require("../config");
 
 gulp.task("compileLess", function(){
-    function compile(src, dest) {
-        return gulp.src(src)
-            .pipe(less())
-            .pipe(rename({extname: ".css"}))
-            .pipe(gulp.dest(dest));
-    }
-    compile(config.tasks.compileLess.files.dev, config.src.dev);
-    return compile(config.tasks.compileLess.files.root, config.src.root);
+    return gulp.src(config.tasks.compileLess.files, {base: config.src.root})
+        .pipe(less())
+        .pipe(rename({extname: ".css"}))
+        .pipe(gulp.dest(config.src.root));
 });
