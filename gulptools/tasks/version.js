@@ -60,9 +60,17 @@ gulp.task("getVersion", function() {
         }));
 });
 
-
 gulp.task("version", ["getVersion"] , function() {
-    // TODO: update the config file to persist changes
+    // Update the config file to persist the version change
+    var sdk_re = /(__SDK_VERSION__ ?\= ?[\'\"])(\S*)([\'\"];)/;
+    var superwidget_re = /(__SUPERWIDGET_VERSION__ ?\= ?[\'\"])(\S*)([\'\"];)/;
+    var css_re = /(__CSS_VERSION__ ?\= ?[\'\"])(\S*)([\'\"];)/;
+    gulp.src(__dirname + "/../config.js")
+        .pipe(replace(sdk_re, "$1" + __NEW_SDK_VERSION__ + "$3"))
+        .pipe(replace(superwidget_re, "$1" + __NEW_SUPERWIDGET_VERSION__ + "$3"))
+        .pipe(replace(css_re, "$1" + __NEW_CSS_VERSION__ + "$3"))
+        .pipe(gulp.dest(__dirname + "/../"));
+
     // Update each of the code files
     var CURRENT_DATE = new Date();
     return gulp.src(config.tasks.version.files, {base: config.src.root})

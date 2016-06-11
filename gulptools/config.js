@@ -7,15 +7,18 @@ var dest = {
     dev: "./dist/dev",
     root: "./dist"
 };
+var __SDK_VERSION__ = "v0.0.3";
+var __SUPERWIDGET_VERSION__ = "v0.0.3";
+var __CSS_VERSION__ = "v0.0.4";
 
 module.exports = {
     root: root,
     src: src,
     dest: dest,
     version: {
-        sdk: "v0.0.3",
-        superwidget: "v0.0.3",
-        css: "v0.0.4"
+        sdk: __SDK_VERSION__,
+        superwidget: __SUPERWIDGET_VERSION__,
+        css: __CSS_VERSION__
     },
     tasks: {
         build: {
