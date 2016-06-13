@@ -664,10 +664,9 @@
                                 "class": "yes-manual-input-form"
                             }),
                             manualInputField = $("<textarea>", {
-                                "placeholder": widgetCopy.manual_input_placeholder || "Enter emails here",
                                 "rows": 3,
                                 "class": "yes-manual-input-field"
-                            }),
+                            }).prop("placeholder", widgetCopy.manual_input_placeholder || "Enter emails here"),
                             manualInputSubmit = $('<button>', {
                                 "text": widgetCopy.manualInputSendBtn || "Add Emails",
                                 "class": "yes-default-btn yes-manual-input-submit"
