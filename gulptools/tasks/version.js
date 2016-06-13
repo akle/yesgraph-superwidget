@@ -16,19 +16,19 @@ gulp.task("_getVersion", function() {
         .pipe(prompt.prompt([{
             type: 'list',
             name: 'sdk_update_type',
-            message: 'Which type of bump shoud be used for the SDK?',
+            message: 'Which type of update should be used for the SDK?',
             choices: ["NONE", "PATCH", "MINOR", "MAJOR"]
         },
         {
             type: 'list',
             name: 'superwidget_update_type',
-            message: 'Which type of bump shoud be used for the Superwidget?',
+            message: 'Which type of update should be used for the Superwidget?',
             choices: ["NONE", "PATCH", "MINOR", "MAJOR"]
         },
         {
             type: 'list',
             name: 'css_update_type',
-            message: 'Which type of bump shoud be used for the CSS?',
+            message: 'Which type of update should be used for the CSS?',
             choices: ["NONE", "PATCH", "MINOR", "MAJOR"]
         }], function(res) {
             newVersions.sdk = getNewVersion(oldVersions.sdk, res.sdk_update_type)
