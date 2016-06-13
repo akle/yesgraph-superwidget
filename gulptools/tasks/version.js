@@ -31,9 +31,9 @@ gulp.task("_getVersion", function() {
             message: 'Which type of update should be used for the CSS?',
             choices: ["NONE", "PATCH", "MINOR", "MAJOR"]
         }], function(res) {
-            newVersions.sdk = getNewVersion(oldVersions.sdk, res.sdk_update_type)
-            newVersions.superwidget = getNewVersion(oldVersions.superwidget, res.superwidget_update_type)
-            newVersions.css = getNewVersion(oldVersions.css, res.css_update_type)
+            newVersions.sdk = getNewVersion(oldVersions.sdk, res.sdk_update_type);
+            newVersions.superwidget = getNewVersion(oldVersions.superwidget, res.superwidget_update_type);
+            newVersions.css = getNewVersion(oldVersions.css, res.css_update_type);
             console.log("SDK Version:", newVersions.sdk);
             console.log("Superwidget Version:", newVersions.superwidget);
             console.log("CSS Version:", newVersions.css);
@@ -43,14 +43,14 @@ gulp.task("_getVersion", function() {
 gulp.task("version", ["_getVersion"] , function() {
     // Update the config file to persist the version change
     gulp.src(__dirname + "/../config.js")
-        .pipe(replace(/__(\w*)_VERSION__ ?\= ?[\'\"]\S*[\'\"];/, configVersionReplacer))
+        .pipe(replace(/__(\w*)_VERSION__ ?\= ?[\'\"]\S*[\'\"];/g, configVersionReplacer))
         .pipe(gulp.dest(__dirname + "/../"));
 
     // Update each of the code files
     var CURRENT_DATE = new Date();
     return gulp.src(config.tasks.version.files, {base: config.src.root})
-        .pipe(replace(/__(\w*)_VERSION__/, fileVersionReplacer))
-        .pipe(replace("__BUILD_DATE__", CURRENT_DATE))
+        .pipe(replace(/__(\w*)_VERSION__/g, fileVersionReplacer))
+        .pipe(replace(/__BUILD_DATE__/g, CURRENT_DATE))
         .pipe(gulp.dest(config.dest.root));
 });
 
