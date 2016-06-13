@@ -1,7 +1,16 @@
+/*!
+ * YesGraph Javascript SDK __SDK_VERSION__
+ *
+ * https://www.yesgraph.com
+ * https://docs.yesgraph.com/docs/javascript-sdk
+ * 
+ * Date: __BUILD_DATE__
+ */
+ 
 (function() {
     "use strict";
 
-    var VERSION = "v0.0.3";
+    var VERSION = "__SDK_VERSION__";
     var YESGRAPH_BASE_URL;
     var YESGRAPH_API_URL;
     var RUNNING_LOCALLY;
