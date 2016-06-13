@@ -8,3 +8,4 @@ src/*.css
 src/dev/*.min*
 src/*.min*
 gulptools/jshint-report.txt
+.envrc

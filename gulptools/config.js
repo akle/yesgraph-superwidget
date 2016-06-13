@@ -22,17 +22,13 @@ module.exports = {
     },
     tasks: {
         build: {
-            files: [
-                src.root + "/**/yesgraph-invites*css",
-                src.root + "/**/yesgraph*js",
-            ]
+            files: src.root + "/**/yesgraph*@(js|css)"
         },
         clean: {
             files: [
                 root + "/jshint-report.txt",
+                src.root + "/**/*.@(css|min.*)",
                 dest.root,
-                src.root + "/**/*.css",
-                src.root + "/**/*.min.*",
             ]
         },
         compileLess: {
@@ -53,6 +49,19 @@ module.exports = {
         },
         version: {
             files: src.root + "/**/*"
+        },
+        deploy: {
+            files: dest.root + "/**/yesgraph*@(js|css)"
         }
+    },
+    s3: {
+        region: "us-east-1",
+        params: {
+            Bucket: "code.yesgraph.com"
+        }
+    },
+    cloudfront: {
+        distribution: "E1QB3DF4HJE37H",
+        paths: ["/yesgraph*"]
     }
 }
