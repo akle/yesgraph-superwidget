@@ -1,5 +1,6 @@
 # YesGraph SuperWidget: A Javascript SDK
 
+[![Build Status](https://travis-ci.org/YesGraph/yesgraph-superwidget.svg?branch=master)](https://travis-ci.org/YesGraph/yesgraph-superwidget)
 [![Coverage Status](https://coveralls.io/repos/github/YesGraph/yesgraph-superwidget/badge.svg?branch=master)](https://coveralls.io/github/YesGraph/yesgraph-superwidget?branch=master)
 
 
