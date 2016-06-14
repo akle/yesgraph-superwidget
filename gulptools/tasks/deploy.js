@@ -9,7 +9,7 @@ var config = require("../config");
 var publisher = aws.create(config.s3);
 
 gulp.task("deploy", function(done) {
-    sequence("clean", "build", function(){
+    sequence("clean", "build", "version", function(){
         var cloneSink = clone.sink();
         gulp.src(config.tasks.deploy.files)
             // We use cloneSink here to create a copy of the files and rename
