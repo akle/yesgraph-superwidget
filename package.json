@@ -19,6 +19,7 @@
     "gulp-awspublish": "^3.2.0",
     "gulp-clean-css": "^2.0.10",
     "gulp-clone": "^1.0.0",
+    "gulp-cloudfront-invalidate": "^0.1.2",
     "gulp-jshint": "^2.0.1",
     "gulp-less": "^3.1.0",
     "gulp-prompt": "^0.2.0",
