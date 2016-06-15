@@ -946,8 +946,8 @@
                                     shareBtn.on("click", function (evt) {
                                         targ = $(this);
                                         open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name);
                                     });
-                                    YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name);
                                     buttonsDiv.append(shareBtn);
                                 }
                             }
