@@ -21,6 +21,11 @@
     var INVITES_SENT_ENDPOINT = '/invites-sent';
     var INVITES_ACCEPTED_ENDPOINT = '/invites-accepted';
     var ANALYTICS_ENDPOINT = '/analytics/sdk';
+    var EVENTS = {
+        LOAD_JS_SDK: "Loaded Javascript SDK",
+        LOAD_DEFAULT_PARAMS: "Loaded Default CURRENT_USER Params",
+        SAW_ERROR_MSG: "Saw Error Message"
+    };
     var settings = {
         app: null,
         testmode: false,
@@ -166,42 +171,6 @@
         return d.promise();
     }
 
-    function logScreenEvent() {
-        var eventData = {
-            "entries": [{
-                "context": {
-                    "app": {
-                        "name": window.navigator.appName,
-                        "version": window.navigator.appVersion
-                    },
-                    "library": {
-                        "name": "yesgraph.js",
-                        "version": VERSION
-                    },
-                    "device": {
-                        "type": "web"
-                    },
-                    "os": {},
-                    "userAgent": window.navigator.userAgent || null,
-                    "page": {
-                        "path": window.location.pathname,
-                        "referrer": window.document.referrer,
-                        "search": window.location.search,
-                        "title": window.document.title,
-                        "url": window.location.href
-                    },
-                },
-                "name": window.document.title + ': ' + window.location.pathname,
-                "properties": {
-                    "app_name": YesGraphAPI.app
-                },
-                "timestamp": new Date(),
-                "type": "screen"
-            }, ]
-        };
-        return hitAPI(ANALYTICS_ENDPOINT, "POST", eventData);
-    }
-
     function requireScript(globalVar, script, func) {
         // Get the specified script if it hasn't been loaded already
         if (window.hasOwnProperty(globalVar)) {
@@ -217,68 +186,6 @@
                 };
             }(document, 'script'));
         }
-    }
-
-    function AnalyticsManager() {
-        // Description:
-        // Generated as soon as the SDK loads.
-        // Loads events, tries to POST them immediately.
-        // Stores any events that fail
-        // Tries to post all failed events individually before the window closes
-        this.postponed = [];
-        this.rejected = [];
-        this.superwidgetSettings = {};
-        this.YesGraphAPI = null;
-        this.sdkSettings = {
-            "context": {
-                "app": {
-                    "name": window.navigator.appName,
-                    "version": window.navigator.appVersion
-                },
-                "library": {
-                    "name": "yesgraph.js",
-                    "version": VERSION
-                },
-                "device": {
-                    "type": "web"
-                },
-                "os": {},
-                "userAgent": window.navigator.userAgent || null,
-                "page": {
-                    "path": window.location.pathname,
-                    "referrer": window.document.referrer,
-                    "search": window.location.search,
-                    "title": window.document.title,
-                    "url": window.location.href
-                },
-            },
-            "name": window.document.title + ': ' + window.location.pathname,
-            "properties": {
-                "app_name": APP_NAME
-            },
-            "timestamp": new Date(),
-            "type": "screen"
-        };
-        var self = this;
-        this.log = function(evt) {
-            if (!self.YesGraphAPI) {
-                self.postponed.push(evt);
-            } else {
-                var events = self.postponed.concat(evt);
-                self.postponed = [];
-                self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", {
-                    entries: events
-                }).fail(function() {
-                    // Store failed events 
-                    events.forEach(function(evt) {
-                        self.rejected.push(evt);
-                    });
-                });
-            }
-        };
-        $(window).on("beforeunload", function() {
-            console.log("Running beforeunload code");
-        });
     }
 
     function YesGraphAPIConstructor() {
@@ -306,6 +213,8 @@
             var ravenDeferred = jQuery.Deferred(),
                 clientTokenDeferred = jQuery.Deferred();
 
+            self.AnalyticsManager = new AnalyticsManager(self);
+
             loadRaven().done(function(_Raven){
                 self.Raven = _Raven;
                 ravenDeferred.resolve();
@@ -314,7 +223,7 @@
             waitForOptions().done(function(userData){
                 self.utils.getOrFetchClientToken(userData).done(function(){
                     clientTokenDeferred.resolve();
-                    logScreenEvent();
+                    self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
                 });
             });
 
@@ -352,7 +261,6 @@
                 });
                 return d2.promise();
             }
-
         };
 
         this.utils = {
@@ -401,10 +309,95 @@
                 var e = new Error(msg);
                 e.name = "YesGraphError";
                 if (fail) {
-                    e.noLog = Boolean(noLog);// Optionally don't log to Sentry
+                    e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
                 } else {
                     console.log("YesGraphError", e);
+                }
+            }
+        };
+    }
+
+    function AnalyticsManager(YesGraphAPI) {
+        // Description:
+        // Generated as soon as the SDK loads.
+        // Loads events, tries to POST them immediately.
+        // Stores any events that fail
+        // Tries to post all failed events individually before the window closes
+        var self = this;
+        this.postponed = [];
+        this.superwidgetSettings = {};
+        this.YesGraphAPI = YesGraphAPI;
+        this.sdkSettings = {
+            "context": {
+                "app": {
+                    "name": window.navigator.appName,
+                    "version": window.navigator.appVersion
+                },
+                "library": {
+                    "name": "yesgraph.js",
+                    "version": VERSION
+                },
+                "device": {
+                    "type": "web"
+                },
+                "os": {},
+                "userAgent": window.navigator.userAgent || null,
+                "page": {
+                    "path": window.location.pathname,
+                    "referrer": window.document.referrer,
+                    "search": window.location.search,
+                    "title": window.document.title,
+                    "url": window.location.href
+                },
+            },
+            "name": window.document.title + ': ' + window.location.pathname,
+            "properties": {
+                "app_name": null
+            },
+            "timestamp": new Date(),
+            "type": "screen"
+        };
+        this.isReady = this.YesGraphAPI && this.YesGraphAPI.isReady;
+
+        if (!this.isReady){
+            // Wait until the analytics manager is ready
+            var interval = setInterval(function(){
+                if (self.YesGraphAPI && self.YesGraphAPI.isReady) {
+                    clearInterval(interval);
+                    self.isReady = true;
+                    self.log(); // log all postponed events
+                }
+            }, 50);
+        }
+
+        this.log = function(type, target, timestamp) {
+            var evt;
+            if (type) {
+                evt = jQuery.extend(true, {}, self.sdkSettings);
+                Object.assign(evt, {
+                    type: type || evt.type,
+                    target: target || evt.target,
+                    timestamp: timestamp || evt.timestamp
+                });
+            }
+            if (self.isReady) {
+                var evts = [];
+                if (evt) {
+                    evt.properties.app_name = self.YesGraphAPI.app;
+                    evts.push(evt);
+                }
+                self.postponed.forEach(function(evt) {
+                    evt.properties.app_name = self.YesGraphAPI.app;
+                    evts.push(evt);
+                });
+                if (evts) {
+                    self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts });
+                }
+                self.postponed = [];
+            } else {
+                if (evt) {
+                    self.postponed.push(evt);
                 }
             }
         };
