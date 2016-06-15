@@ -6,7 +6,7 @@
  * 
  * Date: __BUILD_DATE__
  */
- 
+
 (function() {
     "use strict";
 
@@ -249,13 +249,22 @@
                 d1.done(function(options){
                     // Update the settings for the YesGraphAPI object
                     var userData = {};
+                    var loadedDefaultParams = false;
+                    var val;
                     self.app = self.app || options.app;
                     for (var opt in options) {
-                        if (self.settings.hasOwnProperty(opt)) {
-                            self.settings[opt] = options[opt];
-                        } else {
-                            userData[opt] = options[opt];
+                        val = options[opt];
+                        if (typeof val === "string" && val.startsWith("CURRENT_USER")) {
+                            loadedDefaultParams = true;
                         }
+                        if (self.settings.hasOwnProperty(opt)) {
+                            self.settings[opt] = val;
+                        } else {
+                            userData[opt] = val;
+                        }
+                    }
+                    if (loadedDefaultParams) {
+                        self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
                     }
                     d2.resolve();
                 });
@@ -308,6 +317,7 @@
             error: function (msg, fail, noLog) {
                 var e = new Error(msg);
                 e.name = "YesGraphError";
+                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG + ": " + msg);
                 if (fail) {
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
