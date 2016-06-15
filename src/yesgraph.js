@@ -6,7 +6,7 @@
  * 
  * Date: __BUILD_DATE__
  */
- 
+
 (function() {
     "use strict";
 
@@ -21,6 +21,11 @@
     var INVITES_SENT_ENDPOINT = '/invites-sent';
     var INVITES_ACCEPTED_ENDPOINT = '/invites-accepted';
     var ANALYTICS_ENDPOINT = '/analytics/sdk';
+    var EVENTS = {
+        LOAD_JS_SDK: "Loaded Javascript SDK",
+        LOAD_DEFAULT_PARAMS: "Loaded Default CURRENT_USER Params",
+        SAW_ERROR_MSG: "Saw Error Message"
+    };
     var settings = {
         app: null,
         testmode: false,
@@ -166,42 +171,6 @@
         return d.promise();
     }
 
-    function logScreenEvent() {
-        var eventData = {
-            "entries": [{
-                "context": {
-                    "app": {
-                        "name": window.navigator.appName,
-                        "version": window.navigator.appVersion
-                    },
-                    "library": {
-                        "name": "yesgraph.js",
-                        "version": VERSION
-                    },
-                    "device": {
-                        "type": "web"
-                    },
-                    "os": {},
-                    "userAgent": window.navigator.userAgent || null,
-                    "page": {
-                        "path": window.location.pathname,
-                        "referrer": window.document.referrer,
-                        "search": window.location.search,
-                        "title": window.document.title,
-                        "url": window.location.href
-                    },
-                },
-                "name": window.document.title + ': ' + window.location.pathname,
-                "properties": {
-                    "app_name": YesGraphAPI.app
-                },
-                "timestamp": new Date(),
-                "type": "screen"
-            }, ]
-        };
-        return hitAPI(ANALYTICS_ENDPOINT, "POST", eventData);
-    }
-
     function requireScript(globalVar, script, func) {
         // Get the specified script if it hasn't been loaded already
         if (window.hasOwnProperty(globalVar)) {
@@ -244,6 +213,8 @@
             var ravenDeferred = jQuery.Deferred(),
                 clientTokenDeferred = jQuery.Deferred();
 
+            self.AnalyticsManager = new AnalyticsManager(self);
+
             loadRaven().done(function(_Raven){
                 self.Raven = _Raven;
                 ravenDeferred.resolve();
@@ -252,7 +223,7 @@
             waitForOptions().done(function(userData){
                 self.utils.getOrFetchClientToken(userData).done(function(){
                     clientTokenDeferred.resolve();
-                    logScreenEvent();
+                    self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
                 });
             });
 
@@ -278,19 +249,27 @@
                 d1.done(function(options){
                     // Update the settings for the YesGraphAPI object
                     var userData = {};
+                    var loadedDefaultParams = false;
+                    var val;
                     self.app = self.app || options.app;
                     for (var opt in options) {
-                        if (self.settings.hasOwnProperty(opt)) {
-                            self.settings[opt] = options[opt];
-                        } else {
-                            userData[opt] = options[opt];
+                        val = options[opt];
+                        if (typeof val === "string" && val.startsWith("CURRENT_USER")) {
+                            loadedDefaultParams = true;
                         }
+                        if (self.settings.hasOwnProperty(opt)) {
+                            self.settings[opt] = val;
+                        } else {
+                            userData[opt] = val;
+                        }
+                    }
+                    if (loadedDefaultParams) {
+                        self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
                     }
                     d2.resolve();
                 });
                 return d2.promise();
             }
-
         };
 
         this.utils = {
@@ -338,11 +317,99 @@
             error: function (msg, fail, noLog) {
                 var e = new Error(msg);
                 e.name = "YesGraphError";
+                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG + ": " + msg);
                 if (fail) {
-                    e.noLog = Boolean(noLog);// Optionally don't log to Sentry
+                    e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
                 } else {
                     console.log("YesGraphError", e);
+                }
+            }
+        };
+    }
+
+    function AnalyticsManager(YesGraphAPI) {
+        var self = this;
+        this.postponed = [];
+        this.YesGraphAPI = YesGraphAPI;
+        this.settings = { // default analytics event structure
+            "context": {
+                "app": {
+                    "name": window.navigator.appName,
+                    "version": window.navigator.appVersion
+                },
+                "library": {
+                    "name": "yesgraph.js",
+                    "version": VERSION
+                },
+                "device": {
+                    "type": "web"
+                },
+                "os": {},
+                "userAgent": window.navigator.userAgent || null,
+                "page": {
+                    "path": window.location.pathname,
+                    "referrer": window.document.referrer,
+                    "search": window.location.search,
+                    "title": window.document.title,
+                    "url": window.location.href
+                },
+            },
+            "name": window.document.title + ': ' + window.location.pathname,
+            "properties": {
+                "app_name": null
+            },
+            "timestamp": new Date(),
+            "type": "screen"
+        };
+        this.isReady = this.YesGraphAPI && this.YesGraphAPI.isReady;
+
+        if (!this.isReady){
+            // If the YesGraphAPI isn't yet installed/ready, any analytics
+            // events can be stored in the "postponed" array. Once it IS ready,
+            // we should POST all of those pending events.
+            var interval = setInterval(function(){
+                if (self.YesGraphAPI && self.YesGraphAPI.isReady) {
+                    clearInterval(interval);
+                    self.isReady = true;
+                    self.log(); // log all postponed events
+                }
+            }, 50);
+        }
+
+        this.log = function(type, target, timestamp, library) {
+            var evt;
+            if (type) {
+                // Update the default event object with the specified data
+                evt = jQuery.extend(true, {}, self.settings);
+                Object.assign(evt, {
+                    type: type || evt.type,
+                    target: target || evt.target,
+                    timestamp: timestamp || evt.timestamp,
+                });
+                evt.context.library = library || evt.context.library;
+            }
+            if (self.isReady) {
+                // Collect all postponed events (in addition to the event
+                // currently being logged), and send them in a batch to the API.
+                var evts = [];
+                if (evt) {
+                    evt.properties.app_name = self.YesGraphAPI.app;
+                    evts.push(evt);
+                }
+                self.postponed.forEach(function(evt) {
+                    evt.properties.app_name = self.YesGraphAPI.app;
+                    evts.push(evt);
+                });
+                if (evts) {
+                    self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts });
+                }
+                self.postponed = [];
+            } else {
+                if (evt) {
+                    // Don't try to POST analytics events
+                    // before the YesGraphAPI object is ready
+                    self.postponed.push(evt);
                 }
             }
         };
