@@ -1,0 +1,66 @@
+{
+  "name": "yesgraph-superwidget",
+  "version": "1.0.0",
+  "description": "YesGraph uses machine learning and social graph analysis to improve your app's viral growth. Given an address book, we rank your users' contacts so that they start sending more invites and you win!",
+  "main": "yesgraph-invites.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "jasmine-core": "^2.4.1",
+    "karma": "^0.13.22",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-jasmine": "^1.0.2"
+  },
+  "devDependencies": {
+    "brfs": "^1.4.3",
+    "del": "^2.2.0",
+    "gulp": "^3.9.1",
+    "gulp-awspublish": "^3.2.0",
+    "gulp-clean-css": "^2.0.10",
+    "gulp-clone": "^1.0.0",
+    "gulp-cloudfront-invalidate": "^0.1.2",
+    "gulp-jshint": "^2.0.1",
+    "gulp-less": "^3.1.0",
+    "gulp-prompt": "^0.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
+    "gulp-uglify": "^1.5.3",
+    "jasmine-jquery": "^2.1.1",
+    "jshint": "^2.9.2",
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-coverage": "^1.0.0",
+    "karma-coveralls": "^1.1.2",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-html2js-preprocessor": "^1.0.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-jasmine-jquery": "^0.1.1",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "karma-safari-launcher": "^1.0.0",
+    "karma-sauce-launcher": "^1.0.0",
+    "map-stream": "0.0.6",
+    "phantomjs-prebuilt": "^2.1.7",
+    "require-dir": "^0.3.0",
+    "run-sequence": "^1.2.1",
+    "watchify": "^3.7.0"
+  },
+  "scripts": {
+    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
+    "start": "gulp watch",
+    "build": "gulp build",
+    "lint": "gulp lint",
+    "clean": "gulp clean"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YesGraph/yesgraph-superwidget.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YesGraph/yesgraph-superwidget/issues"
+  },
+  "homepage": "https://github.com/YesGraph/yesgraph-superwidget#readme"
+}
