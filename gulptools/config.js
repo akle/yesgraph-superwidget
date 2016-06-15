@@ -7,8 +7,8 @@ var dest = {
     dev: "./dist/dev",
     root: "./dist"
 };
-var __SDK_VERSION__ = "v0.0.3";
-var __SUPERWIDGET_VERSION__ = "v0.0.3";
+var __SDK_VERSION__ = "v0.1.0";
+var __SUPERWIDGET_VERSION__ = "v1.0.0";
 var __CSS_VERSION__ = "v0.0.4";
 
 module.exports = {

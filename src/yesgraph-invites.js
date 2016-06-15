@@ -7,7 +7,7 @@
  * Date: __BUILD_DATE__
  */
 
-;(function () {
+(function () {
     "use strict";
 
     var VERSION = "__SUPERWIDGET_VERSION__";
@@ -19,6 +19,12 @@
             clearInterval(domReadyTimer);
         }
     }, 100);
+    var EVENTS = {
+        LOAD_SUPERWIDGET: "Loaded Superwidget",
+        CLICK_CONTACT_IMPORT_BTN: "Clicked Contact Import Button",
+        CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
+        CLICK_COPY_LINK: "Clicked to Copy Invite Link"
+    };
 
     function loadSuperwidget() {
         var protocol;
@@ -643,6 +649,10 @@
                             containerHeader.append(headline);
                         }
 
+                        $("#yes-invite-link-copy-btn").on("click", function() {
+                            YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK);
+                        });
+
                         var clipboard = new Clipboard('#yes-invite-link-copy-btn');
                         clipboard.on('success', function (e) {
                             var originalCopy = e.trigger.textContent;
@@ -797,6 +807,9 @@
                                     "class": btnClass + (btnCount > 3 ? " yes-no-label" : ""), // Only show the icon if there are more than 3 btns
                                     "title": service.name
                                 }).append(outerWrapper);
+                            btn.on("click", function(){
+                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN + ": " + service.name);
+                            });
                             return btn;
                         }
                     }
@@ -914,13 +927,14 @@
                                         "data-pin-custom": true
                                     }).append(shareBtn);
 
-                                    shareBtn.on("click", function () { // jshint ignore:line
+                                    shareBtn.on("click", function () {
                                         // Do this on each click. Otherwise images added
                                         // asynchronously (e.g., by Intercom) will not
                                         // have the desired description when pinned.
                                         $("img").not("[data-pin-description]").each(function () {
                                             this.dataset.pinDescription = OPTIONS.integrations.twitter.tweetMsg + " " + inviteLink;
                                         });
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name);
                                         wrapper[0].click();
                                     });
 
@@ -929,10 +943,11 @@
                                     });
 
                                 } else {
-                                    shareBtn.on("click", function (evt) { //jshint ignore:line
+                                    shareBtn.on("click", function (evt) {
                                         targ = $(this);
                                         open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
                                     });
+                                    YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name);
                                     buttonsDiv.append(shareBtn);
                                 }
                             }
