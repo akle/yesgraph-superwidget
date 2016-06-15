@@ -286,7 +286,7 @@
                             userData[opt] = options[opt];
                         }
                     }
-                    d2.resolve();
+                    d2.resolve(userData);
                 });
                 return d2.promise();
             }
