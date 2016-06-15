@@ -329,16 +329,10 @@
     }
 
     function AnalyticsManager(YesGraphAPI) {
-        // Description:
-        // Generated as soon as the SDK loads.
-        // Loads events, tries to POST them immediately.
-        // Stores any events that fail
-        // Tries to post all failed events individually before the window closes
         var self = this;
         this.postponed = [];
-        this.superwidgetSettings = {};
         this.YesGraphAPI = YesGraphAPI;
-        this.sdkSettings = {
+        this.settings = { // default analytics event structure
             "context": {
                 "app": {
                     "name": window.navigator.appName,
@@ -371,7 +365,9 @@
         this.isReady = this.YesGraphAPI && this.YesGraphAPI.isReady;
 
         if (!this.isReady){
-            // Wait until the analytics manager is ready
+            // If the YesGraphAPI isn't yet installed/ready, any analytics
+            // events can be stored in the "postponed" array. Once it IS ready,
+            // we should POST all of those pending events.
             var interval = setInterval(function(){
                 if (self.YesGraphAPI && self.YesGraphAPI.isReady) {
                     clearInterval(interval);
@@ -381,17 +377,21 @@
             }, 50);
         }
 
-        this.log = function(type, target, timestamp) {
+        this.log = function(type, target, timestamp, library) {
             var evt;
             if (type) {
-                evt = jQuery.extend(true, {}, self.sdkSettings);
+                // Update the default event object with the specified data
+                evt = jQuery.extend(true, {}, self.settings);
                 Object.assign(evt, {
                     type: type || evt.type,
                     target: target || evt.target,
-                    timestamp: timestamp || evt.timestamp
+                    timestamp: timestamp || evt.timestamp,
                 });
+                evt.context.library = library || evt.context.library;
             }
             if (self.isReady) {
+                // Collect all postponed events (in addition to the event
+                // currently being logged), and send them in a batch to the API.
                 var evts = [];
                 if (evt) {
                     evt.properties.app_name = self.YesGraphAPI.app;
@@ -407,6 +407,8 @@
                 self.postponed = [];
             } else {
                 if (evt) {
+                    // Don't try to POST analytics events
+                    // before the YesGraphAPI object is ready
                     self.postponed.push(evt);
                 }
             }

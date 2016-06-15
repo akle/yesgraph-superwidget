@@ -13,6 +13,10 @@
     var VERSION = "__SUPERWIDGET_VERSION__";
     var SDK_VERSION = "__SDK_VERSION__";
     var CSS_VERSION = "__CSS_VERSION__";
+    var LIBRARY = {
+        name: "yesgraph-invites.js",
+        version: VERSION
+    };
     var domReadyTimer = setInterval(function () {
         if (document.readyState === "complete" || document.readyState === "interactive") {
             loadSuperwidget();
@@ -650,7 +654,7 @@
                         }
 
                         $("#yes-invite-link-copy-btn").on("click", function() {
-                            YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK);
+                            YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, null, null, LIBRARY);
                         });
 
                         var clipboard = new Clipboard('#yes-invite-link-copy-btn');
@@ -808,7 +812,7 @@
                                     "title": service.name
                                 }).append(outerWrapper);
                             btn.on("click", function(){
-                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN + ": " + service.name);
+                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN + ": " + service.name, null, null, LIBRARY);
                             });
                             return btn;
                         }
@@ -934,7 +938,7 @@
                                         $("img").not("[data-pin-description]").each(function () {
                                             this.dataset.pinDescription = OPTIONS.integrations.twitter.tweetMsg + " " + inviteLink;
                                         });
-                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name);
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name, null, null, LIBRARY);
                                         wrapper[0].click();
                                     });
 
@@ -946,7 +950,7 @@
                                     shareBtn.on("click", function (evt) {
                                         targ = $(this);
                                         open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
-                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name);
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name, null, null, LIBRARY);
                                     });
                                     buttonsDiv.append(shareBtn);
                                 }
