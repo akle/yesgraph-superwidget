@@ -50,6 +50,9 @@ module.exports = {
         version: {
             files: src.root + "/**/*"
         },
+        update: {
+            files: src.dev + "/yesgraph?(-invites)?(.min).@(js|less|css)"
+        },
         deploy: {
             files: dest.root + "/**/yesgraph*@(js|css)"
         }
