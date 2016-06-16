@@ -266,7 +266,7 @@
                     if (loadedDefaultParams) {
                         self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
                     }
-                    d2.resolve();
+                    d2.resolve(userData);
                 });
                 return d2.promise();
             }
