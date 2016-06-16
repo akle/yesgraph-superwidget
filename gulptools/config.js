@@ -39,7 +39,7 @@ module.exports = {
             reportFile: root + "/jshint-report.txt"
         },
         minifyScripts: {
-            files: src.root + "/**/yesgraph*js"
+            files: src.root + "/**/yesgraph?(-invites).js"
         },
         minifyCss: {
             files: src.root + "/**/yesgraph-invites.css"
@@ -54,7 +54,7 @@ module.exports = {
             files: src.dev + "/yesgraph?(-invites)?(.min).@(js|less|css)"
         },
         deploy: {
-            files: dest.root + "/**/yesgraph*@(js|css)"
+            files: dest.root + "/**/yesgraph?(-invites)?(.min).@(js|css)?(.map)"
         }
     },
     s3: {
