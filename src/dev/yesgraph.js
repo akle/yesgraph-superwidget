@@ -401,7 +401,7 @@
                     evt.properties.app_name = self.YesGraphAPI.app;
                     evts.push(evt);
                 });
-                if (evts) {
+                if (evts.length > 0) {
                     self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts });
                 }
                 self.postponed = [];

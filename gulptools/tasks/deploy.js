@@ -13,7 +13,7 @@ gulp.task("deploy", function(done) {
         return str.slice(0,substr.length) === substr;
     }
 
-    sequence("clean", "build", "version", function(){
+    sequence("clean", "test", "build", "version", function(){
         var cloneSink = clone.sink();
         gulp.src(config.tasks.deploy.files)
             // We use cloneSink here to create a copy of the files and rename
