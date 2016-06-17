@@ -792,6 +792,11 @@
 
                         $(targetSelector).append(container);
                         YesGraphAPI.Superwidget.isReady = true;
+                        YesGraphAPI.Raven.captureBreadcrumb({
+                            timestamp: new Date(),  
+                            type: "config",
+                            message: "Superwidget Is Ready"
+                        });
 
                         function generateContactImportBtn(service) {
                             var icon = $("<div>", {
