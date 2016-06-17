@@ -434,6 +434,14 @@
                 evt.context.library = library || evt.context.library;
             }
             if (self.isReady) {
+                // Log a breadcrumb to Sentry, in case an error occurs later
+                self.Raven.captureBreadcrumb({
+                    timestamp: timestamp || new Date(),
+                    message: type
+                    data: {
+                        target: target
+                    }
+                });
                 // Collect all postponed events (in addition to the event
                 // currently being logged), and send them in a batch to the API.
                 var evts = [];
