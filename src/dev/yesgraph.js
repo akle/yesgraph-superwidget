@@ -435,9 +435,9 @@
             }
             if (self.isReady) {
                 // Log a breadcrumb to Sentry, in case an error occurs later
-                self.Raven.captureBreadcrumb({
+                self.YesGraphAPI.Raven.captureBreadcrumb({
                     timestamp: timestamp || new Date(),
-                    message: type
+                    message: type,
                     data: {
                         target: target
                     }

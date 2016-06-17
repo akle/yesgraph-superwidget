@@ -18,6 +18,7 @@ module.exports = function(config) {
     files: [
       'tests/*.html',
       'tests/*.js',
+      'src/dev/yesgraph-invites.css', 
       'src/dev/yesgraph-invites.js', 
       'src/dev/yesgraph.js', 
       //'tests/*.js', 
