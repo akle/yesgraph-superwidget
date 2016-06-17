@@ -22,7 +22,7 @@ module.exports = {
     },
     tasks: {
         build: {
-            files: src.root + "/**/yesgraph*@(js|css)"
+            files: src.root + "/**/yesgraph?(-invites)?(.min).@(js|css)?(.map)"
         },
         clean: {
             files: [
@@ -35,7 +35,7 @@ module.exports = {
             files: src.root + "/**/yesgraph-invites.less"
         },
         lint: {
-            files: src.root + "/**/yesgraph*js",
+            files: src.root + "/**/yesgraph?(-invites).js",
             reportFile: root + "/jshint-report.txt"
         },
         minifyScripts: {

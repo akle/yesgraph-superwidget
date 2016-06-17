@@ -71,8 +71,7 @@
     function getRankedContacts(done) {
         var matchDomain = settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
-        rawContacts.promote_matching_domain = domainVal;
-        return hitAPI(ADDRBOOK_ENDPOINT, "GET", null, done);
+        return hitAPI(ADDRBOOK_ENDPOINT, "GET", {promote_matching_domain: domainVal}, done);
     }
 
     function postSuggestedSeen(seenContacts, done) {

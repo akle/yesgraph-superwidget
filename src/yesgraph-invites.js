@@ -525,8 +525,8 @@
                         } catch (ignore) {}
 
                         modalSendBtn.prop("disabled", true);
-                        var suggested = getSelectedRecipients(suggestedList),
-                            alphabetical = getSelectedRecipients(totalList),
+                        var suggested = YesGraphAPI.utils.getSelectedRecipients(suggestedList),
+                            alphabetical = YesGraphAPI.utils.getSelectedRecipients(totalList),
                             recipients = suggested.concat(alphabetical),
                             unique_recipients = [],
                             emails = [];
@@ -540,7 +540,7 @@
                             }
                         });
 
-                        sendEmailInvites(recipients)
+                        YesGraphAPI.utils.sendEmailInvites(recipients)
                             .fail(function (data) {
                                 flash.error("Email invite sending failed");
                                 YesGraphAPI.utils.error("Email invite sending failed");
@@ -703,8 +703,8 @@
 
                         manualInputSubmit.on("click", function (evt) {
                             evt.preventDefault();
-                            var recipients = getSelectedRecipients(manualInputField);
-                            sendEmailInvites(recipients);
+                            var recipients = YesGraphAPI.utils.getSelectedRecipients(manualInputField);
+                            YesGraphAPI.utils.sendEmailInvites(recipients);
                             manualInputField.val("");
                         });
 
@@ -1390,7 +1390,7 @@
                     return d.promise();
                 }
 
-                function getSelectedRecipients(elem) {
+                YesGraphAPI.utils.getSelectedRecipients = function(elem) {
                     var recipients = [],
                         recipient,
                         emails,
@@ -1430,9 +1430,9 @@
                         });
                         return recipients;
                     }
-                }
+                };
 
-                function sendEmailInvites(recipients) {
+                YesGraphAPI.utils.sendEmailInvites = function(recipients) {
                     var d = $.Deferred();
                     var msg;
                     if (!recipients || recipients.length < 1) {
@@ -1499,7 +1499,7 @@
                         });
                     }
                     return d.promise();
-                }
+                };
 
                 function getUrlParam(url, name) {
                     name = name.replace(new RegExp("/[[]/"), "\[").replace(new RegExp("/[]]/"), "\]");
