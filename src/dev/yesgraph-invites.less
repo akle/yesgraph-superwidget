@@ -13,45 +13,10 @@
     }
 }
 
-.box-shadow(@shadow) {
-    -webkit-box-shadow: @shadow;
-    -moz-box-shadow: @shadow;
-    box-shadow: @shadow;
-}
-
-.keyframes(@name,@rules) {
-
-    @-webkit-keyframes @name {
-        @rules();
-    }
-
-    @-moz-keyframes @name {
-        @rules();
-    }
-
-    @-ms-keyframes @name {
-        @rules();
-    }
-
-    @-o-keyframes @name {
-        @rules();
-    }
-
-    @keyframes @name {
-        @rules();
-    }
-}
-
 .strict-width(@width) {
     max-width: @width;
     min-width: @width;
     width: @width;
-}
-
-.transform(@transformation) {
-  -webkit-transform: @transformation;
-  -ms-transform: @transformation;
-  transform: @transformation;
 }
 
 .yes-widget-container, .yes-modal {
@@ -290,7 +255,7 @@
         margin: 0 0 10px 0;
         padding: 5px 35px;
         width: 100%;
-        .box-shadow(0px 0px 28px -13px rgba(0,0,0,1));
+        box-shadow: 0px 0px 28px -13px rgba(0,0,0,1);
     }
 
     .yes-contact-container {
@@ -366,14 +331,14 @@
 }
 
 @-moz-document url-prefix() { 
-  .yes-modal {
+    .yes-modal {
         .yes-contact-row-name,
         .yes-contact-row-email {
             &>div {
                 overflow: hidden;
             }
         }
-  }
+    }
 }
 
 .yes-modal-overlay {

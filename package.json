@@ -16,6 +16,7 @@
     "brfs": "^1.4.3",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^3.1.0",
     "gulp-awspublish": "^3.2.0",
     "gulp-clean-css": "^2.0.10",
     "gulp-clone": "^1.0.0",
