@@ -793,8 +793,7 @@
                         $(targetSelector).append(container);
                         YesGraphAPI.Superwidget.isReady = true;
                         YesGraphAPI.Raven.captureBreadcrumb({
-                            timestamp: new Date(),  
-                            type: "config",
+                            timestamp: new Date(),
                             message: "Superwidget Is Ready"
                         });
 

@@ -163,9 +163,17 @@
             }
 
             jQuery.ajax(ajaxSettings).always(function(resp) {
+                var level;
+                if (200 <= resp.status < 300) {
+                    level = "info";
+                } else if (resp.status > 500) {
+                    level = "error";
+                } else {
+                    level = "warning";
+                }
                 self.Raven.captureBreadcrumb({
                     timestamp: new Date(),
-                    type: "ajax",
+                    level: level,
                     data: {
                         url: ajaxSettings.url,
                         method: ajaxSettings.method || ajaxSettings.type,
@@ -232,6 +240,19 @@
                 });
             });
 
+            // If the client token fails, log that to Sentry
+            clientTokenDeferred.fail(function(clientTokenResponse){
+                ravenDeferred.done(function(){
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        message: "Client Token Request Failed",
+                        level: "error",
+                        data: clientTokenResponse
+                    });
+                    self.Raven.captureException(new Error("Client Token Request Failed"));
+                });
+            });
+
             jQuery.when(ravenDeferred, clientTokenDeferred).done(function(){
                 self.Raven.setTagsContext({
                     sdk_version: self.SDK_VERSION,
@@ -240,8 +261,7 @@
                     jquery_version: jQuery.fn.jquery
                 });
                 self.Raven.captureBreadcrumb({
-                    timestamp: new Date(),  
-                    type: "config",
+                    timestamp: new Date(),
                     message: "YesGraphAPI Is Ready"
                 });
                 self.isReady = true;
@@ -322,21 +342,24 @@
                 // hitting the API will validate the token and return the same one.
                 // Otherwise, the API will create a new client token.
                 return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(data) {
+                    var errorMsg = ((!data.error) || (data.error === "error")) ? "Client Token Request Failed." : data.error;
                     self.utils.error(data.error + " Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
                 });
             },
             error: function (msg, fail, noLog) {
                 var e = new Error(msg);
                 e.name = "YesGraphError";
-                self.Raven.captureBreadcrumb({
-                    timestamp: new Date(),
-                    type: "YesGraphError",
-                    message: msg,
-                    data: {
-                        is_fatal: fail,
-                        should_log: !noLog
-                    }
-                });
+                if (self.Raven) {
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        message: msg,
+                        level: fail ? "error" : "warning",
+                        data: {
+                            is_fatal: fail,
+                            should_log: !noLog
+                        }
+                    });
+                }
                 self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG);
                 if (fail) {
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
