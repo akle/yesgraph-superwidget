@@ -40,7 +40,7 @@
 
     // Initialize in dev-mode as appropriate
     if (["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1 && window.document.title === 'YesGraph') {
-        YESGRAPH_BASE_URL = window.location.origin;
+        YESGRAPH_BASE_URL = "http://localhost:5001";
         PUBLIC_RAVEN_DSN = "https://26657ee86c48458ea5c65e27de766715@app.getsentry.com/81078";
         RUNNING_LOCALLY = true;
     } else {
@@ -89,7 +89,6 @@
             src = "https://cdn.ravenjs.com/3.0.4/raven.min.js",
             options = {
                 includePaths: [
-                    window.location.href,
                     /https?:\/\/cdn\.yesgraph\.com*/
                 ],
                 shouldSendCallback: function(data) {
@@ -171,17 +170,19 @@
                 } else {
                     level = "warning";
                 }
-                self.Raven.captureBreadcrumb({
-                    timestamp: new Date(),
-                    level: level,
-                    data: {
-                        url: ajaxSettings.url,
-                        method: ajaxSettings.method || ajaxSettings.type,
-                        status_code: resp.status,
-                        reason: resp.statusText,
-                        requestData: ajaxSettings.data
-                    }
-                });
+                if (self.Raven) {
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        level: level,
+                        data: {
+                            url: ajaxSettings.url,
+                            method: ajaxSettings.method || ajaxSettings.type,
+                            status_code: resp.status,
+                            reason: resp.statusText,
+                            requestData: ajaxSettings.data
+                        }
+                    });
+                }
             });
 
             if (done) { d.done(done); }
