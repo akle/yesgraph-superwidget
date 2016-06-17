@@ -40,7 +40,7 @@
 
     // Initialize in dev-mode as appropriate
     if (["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1 && window.document.title === 'YesGraph') {
-        YESGRAPH_BASE_URL = window.location.origin;
+        YESGRAPH_BASE_URL = "http://localhost:5001";
         PUBLIC_RAVEN_DSN = "https://26657ee86c48458ea5c65e27de766715@app.getsentry.com/81078";
         RUNNING_LOCALLY = true;
     } else {
@@ -60,70 +60,6 @@
     requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function(jQuery){
         YesGraphAPI.install();
     });
-
-    function rankContacts(rawContacts, done) {
-        var matchDomain = settings.promoteMatchingDomain,
-            domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
-        rawContacts.promote_matching_domain = domainVal;
-        return hitAPI(ADDRBOOK_ENDPOINT, "POST", rawContacts, done);
-    }
-
-    function getRankedContacts(done) {
-        var matchDomain = settings.promoteMatchingDomain,
-            domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
-        return hitAPI(ADDRBOOK_ENDPOINT, "GET", {promote_matching_domain: domainVal}, done);
-    }
-
-    function postSuggestedSeen(seenContacts, done) {
-        return hitAPI(SUGGESTED_SEEN_ENDPOINT, "POST", seenContacts, done);
-    }
-
-    function postInvitesSent(invitesSent, done) {
-        return hitAPI(INVITES_SENT_ENDPOINT, "POST", invitesSent, done);
-    }
-
-    function postInvitesAccepted(invitesAccepted, done) {
-        return hitAPI(INVITES_ACCEPTED_ENDPOINT, "POST", invitesAccepted, done);
-    }
-
-    function test(done) {
-        return hitAPI('/test', "GET", null, done);
-    }
-
-    function hitAPI(endpoint, method, data, done, deferred) {
-        var d = deferred || jQuery.Deferred();
-        if (typeof method !== "string") {
-            d.reject({error: "Expected method as string, not " + typeof method});
-            return d.promise();
-        } else if (method.toUpperCase() !== "GET") {
-            data = JSON.stringify(data || {});
-        }
-        var ajaxSettings = {
-            url: YESGRAPH_API_URL + endpoint,
-            data: data,
-            contentType: "application/json; charset=UTF-8",
-            headers: {
-                "Authorization": "ClientToken " + YesGraphAPI.clientToken
-            },
-            success: function(data) {
-                data = typeof data === "string" ? JSON.parse(data) : data;
-                d.resolve(data);
-            },
-            error: function(data) {
-                d.reject(data.responseJSON || {error: data.statusText});
-            }
-        };
-        // In jQuery 1.9+, the jQuery.ajax "type" is changed to "method"
-        if (jQuery.fn.jquery < "1.9") {
-            ajaxSettings.type = method;
-        } else {
-            ajaxSettings.method = method;
-        }
-
-        jQuery.ajax(ajaxSettings);
-        if (done) { d.done(done); }
-        return d.promise();
-    }
 
     function waitForYesGraphTarget() {
         // Check the dom periodically until we find an
@@ -153,7 +89,6 @@
             src = "https://cdn.ravenjs.com/3.0.4/raven.min.js",
             options = {
                 includePaths: [
-                    window.location.href,
                     /https?:\/\/cdn\.yesgraph\.com*/
                 ],
                 shouldSendCallback: function(data) {
@@ -193,15 +128,95 @@
         this.hasLoadedSuperwidget = false;
         this.settings = settings;
 
-        this.hitAPI = hitAPI;
-        this.rankContacts = rankContacts;
-        this.getRankedContacts = getRankedContacts;
-        this.postSuggestedSeen = postSuggestedSeen;
-        this.postInvitesSent = postInvitesSent;
-        this.postInvitesAccepted = postInvitesAccepted;
-        this.test = test;
-
         var self = this;
+
+        this.hitAPI = function (endpoint, method, data, done, deferred) {
+            var d = deferred || jQuery.Deferred();
+            if (typeof method !== "string") {
+                d.reject({error: "Expected method as string, not " + typeof method});
+                return d.promise();
+            } else if (method.toUpperCase() !== "GET") {
+                data = JSON.stringify(data || {});
+            }
+            var ajaxSettings = {
+                url: YESGRAPH_API_URL + endpoint,
+                data: data,
+                contentType: "application/json; charset=UTF-8",
+                headers: {
+                    "Authorization": "ClientToken " + YesGraphAPI.clientToken
+                },
+                success: function(data) {
+                    data = typeof data === "string" ? JSON.parse(data) : data;
+                    d.resolve(data);
+                },
+                error: function(data) {
+                    d.reject(data.responseJSON || {error: data.statusText});
+                }
+            };
+
+            // In jQuery 1.9+, the jQuery.ajax "type" is changed to "method"
+            if (jQuery.fn.jquery < "1.9") {
+                ajaxSettings.type = method;
+            } else {
+                ajaxSettings.method = method;
+            }
+
+            jQuery.ajax(ajaxSettings).always(function(resp) {
+                var level;
+                if (200 <= resp.status < 300) {
+                    level = "info";
+                } else if (resp.status > 500) {
+                    level = "error";
+                } else {
+                    level = "warning";
+                }
+                if (self.Raven) {
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        level: level,
+                        data: {
+                            url: ajaxSettings.url,
+                            method: ajaxSettings.method || ajaxSettings.type,
+                            status_code: resp.status,
+                            reason: resp.statusText,
+                            requestData: ajaxSettings.data
+                        }
+                    });
+                }
+            });
+
+            if (done) { d.done(done); }
+            return d.promise();
+        };
+
+        this.rankContacts = function (rawContacts, done) {
+            var matchDomain = settings.promoteMatchingDomain,
+                domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
+            rawContacts.promote_matching_domain = domainVal;
+            return self.hitAPI(ADDRBOOK_ENDPOINT, "POST", rawContacts, done);
+        };
+
+        this.getRankedContacts = function (done) {
+            var matchDomain = settings.promoteMatchingDomain,
+                domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
+            return self.hitAPI(ADDRBOOK_ENDPOINT, "GET", {promote_matching_domain: domainVal}, done);
+        };
+
+        this.postSuggestedSeen = function (seenContacts, done) {
+            return self.hitAPI(SUGGESTED_SEEN_ENDPOINT, "POST", seenContacts, done);
+        };
+
+        this.postInvitesAccepted = function (invitesAccepted, done) {
+            return self.hitAPI(INVITES_ACCEPTED_ENDPOINT, "POST", invitesAccepted, done);
+        };
+
+        this.postInvitesSent = function (invitesSent, done) {
+            return self.hitAPI(INVITES_SENT_ENDPOINT, "POST", invitesSent, done);
+        };
+
+        this.test = function (done) {
+            return self.hitAPI('/test', "GET", null, done);
+        };
 
         this.noConflict = function() {
             delete window.YesGraphAPI;
@@ -226,11 +241,29 @@
                 });
             });
 
+            // If the client token fails, log that to Sentry
+            clientTokenDeferred.fail(function(clientTokenResponse){
+                ravenDeferred.done(function(){
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        message: "Client Token Request Failed",
+                        level: "error",
+                        data: clientTokenResponse
+                    });
+                    self.Raven.captureException(new Error("Client Token Request Failed"));
+                });
+            });
+
             jQuery.when(ravenDeferred, clientTokenDeferred).done(function(){
                 self.Raven.setTagsContext({
                     sdk_version: self.SDK_VERSION,
                     app: self.app,
-                    client_token: self.clientToken
+                    client_token: self.clientToken,
+                    jquery_version: jQuery.fn.jquery
+                });
+                self.Raven.captureBreadcrumb({
+                    timestamp: new Date(),
+                    message: "YesGraphAPI Is Ready"
                 });
                 self.isReady = true;
             });
@@ -309,14 +342,26 @@
                 // If there is a client token available in the user's cookies,
                 // hitting the API will validate the token and return the same one.
                 // Otherwise, the API will create a new client token.
-                return hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(data) {
+                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(data) {
+                    var errorMsg = ((!data.error) || (data.error === "error")) ? "Client Token Request Failed." : data.error;
                     self.utils.error(data.error + " Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
                 });
             },
             error: function (msg, fail, noLog) {
                 var e = new Error(msg);
                 e.name = "YesGraphError";
-                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG + ": " + msg);
+                if (self.Raven) {
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        message: msg,
+                        level: fail ? "error" : "warning",
+                        data: {
+                            is_fatal: fail,
+                            should_log: !noLog
+                        }
+                    });
+                }
+                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG);
                 if (fail) {
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
@@ -413,5 +458,4 @@
             }
         };
     }
-
 }());

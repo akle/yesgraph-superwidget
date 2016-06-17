@@ -816,7 +816,7 @@
                                     "title": service.name
                                 }).append(outerWrapper);
                             btn.on("click", function(){
-                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN + ": " + service.name, null, null, LIBRARY);
+                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN, null, null, LIBRARY);
                             });
                             return btn;
                         }
@@ -942,7 +942,7 @@
                                         $("img").not("[data-pin-description]").each(function () {
                                             this.dataset.pinDescription = OPTIONS.integrations.twitter.tweetMsg + " " + inviteLink;
                                         });
-                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name, null, null, LIBRARY);
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, null, null, LIBRARY);
                                         wrapper[0].click();
                                     });
 
@@ -954,7 +954,7 @@
                                     shareBtn.on("click", function (evt) {
                                         targ = $(this);
                                         open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
-                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN + ": " + service.name, null, null, LIBRARY);
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, null, null, LIBRARY);
                                     });
                                     buttonsDiv.append(shareBtn);
                                 }
