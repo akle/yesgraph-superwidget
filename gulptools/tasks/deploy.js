@@ -9,7 +9,11 @@ var config = require("../config");
 var publisher = aws.create(config.s3);
 
 gulp.task("deploy", function(done) {
-    sequence("clean", "build", "version", function(){
+    function startsWith (str, substr) {
+        return str.slice(0,substr.length) === substr;
+    }
+
+    sequence("clean", "test", "build", "version", function(){
         var cloneSink = clone.sink();
         gulp.src(config.tasks.deploy.files)
             // We use cloneSink here to create a copy of the files and rename
@@ -17,11 +21,11 @@ gulp.task("deploy", function(done) {
             .pipe(cloneSink)
             .pipe(rename(function(path){
                 // Add versions to the filepath
-                if (path.basename == "yesgraph-invites" && path.extname == ".css") {
+                if (startsWith(path.basename, "yesgraph-invites") && path.extname == ".css") {
                     path.dirname += "/" + config.version.css;
-                } else if (path.basename == "yesgraph-invites" && path.extname == ".js") {
+                } else if (startsWith(path.basename, "yesgraph-invites") && path.extname == ".js") {
                     path.dirname += "/" + config.version.superwidget;
-                } else if (path.basename == "yesgraph" && path.extname == ".js") {
+                } else if (startsWith(path.basename, "yesgraph") && path.extname == ".js") {
                     path.dirname += "/" + config.version.sdk;
                 }
             }))

@@ -7,8 +7,8 @@ var dest = {
     dev: "./dist/dev",
     root: "./dist"
 };
-var __SDK_VERSION__ = "v0.1.0";
-var __SUPERWIDGET_VERSION__ = "v1.0.0";
+var __SDK_VERSION__ = "v0.1.1";
+var __SUPERWIDGET_VERSION__ = "v1.0.1";
 var __CSS_VERSION__ = "v0.0.4";
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
     },
     tasks: {
         build: {
-            files: src.root + "/**/yesgraph*@(js|css)"
+            files: src.root + "/**/yesgraph?(-invites)?(.min).@(js|css)?(.map)"
         },
         clean: {
             files: [
@@ -35,11 +35,11 @@ module.exports = {
             files: src.root + "/**/yesgraph-invites.less"
         },
         lint: {
-            files: src.root + "/**/yesgraph*js",
+            files: src.root + "/**/yesgraph?(-invites).js",
             reportFile: root + "/jshint-report.txt"
         },
         minifyScripts: {
-            files: src.root + "/**/yesgraph*js"
+            files: src.root + "/**/yesgraph?(-invites).js"
         },
         minifyCss: {
             files: src.root + "/**/yesgraph-invites.css"
@@ -50,8 +50,11 @@ module.exports = {
         version: {
             files: src.root + "/**/*"
         },
+        update: {
+            files: src.dev + "/yesgraph?(-invites)?(.min).@(js|less|css)"
+        },
         deploy: {
-            files: dest.root + "/**/yesgraph*@(js|css)"
+            files: dest.root + "/**/yesgraph?(-invites)?(.min).@(js|css)?(.map)"
         }
     },
     s3: {

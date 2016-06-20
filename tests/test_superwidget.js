@@ -15,6 +15,7 @@ describe('testSuperwidgetUI', function() {
         }
         function finishPrep(){
             widget = window.YesGraphAPI.Superwidget;
+            window.YesGraphAPI.isTestMode(true);
             done();
         }
     });
@@ -36,13 +37,37 @@ describe('testSuperwidgetUI', function() {
         });
         it('Should load invite link section', function() {
             expect(widget.container.find(".yes-invite-link-section").length).toEqual(1);
+            expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com?foo=bar");
         });
         it('Should load share button section', function() {
             expect(widget.container.find(".yes-share-btn-section").length).toEqual(1);
         });
     });
 
+    describe("testEmailValidation", function() {
+        it("Should identify valid email recipients", function() {
+            var inputField = widget.container.find(".yes-manual-input-field");
+            inputField.val("valid@email.com");
+
+            expect(function(){
+                var recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
+                return recipients[0].email;
+            }()).toEqual("valid@email.com");
+        });
+
+        it("Should reject invalid email recipients", function() {
+            var inputField = widget.container.find(".yes-manual-input-field");
+            inputField.val("not-a-valid-email");
+
+            expect(function(){
+                var recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
+                return recipients.length;
+            }()).toEqual(0); // No valid recipients should be returned
+        });
+    });
+
     describe('testContactsModal', function(){
+
         it('Should load contacts modal', function() {
             expect(widget.modal).toBeDefined();
             expect(widget.modal.container).toBeDefined();
