@@ -425,12 +425,9 @@
             var evt;
             if (type) {
                 // Update the default event object with the specified data
-                evt = jQuery.extend(true, {}, self.settings);
-                Object.assign(evt, {
-                    type: type || evt.type,
-                    target: target || evt.target,
-                    timestamp: timestamp || evt.timestamp,
-                });
+                evt = jQuery.extend(true, {}, self.settings, { type: type });
+                evt.target = target || evt.target;
+                evt.timestamp = timestamp || evt.timestamp;
                 evt.context.library = library || evt.context.library;
             }
             if (self.isReady) {
