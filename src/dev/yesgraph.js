@@ -344,7 +344,7 @@
                 // Otherwise, the API will create a new client token.
                 return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(data) {
                     var errorMsg = ((!data.error) || (data.error === "error")) ? "Client Token Request Failed." : data.error;
-                    self.utils.error(data.error + " Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
+                    self.utils.error(errorMsg + " Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
                 });
             },
             error: function (msg, fail, noLog) {
