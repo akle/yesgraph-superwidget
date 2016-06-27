@@ -1287,11 +1287,14 @@
                                         var errorMessage = getUrlParam(responseUrl, "error");
                                         token = getUrlParam(responseUrl, "access_token");
 
+                                        console.log("Response URL:", responseUrl); // FIXME
+                                        console.log("Refresh Token:", getUrlParam(responseUrl, "refresh_token")); // FIXME
+
                                         if (token) {
                                             GMAIL_ACCESS_TOKEN = token;
                                             d.resolve({
                                                 token: GMAIL_ACCESS_TOKEN,
-                                                type: getUrlParam(responseUrl, "token_type"),
+                                                type: "code" || getUrlParam(responseUrl, "token_type"), // FIXME
                                                 expires_in: getUrlParam(responseUrl, "expires_in")
                                             });
                                             clearInterval(pollTimer);
@@ -1341,14 +1344,16 @@
                             }
 
                             var params = {
-                                response_type: "token",
+                                response_type: "code",
                                 client_id: OPTIONS.integrations.google.clientId,
                                 state: window.location.href,
-                                redirect_uri: OPTIONS.integrations.google.redirectUrl
+                                redirect_uri: OPTIONS.integrations.google.redirectUrl,
+                                access_type: "offline"
                             };
                             var scope = concatScopes(["https://www.google.com/m8/feeds/",
                                 "https://www.googleapis.com/auth/userinfo.email"
                             ]);
+                            var scope = "https://www.google.com/m8/feeds/"; // FIXME
                             var fullUrl = "https://accounts.google.com/o/oauth2/auth?" + $.param(params) + "&scope=" + scope;
                             return [fullUrl, REDIRECT];
                         }

@@ -2,6 +2,7 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="dev/yesgraph-invites.css">
+<title>YesGraph</title>
 </head>
 <body>
 <div>
@@ -16,7 +17,7 @@
 <script src="dev/yesgraph.js"></script>
 <script src="dev/yesgraph-invites.js"></script>
 <script>
-$(document).on("imported.yesgraph.contacts", function(evt, src, contacts){
+$(document).on("imported.yesgraph.contacts", function(evt, src, contacts, meta){
     // Do something with the contacts
 });
 $(document).on("set.yesgraph.recipients", function(evt, recipients){
