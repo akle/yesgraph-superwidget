@@ -6,7 +6,6 @@
  * 
  * Date: __BUILD_DATE__
  */
-
 (function () {
     "use strict";
 
@@ -378,21 +377,30 @@
 
                         // Suggested Contacts
                         if (!noSuggestions) {
-                            var seenContacts = {entries: []};
-                            var i;
+                            var foundContacts = 0;
+                            var i = 0;
                             var contact;
-                            for (i = 0; i < suggestedContactCount; i += 1) {
+
+                            while (foundContacts < suggestedContactCount) {
                                 contact = contacts[i];
-                                if (contact.name) {
-                                    seenContacts.entries.push({
-                                        name: contact.name,
-                                        emails: contact.emails,
-                                        seen_at: new Date().toISOString()
-                                    });
+                                // Only suggest the contact if it has a name and an email
+                                if (contact.name && contact.emails.length > 0) {
+                                    addRow(suggestedList, contact, false);
+                                    foundContacts++;
                                 }
-                                addRow(suggestedList, contact, false);
+                                i++;
                             }
-                            YesGraphAPI.postSuggestedSeen(seenContacts);
+                            // Parse the suggested list for the displayed contacts
+                            var now = new Date().toISOString();
+                            var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
+                                var row = $(this);
+                                return {
+                                    name: row.find(".yes-contact-row-name span").text(),
+                                    emails: [row.find(".yes-contact-row-email span").text()],
+                                    seen_at: now
+                                };
+                            }).get();
+                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
                         }
 
                         // Total Contacts (Alphabetical)
@@ -615,7 +623,7 @@
 
                     return {
                         init: init,
-                        isOpen: isOpen,
+                        isOpen: function(){ return isOpen },
                         openModal: openModal,
                         closeModal: closeModal,
                         loadContacts: loadContacts,
@@ -713,7 +721,7 @@
                             btnText = (OPTIONS.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
                         }
                         if (includeGoogle) {
-                            var gmailBtn = generateContactImportBtn({
+                            var gmailBtn =  generateContactImportBtn({
                                 "id": "google",
                                 "name": "Gmail"
                             });
@@ -721,31 +729,17 @@
 
                             // Define oauth behavior for Gmail
                             gmailBtn.on("click", function (evt) {
-                                // Attempt to auth gmail & pull contacts
-                                evt.preventDefault();
-                                gmail.authPopup().done(function () {
-                                    contactsModal.openModal();
-                                    contactsModal.loading();
-                                    gmail.getContacts()
-                                        .done(
-                                            function (contacts) {
-                                                rankContacts(contacts).done(function (contacts, noSuggestions) {
-                                                    if (!contactsModal.isOpen) { contactsModal.openModal(); }
-                                                    contactsModal.loadContacts(contacts, noSuggestions);
-                                                }).fail(function (contacts) {
-                                                    contactsModal.loadContacts(contacts, true);
-                                                });
-                                            }
-                                        );
+                                // Attempt to auth & pull contacts
+                                gmail.authPopup().done(function (contacts, noSuggestions) {
+                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
+                                    contactsModal.loadContacts(contacts, noSuggestions);
                                 }).fail(function (data) {
-                                    // Handle case where auth failed
-                                    contactsModal.closeModal();
-                                    contactsModal.stopLoading();
-                                    flash.error(data.error);
-                                    YesGraphAPI.utils.error(data.error);
+                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
+                                    flash.error("Gmail Authorization Failed.");
                                 });
                             });
                         }
+
                         if (includeOutlook) {
                             var outlookBtn = generateContactImportBtn({
                                     "id": "outlook",
@@ -761,10 +755,10 @@
                             outlookBtn.add(hotmailBtn).on("click", function (evt) {
                                 // Attempt to auth & pull contacts
                                 outlook.authPopup().done(function (contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen) { contactsModal.openModal(); }
+                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
                                     contactsModal.loadContacts(contacts, noSuggestions);
                                 }).fail(function (data) {
-                                    if (contactsModal.isOpen) { contactsModal.closeModal(); }
+                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
                                     flash.error($(this).prop("title") + " Authorization Failed.");
                                 });
                             });
@@ -781,10 +775,10 @@
                             yahooBtn.on("click", function (evt) {
                                 // Attempt to auth & pull contacts
                                 yahoo.authPopup().done(function (contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen) { contactsModal.openModal(); }
+                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
                                     contactsModal.loadContacts(contacts, noSuggestions);
                                 }).fail(function (data) {
-                                    if (contactsModal.isOpen) { contactsModal.closeModal(); }
+                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
                                     flash.error("Yahoo Authorization Failed.");
                                 });
                             });
@@ -1024,7 +1018,7 @@
                                                             name: undefined,
                                                             email: undefined,
                                                             type: "yahoo"
-                                                        }, response.data.raw_contacts ]);
+                                                        }, response.data.raw_contacts, response.meta ]);
                                                     var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
                                                     d.resolve(response.data.ranked_contacts, noSuggestions);
                                                 }
@@ -1097,8 +1091,8 @@
                         var d = $.Deferred(),
                             oauthInfo = getOAuthInfo(),
                             url = oauthInfo[0],
-                            msg,
                             redirect = oauthInfo[1],
+                            msg,
                             win = open(url, "Outlook Authorization", 'width=900, height=700'),
                             count = 0,
                             token,
@@ -1106,18 +1100,18 @@
                                 try {
                                     if (win.document.URL.indexOf(redirect) !== -1) {
                                         // Stop waiting & resolve or reject with results
-                                        var responseUrl = win.document.URL,
-                                            errorType = getUrlParam(responseUrl, "error"),
-                                            errorDescription = getUrlParam(responseUrl, "error_description"),
-                                            accessToken = getUrlParam(responseUrl, "access_token");
+                                        var responseUrl = win.document.URL;
+                                        var errorType = getUrlParam(responseUrl, "error");
+                                        var errorDescription = getUrlParam(responseUrl, "error_description");
+                                        token = getUrlParam(responseUrl, "access_token");
                                         clearInterval(pollTimer);
                                         win.close();
 
-                                        if (accessToken) {
+                                        if (token) {
                                             contactsModal.loading();
                                             // Get and rank contacts server-side
                                             var tokenData = {
-                                                access_token: accessToken
+                                                access_token: token
                                             };
                                             if (errorType) {
                                                 tokenData.error = errorType;
@@ -1131,10 +1125,10 @@
                                                     d.reject(response);
                                                 } else {
                                                     $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [{
-                                                        name: undefined,
-                                                        email: undefined,
-                                                        type: "outlook"
-                                                    }, response.data.raw_contacts ]);
+                                                        name: undefined, // FIXME
+                                                        email: undefined, // FIXME
+                                                        type: "outlook" // FIXME
+                                                    }, response.data.raw_contacts, response.meta ]);
                                                     var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
                                                     d.resolve(response.data.ranked_contacts, noSuggestions);
                                                 }
@@ -1175,7 +1169,7 @@
                             var REDIRECT;
                             if (window.location.hostname === "localhost" || OPTIONS.integrations.outlook.usingDefaultCredentials) {
                                 REDIRECT = window.location.origin;
-                            } else {
+               i             } else {
                                 REDIRECT = OPTIONS.integrations.outlook.redirectUrl;
                             }
 
@@ -1211,95 +1205,76 @@
                 // Module for all of our gmail functionality
                 // (e.g., OAuth, contact importing, etc.)
                 var gmail = (function () {
-                    var GMAIL_ACCESS_TOKEN;
-                    function getContacts() {
-                        var d = $.Deferred();
-                        var contactsFeedUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=1000000';
-                        var readContactsScope = 'https://www.googleapis.com/auth/contacts.readonly';
-
-                        var queryParams = {
-                            access_token: GMAIL_ACCESS_TOKEN,
-                            alt: 'json',
-                            orderby: 'lastmodified'
-                        };
-
-                        $.ajax({
-                            url: contactsFeedUrl,
-                            data: queryParams,
-                            dataType: "jsonp",
-                            success: function (rawContacts) {
-                                var contacts = parseContactsFeed(rawContacts.feed);
-                                $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [contacts.source, rawContacts]);
-                                d.resolve(contacts);
-                            },
-                            error: function (data) {
-                                d.reject();
-                            }
-                        });
-                        return d.promise();
-                    }
-
-                    function parseContactsFeed(contactsFeed) {
-                        var entries = [],
-                            yesgraphEntry,
-                            emails;
-
-                        contactsFeed.entry.forEach(function (googleEntry, index, array) {
-                            yesgraphEntry = {};
-                            if (googleEntry.title.$t) {
-                                yesgraphEntry.name = googleEntry.title.$t;
-                            }
-
-                            if (googleEntry.gd$email) {
-                                yesgraphEntry.emails = [];
-
-                                googleEntry.gd$email.forEach(function (email, index, array) {
-                                    yesgraphEntry.emails.push(googleEntry.gd$email[index].address);
-                                });
-                            }
-                            entries.push(yesgraphEntry);
-                        });
-
-                        var contacts = {
-                            source: {
-                                type: 'gmail',
-                                name: contactsFeed.author[0].name.$t,
-                                email: contactsFeed.author[0].email.$t
-                            },
-                            entries: entries
-                        };
-                        return contacts;
-                    }
+                    var GMAIL_FAILED_MSG = "Gmail Authorization Failed";
 
                     function authPopup() {
                         // Open the Google OAuth popup & retrieve the access token from it
                         var d = $.Deferred(),
-                            url = getOAuthInfo()[0],
-                            redirect = getOAuthInfo()[1],
+                            oauthInfo = getOAuthInfo(),
+                            url = oauthInfo[0],
+                            redirect = oauthInfo[1],
+                            msg,
                             win = open(url, "Google Authorization", 'width=550, height=550'),
                             count = 0,
-                            token,
+                            access_code,
                             pollTimer = setInterval(function () {
                                 try {
                                     if (win.document.URL.indexOf(redirect) !== -1) {
                                         // Stop waiting & resolve or reject with results
                                         var responseUrl = win.document.URL;
-                                        var errorMessage = getUrlParam(responseUrl, "error");
-                                        token = getUrlParam(responseUrl, "access_token");
+                                        var errorMsg = getUrlParam(responseUrl, "error");
+                                        access_code = getUrlParam(responseUrl, "code");
 
-                                        console.log("Response URL:", responseUrl); // FIXME
-                                        console.log("Refresh Token:", getUrlParam(responseUrl, "refresh_token")); // FIXME
+                                        if (access_code) {
+                                            contactsModal.loading();
+                                            // Get and rank contacts server-side
+                                            var tokenData = {
+                                                code: access_code,
+                                                token_type: "code"
+                                            };
+                                            if (errorMsg) {
+                                                tokenData.error = errorMsg;
+                                            }
+                                            YesGraphAPI.hitAPI("/oauth", "GET", {
+                                                "service": "google",
+                                                "token_data": JSON.stringify(tokenData)
+                                            }).done(function (response) {
+                                                if (response.error) {
+                                                    d.reject(response);
+                                                } else {
+                                                    // Parse the source data from the contacts feed
+                                                    var source = {
+                                                        type: "google"
+                                                    };
+                                                    var authors = response.data.raw_contacts.feed.author;
+                                                    if (authors.length > 0) {
+                                                        var author = authors[0];
+                                                        if (typeof author.name === "object") {
+                                                            source.name = author.name.$t;
+                                                        }
+                                                        if (typeof author.email === "object") {
+                                                            source.name = author.email.address;
+                                                        }
+                                                    }
+                                                    // Trigger DOM event "imported.yesgraph.contacts"
+                                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [source, response.data.raw_contacts, response.meta]);
+                                                    var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
+                                                    d.resolve(response.data.ranked_contacts, noSuggestions);
 
-                                        if (token) {
-                                            GMAIL_ACCESS_TOKEN = token;
-                                            d.resolve({
-                                                token: GMAIL_ACCESS_TOKEN,
-                                                type: "code" || getUrlParam(responseUrl, "token_type"), // FIXME
-                                                expires_in: getUrlParam(responseUrl, "expires_in")
+                                                    // Upload photo data
+                                                    var photoData = parsePhotoData(response.data.raw_contacts, response.meta);
+                                                    if (photoData.entries.length > 0) {
+                                                        YesGraphAPI.hitAPI("/photo/upload/google", "POST", photoData);                                                        
+                                                    }
+                                                }
+                                            }).fail(function (response) {
+                                                contactsModal.stopLoading();
+                                                d.reject(response);
                                             });
+
                                             clearInterval(pollTimer);
                                             win.close();
-                                        } else if (errorMessage === "access_denied") {
+                                        } else if (errorMsg === "access_denied") {
                                             d.reject({
                                                 "error": "Access Denied"
                                             });
@@ -1321,7 +1296,7 @@
                                     if (count >= 1000 || !canIgnoreError) {
                                         var msg = e.message;
                                         if (canIgnoreError) {
-                                            msg = "Gmail authorization failed.";
+                                            msg = GMAIL_FAILED_MSG;
                                         }
                                         YesGraphAPI.utils.error(msg, false);
                                         d.reject({
@@ -1344,16 +1319,17 @@
                             }
 
                             var params = {
-                                response_type: "code",
+                                access_type: "offline",
                                 client_id: OPTIONS.integrations.google.clientId,
-                                state: window.location.href,
+                                prompt: "consent", // Ensures that a refresh_token will be included
                                 redirect_uri: OPTIONS.integrations.google.redirectUrl,
-                                access_type: "offline"
+                                response_type: "code",
+                                state: window.location.href
                             };
-                            var scope = concatScopes(["https://www.google.com/m8/feeds/",
+                            var scope = concatScopes([
+                                "https://www.google.com/m8/feeds/",
                                 "https://www.googleapis.com/auth/userinfo.email"
                             ]);
-                            var scope = "https://www.google.com/m8/feeds/"; // FIXME
                             var fullUrl = "https://accounts.google.com/o/oauth2/auth?" + $.param(params) + "&scope=" + scope;
                             return [fullUrl, REDIRECT];
                         }
@@ -1369,9 +1345,46 @@
                         return d.promise();
                     }
 
+                    function parsePhotoData (contacts, meta) {
+                        var photoList = [];
+
+                        // Loop through the contacts, checking for photos
+                        contacts.feed.entry.forEach(function(entry){
+                            var email, emails, phone, phones, photoEntry;
+                            if (!entry.link) return;
+
+                            // Loop through links, storing any photo urls
+                            entry.link.forEach(function(link) {
+                                if (!link.type.startsWith("image/") || !link.rel.endsWith("#photo")) return;
+                                photoEntry = {
+                                    type: "google",
+                                    url: link.href
+                                }
+                                emails = entry.gd$email || [];
+                                phones = entry.gd$phoneNumber || [];
+                                if (phones.length > 0 && typeof phones[0].uri === "string") {
+                                    photoEntry.phone = phones[0].uri.replace("tel:", "");
+                                }
+                                if (emails.length > 0 && typeof emails[0].address === "string") {
+                                    photoEntry.email = emails[0].address;
+                                }
+                                photoList.push(photoEntry);
+                            });
+                        });
+                        // Return the photo data, formatted to POST to YesGraph
+                        return {
+                            user_id: meta.user_id,
+                            sdk: "superwidget",
+                            access_token: meta.oauth_credentials.google.access_token,
+                            refresh_token: meta.oauth_credentials.google.refresh_token,
+                            token_expires_at: meta.oauth_credentials.google.expires_at,
+                            entries: photoList
+                        };
+                    }
+
                     return {
                         authPopup: authPopup,
-                        getContacts: getContacts
+                        parsePhotoData: parsePhotoData
                     };
                 }());
 
