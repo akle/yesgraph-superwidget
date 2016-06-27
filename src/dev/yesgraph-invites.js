@@ -1233,11 +1233,22 @@
                                                 if (response.error) {
                                                     d.reject(response);
                                                 } else {
-                                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [{
-                                                        name: response.data.raw_contacts.feed.author[0].name.$t, // FIXME handle error case
-                                                        email: undefined, // FIXME
+                                                    // Parse the source data from the contacts feed
+                                                    var source = {
                                                         type: "google"
-                                                    }, response.data.raw_contacts, response.meta ]);
+                                                    };
+                                                    var authors = response.data.raw_contacts.feed.author;
+                                                    if (authors.length > 0) {
+                                                        var author = authors[0];
+                                                        if (†ypeof author.name === "object") {
+                                                            source.name = author.name.$t;
+                                                        }
+                                                        if (†ypeof author.email === "object") {
+                                                            source.name = author.email.address;
+                                                        }
+                                                    }
+                                                    // Trigger DOM event "imported.yesgraph.contacts"
+                                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [source, response.data.raw_contacts, response.meta]);
                                                     var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
                                                     d.resolve(response.data.ranked_contacts, noSuggestions);
 
