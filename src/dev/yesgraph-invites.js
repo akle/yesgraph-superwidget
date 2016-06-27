@@ -623,7 +623,7 @@
 
                     return {
                         init: init,
-                        isOpen: function(){ return isOpen },
+                        isOpen: function(){ return isOpen; },
                         openModal: openModal,
                         closeModal: closeModal,
                         loadContacts: loadContacts,
@@ -1169,7 +1169,7 @@
                             var REDIRECT;
                             if (window.location.hostname === "localhost" || OPTIONS.integrations.outlook.usingDefaultCredentials) {
                                 REDIRECT = window.location.origin;
-               i             } else {
+                            } else {
                                 REDIRECT = OPTIONS.integrations.outlook.redirectUrl;
                             }
 
@@ -1359,7 +1359,7 @@
                                 photoEntry = {
                                     type: "google",
                                     url: link.href
-                                }
+                                };
                                 emails = entry.gd$email || [];
                                 phones = entry.gd$phoneNumber || [];
                                 if (phones.length > 0 && typeof phones[0].uri === "string") {
