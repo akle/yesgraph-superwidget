@@ -377,21 +377,30 @@
 
                         // Suggested Contacts
                         if (!noSuggestions) {
-                            var seenContacts = {entries: []};
-                            var i;
+                            var foundContacts = 0;
+                            var i = 0;
                             var contact;
-                            for (i = 0; i < suggestedContactCount; i += 1) {
+
+                            while (foundContacts < suggestedContactCount) {
                                 contact = contacts[i];
-                                if (contact.name) {
-                                    seenContacts.entries.push({
-                                        name: contact.name,
-                                        emails: contact.emails,
-                                        seen_at: new Date().toISOString()
-                                    });
+                                // Only suggest the contact if it has a name and an email
+                                if (contact.name && contact.emails.length > 0) {
+                                    addRow(suggestedList, contact, false);
+                                    foundContacts++;
                                 }
-                                addRow(suggestedList, contact, false);
+                                i++;
                             }
-                            YesGraphAPI.postSuggestedSeen(seenContacts);
+                            // Parse the suggested list for the displayed contacts
+                            var now = new Date().toISOString();
+                            var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
+                                var row = $(this);
+                                return {
+                                    name: row.find(".yes-contact-row-name span").text(),
+                                    emails: [row.find(".yes-contact-row-email span").text()],
+                                    seen_at: now
+                                };
+                            }).get();
+                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
                         }
 
                         // Total Contacts (Alphabetical)
@@ -1240,10 +1249,10 @@
                                                     var authors = response.data.raw_contacts.feed.author;
                                                     if (authors.length > 0) {
                                                         var author = authors[0];
-                                                        if (†ypeof author.name === "object") {
+                                                        if (typeof author.name === "object") {
                                                             source.name = author.name.$t;
                                                         }
-                                                        if (†ypeof author.email === "object") {
+                                                        if (typeof author.email === "object") {
                                                             source.name = author.email.address;
                                                         }
                                                     }
@@ -1254,7 +1263,9 @@
 
                                                     // Upload photo data
                                                     var photoData = parsePhotoData(response.data.raw_contacts, response.meta);
-                                                    YesGraphAPI.hitAPI("/photo/upload/google", "POST", photoData);
+                                                    if (photoData.entries.length > 0) {
+                                                        YesGraphAPI.hitAPI("/photo/upload/google", "POST", photoData);                                                        
+                                                    }
                                                 }
                                             }).fail(function (response) {
                                                 contactsModal.stopLoading();
@@ -1308,13 +1319,15 @@
                             }
 
                             var params = {
-                                response_type: "code",
+                                access_type: "offline",
                                 client_id: OPTIONS.integrations.google.clientId,
-                                state: window.location.href,
+                                prompt: "consent", // Ensures that a refresh_token will be included
                                 redirect_uri: OPTIONS.integrations.google.redirectUrl,
-                                access_type: "offline"
+                                response_type: "code",
+                                state: window.location.href
                             };
-                            var scope = concatScopes(["https://www.google.com/m8/feeds/",
+                            var scope = concatScopes([
+                                "https://www.google.com/m8/feeds/",
                                 "https://www.googleapis.com/auth/userinfo.email"
                             ]);
                             var fullUrl = "https://accounts.google.com/o/oauth2/auth?" + $.param(params) + "&scope=" + scope;
