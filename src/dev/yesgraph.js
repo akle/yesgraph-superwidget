@@ -366,7 +366,9 @@
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
                 } else {
-                    console.log("YesGraphError", e);
+                    if (window.console && window.console.log) {
+                        console.log("YesGraphError", e);                        
+                    }
                 }
             }
         };

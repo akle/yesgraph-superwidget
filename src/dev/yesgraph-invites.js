@@ -383,6 +383,7 @@
 
                             while (foundContacts < suggestedContactCount) {
                                 contact = contacts[i];
+                                if (contact == undefined) break;
                                 // Only suggest the contact if it has a name and an email
                                 if (contact.name && contact.emails.length > 0) {
                                     addRow(suggestedList, contact, false);
@@ -390,17 +391,23 @@
                                 }
                                 i++;
                             }
+                            if (foundContacts == 0) {
+                                noSuggestions = true;
+                            }
+
                             // Parse the suggested list for the displayed contacts
                             var now = new Date().toISOString();
-                            var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
-                                var row = $(this);
-                                return {
-                                    name: row.find(".yes-contact-row-name span").text(),
-                                    emails: [row.find(".yes-contact-row-email span").text()],
-                                    seen_at: now
-                                };
-                            }).get();
-                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
+                            if (!noSuggestions) {
+                                var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
+                                    var row = $(this);
+                                    return {
+                                        name: row.find(".yes-contact-row-name span").text(),
+                                        emails: [row.find(".yes-contact-row-email span").text()],
+                                        seen_at: now
+                                    };
+                                }).get();
+                                YesGraphAPI.postSuggestedSeen({ entries: seenContacts });                                
+                            }
                         }
 
                         // Total Contacts (Alphabetical)
