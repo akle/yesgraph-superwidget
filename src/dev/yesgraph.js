@@ -361,13 +361,13 @@
                         }
                     });
                 }
-                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG);
+                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG, msg);
                 if (fail) {
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
                 } else {
                     if (window.console && window.console.log) {
-                        console.log("YesGraphError", e);                        
+                        console.log("YesGraphError", e);
                     }
                 }
             }
