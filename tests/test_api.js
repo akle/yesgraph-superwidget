@@ -40,7 +40,6 @@ describe('testAPI', function() {
             spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
                 expect(endpoint).toEqual("/address-book");
                 expect(method).toEqual("POST");
-                console.info('calling fake hitAPI');
                 return {};
             });
             var result = window.YesGraphAPI.rankContacts({});
@@ -51,7 +50,6 @@ describe('testAPI', function() {
             spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
                 expect(endpoint).toEqual("/address-book");
                 expect(method).toEqual("GET");
-                console.info('calling fake hitAPI');
                 return {};
             });
             var result = window.YesGraphAPI.getRankedContacts({});
@@ -62,7 +60,6 @@ describe('testAPI', function() {
             spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
                 expect(endpoint).toEqual("/suggested-seen");
                 expect(method).toEqual("POST");
-                console.info('calling fake hitAPI');
                 return {};
             });
             var result = window.YesGraphAPI.postSuggestedSeen({});
@@ -73,7 +70,6 @@ describe('testAPI', function() {
             spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
                 expect(endpoint).toEqual("/invites-sent");
                 expect(method).toEqual("POST");
-                console.info('calling fake hitAPI');
                 return {};
             });
             var result = window.YesGraphAPI.postInvitesSent({});
@@ -84,7 +80,6 @@ describe('testAPI', function() {
             spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
                 expect(endpoint).toEqual("/invites-accepted");
                 expect(method).toEqual("POST");
-                console.info('calling fake hitAPI');
                 return {};
             });
             var result = window.YesGraphAPI.postInvitesAccepted({});
@@ -135,6 +130,18 @@ describe('testAPI', function() {
             expect(function(){
                 window.YesGraphAPI.utils.error(errorMsg, shouldThrow)
             }).not.toThrow();
+
+            // In IE the console sometimes doesn't exist. We should be able
+            // to handle that without the .error() method breaking.
+            var _console = window.console;
+            delete window.console;
+
+            shouldThrow = false;
+            expect(function(){
+                window.YesGraphAPI.utils.error(errorMsg, shouldThrow)
+            }).not.toThrow();
+
+            window.console = _console;
         });
 
         it('Should be removed by YesGraphAPI.noConflict', function() {
