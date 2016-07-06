@@ -31,6 +31,7 @@
     "jasmine-jquery": "^2.1.1",
     "jshint": "^2.9.2",
     "karma": "^0.13.22",
+    "karma-browserstack-launcher": "^1.0.1",
     "karma-chrome-launcher": "^1.0.1",
     "karma-coverage": "^1.0.0",
     "karma-coveralls": "^1.1.2",
