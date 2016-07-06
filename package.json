@@ -40,11 +40,8 @@
     "karma-ie-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
     "karma-jasmine-jquery": "^0.1.1",
-    "karma-phantomjs-launcher": "^1.0.0",
     "karma-safari-launcher": "^1.0.0",
-    "karma-sauce-launcher": "^1.0.0",
     "map-stream": "0.0.6",
-    "phantomjs-prebuilt": "^2.1.7",
     "require-dir": "^0.3.0",
     "run-sequence": "^1.2.1",
     "watchify": "^3.7.0"

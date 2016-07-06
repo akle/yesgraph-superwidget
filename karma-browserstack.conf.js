@@ -91,8 +91,8 @@ module.exports = function(config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     // browsers: ['Chrome'],
-    // browsers: ['Chrome', 'Firefox', 'Safari'],
-    browsers: ['bs_firefox_mac', 'bs_iphone5'],
+    browsers: ['Chrome', 'Firefox', 'Safari'],
+    // browsers: ['bs_firefox_mac', 'bs_iphone5'],
 
     // you can define custom flags 
     customLaunchers: {
@@ -114,11 +114,6 @@ module.exports = function(config) {
             os_version: '6.0'
         },
     },
- 
-    phantomjsLauncher: {
-      // Have phantomjs exit if a ResourceError is encountered (useful if karma exits without killing phantom) 
-      exitOnResourceError: true
-    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
@@ -129,14 +124,14 @@ module.exports = function(config) {
     concurrency: Infinity
   });
 
-    if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
-    // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
-        config.browsers = ['Chrome_travis_ci', 'Firefox', 'Safari'];
-        config.reporters = ['progress', 'coverage', 'coveralls'];
-    }
-    else if (process.env.TRAVIS) {
+    if (process.env.TRAVIS) {
         //config.browsers = ['Chrome_travis_ci', 'Firefox'];
         config.browsers = ['bs_firefox_mac', 'bs_iphone5'];
+        config.reporters = ['progress', 'coverage', 'coveralls'];
+    }
+    else if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
+    // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
+        config.browsers = ['Chrome_travis_ci', 'Firefox', 'Safari'];
         config.reporters = ['progress', 'coverage', 'coveralls'];
     }
 };
