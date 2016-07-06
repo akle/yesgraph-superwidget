@@ -82,7 +82,7 @@ describe('testSuperwidgetUI', function() {
 
             for (var i=0; i < personCount; i++) {
                 var entry = {
-                    name: "Some Name " + Math.random(),
+                    name: generateRandomString(),
                     emails: []
                 };
                 for (var j=0; j < emailsPerPerson; j++) { entry.emails.push("someone@email" + Math.random() + new Date()); }
@@ -94,3 +94,18 @@ describe('testSuperwidgetUI', function() {
         });
     });
 });
+
+
+function generateRandomString(len){
+    // Start with an empty string & a charlist.
+    var string = "";
+    var chars = "ABCDEFGHIJabcdefghij1234567890ﭐﭑﭒﭓﭔﭕﭖﭗﭘﭙﭚﭛﭜﭝﭞﭟﺰﺱﺲﺳﺴﺵﺶﺷﺸﺹﺺﺻﺼﺽﺾﺿ的一是不了人我在有他这這中大来來上国國壹";
+    var randint;
+    len = len || 20;
+    // Generate a random string of the specified length
+    for (var i=0; i < len; i++) {
+        randint = Math.floor(Math.random() * (chars.length - 1));
+        string += chars[randint];
+    }
+    return string;
+}
