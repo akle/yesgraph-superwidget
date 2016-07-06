@@ -77,20 +77,46 @@ describe('testSuperwidgetUI', function() {
             // Generate dummy contact entries to load into the widget
             var personCount = 30;
             var emailsPerPerson = 3;
-            var expectedRowCount = personCount * emailsPerPerson;
+            var invalidEntryCount = 5;
+            var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
+            var expectedSuggestionCount = 5;
             var contacts = [];
 
             for (var i=0; i < personCount; i++) {
                 var entry = {
-                    name: "Some Name " + Math.random(),
+                    name: generateRandomString(),
                     emails: []
                 };
-                for (var j=0; j < emailsPerPerson; j++) { entry.emails.push("someone@email" + Math.random() + new Date()); }
+                // Exclude emails from the first few entries. They should then be filtered
+                // out of the results and the next suggestions should be shown instead.
+                if (i >= invalidEntryCount) {
+                    for (var j=0; j < emailsPerPerson; j++) {
+                        entry.emails.push("someone@email" + Math.random() + new Date());
+                    }
+                }
                 contacts.push(entry);
             }
 
             widget.modal.loadContacts(contacts);
-            expect(widget.modal.container.find(".yes-contact-row").length).toEqual(expectedRowCount);
+            var totalRows = widget.modal.container.find(".yes-contact-row");
+            var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
+            expect(totalRows.length).toEqual(expectedRowCount);
+            expect(suggestedRows.length).toEqual(expectedSuggestionCount);
         });
     });
 });
+
+
+function generateRandomString(len){
+    // Start with an empty string & a charlist.
+    var string = "";
+    var chars = "ABCDEFGHIJabcdefghij1234567890ﭐﭑﭒﭓﭔﭕﭖﭗﭘﭙﭚﭛﭜﭝﭞﭟﺰﺱﺲﺳﺴﺵﺶﺷﺸﺹﺺﺻﺼﺽﺾﺿ的一是不了人我在有他这這中大来來上国國壹";
+    var randint;
+    len = len || 20;
+    // Generate a random string of the specified length
+    for (var i=0; i < len; i++) {
+        randint = Math.floor(Math.random() * (chars.length - 1));
+        string += chars[randint];
+    }
+    return string;
+}

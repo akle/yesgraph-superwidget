@@ -383,6 +383,7 @@
 
                             while (foundContacts < suggestedContactCount) {
                                 contact = contacts[i];
+                                if (!contact) break;
                                 // Only suggest the contact if it has a name and an email
                                 if (contact.name && contact.emails.length > 0) {
                                     addRow(suggestedList, contact, false);
@@ -390,17 +391,23 @@
                                 }
                                 i++;
                             }
+                            if (foundContacts === 0) {
+                                noSuggestions = true;
+                            }
+
                             // Parse the suggested list for the displayed contacts
                             var now = new Date().toISOString();
-                            var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
-                                var row = $(this);
-                                return {
-                                    name: row.find(".yes-contact-row-name span").text(),
-                                    emails: [row.find(".yes-contact-row-email span").text()],
-                                    seen_at: now
-                                };
-                            }).get();
-                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
+                            if (!noSuggestions) {
+                                var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
+                                    var row = $(this);
+                                    return {
+                                        name: row.find(".yes-contact-row-name span").text(),
+                                        emails: [row.find(".yes-contact-row-email span").text()],
+                                        seen_at: now
+                                    };
+                                }).get();
+                                YesGraphAPI.postSuggestedSeen({ entries: seenContacts });                                
+                            }
                         }
 
                         // Total Contacts (Alphabetical)
@@ -662,7 +669,7 @@
                         }
 
                         $("#yes-invite-link-copy-btn").on("click", function() {
-                            YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, null, null, LIBRARY);
+                            YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, "#yes-invite-link-copy-btn", null, LIBRARY);
                         });
 
                         var clipboard = new Clipboard('#yes-invite-link-copy-btn');
@@ -810,7 +817,7 @@
                                     "title": service.name
                                 }).append(outerWrapper);
                             btn.on("click", function(){
-                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN, null, null, LIBRARY);
+                                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN, ".yes-contact-import-btn-" + service.id, null, LIBRARY);
                             });
                             return btn;
                         }
@@ -936,7 +943,7 @@
                                         $("img").not("[data-pin-description]").each(function () {
                                             this.dataset.pinDescription = OPTIONS.integrations.twitter.tweetMsg + " " + inviteLink;
                                         });
-                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, null, null, LIBRARY);
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
                                         wrapper[0].click();
                                     });
 
@@ -948,7 +955,7 @@
                                     shareBtn.on("click", function (evt) {
                                         targ = $(this);
                                         open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
-                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, null, null, LIBRARY);
+                                        YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
                                     });
                                     buttonsDiv.append(shareBtn);
                                 }

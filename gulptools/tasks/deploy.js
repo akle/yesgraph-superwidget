@@ -5,15 +5,14 @@ var cloudfront = require('gulp-cloudfront-invalidate');
 var rename = require("gulp-rename");
 var sequence = require("run-sequence").use(gulp);
 
-var config = require("../config");
-var publisher = aws.create(config.s3);
-
 gulp.task("deploy", function(done) {
     function startsWith (str, substr) {
         return str.slice(0,substr.length) === substr;
     }
 
-    sequence("clean", "test", "build", "version", function(){
+    sequence("clean", "build", "version", function(){
+        var config = require("../config");  // Load config after versioning
+        var publisher = aws.create(config.s3);
         var cloneSink = clone.sink();
         gulp.src(config.tasks.deploy.files)
             // We use cloneSink here to create a copy of the files and rename
