@@ -107,6 +107,13 @@ module.exports = function(config) {
             os: 'OS X',
             os_version: 'Mountain Lion'
         },
+        bs_chrome_mac: {
+            base: 'BrowserStack',
+            browser: 'chrome',
+            browser_version: '51.0',
+            os: 'OS X',
+            os_version: 'Mountain Lion'
+        },
         bs_iphone5: {
             base: 'BrowserStack',
             device: 'iPhone 5',
@@ -126,7 +133,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS) {
         //config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.browsers = ['bs_firefox_mac', 'bs_iphone5'];
+        config.browsers = ['bs_firefox_mac', 'bs_chrome_mac'];
         config.reporters = ['progress', 'coverage', 'coveralls'];
     }
     else if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
