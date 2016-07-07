@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "brfs": "^1.4.3",
+    "concurrently": "^2.2.0",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.0",
@@ -52,7 +53,8 @@
     "test": "node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
     "build": "gulp build",
     "lint": "gulp lint",
-    "clean": "gulp clean"
+    "clean": "gulp clean",
+    "start": "echo \"Starting server at localhost:8000\"; concurrently \"python3 -m http.server\" \"gulp watch\""
   },
   "repository": {
     "type": "git",
