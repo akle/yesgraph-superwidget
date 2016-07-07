@@ -91,8 +91,8 @@ module.exports = function(config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     // browsers: ['Chrome'],
-    browsers: ['Chrome', 'Firefox', 'Safari'],
-    // browsers: ['bs_firefox_mac', 'bs_iphone5'],
+    // browsers: ['Chrome', 'Firefox', 'Safari'],
+    browsers: ['bs_firefox_mac', 'bs_chrome_mac'],
 
     // you can define custom flags 
     customLaunchers: {
@@ -105,20 +105,23 @@ module.exports = function(config) {
             browser: 'firefox',
             browser_version: '21.0',
             os: 'OS X',
-            os_version: 'Mountain Lion'
+            os_version: 'Mountain Lion',
+            tunnelIdentifier: 'test_chrome_mac'
         },
         bs_chrome_mac: {
             base: 'BrowserStack',
             browser: 'chrome',
-            browser_version: '51.0',
+            browser_version: '53',
             os: 'OS X',
-            os_version: 'Mountain Lion'
+            os_version: 'Mountain Lion',
+            tunnelIdentifier: 'test_firefox_mac'
         },
         bs_iphone5: {
             base: 'BrowserStack',
             device: 'iPhone 5',
             os: 'ios',
-            os_version: '6.0'
+            os_version: '6.0',
+            tunnelIdentifier: 'test_iphone5_mac'
         },
     },
 
