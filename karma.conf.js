@@ -11,11 +11,17 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jasmine-jquery', 'jasmine', ],
+    frameworks: [
+        'jasmine-jquery', 
+        'jasmine', 
+        'phantomjs-shim'
+    ],
 
 
     // list of files / patterns to load in the browser
     files: [
+      'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
+      './node_modules/phantomjs-polyfill/bind-polyfill.js',
       'tests/*.html',
       'tests/*.js',
       'src/dev/yesgraph-invites.css', 
@@ -77,6 +83,7 @@ module.exports = function(config) {
 
     // Which plugins to enable
     plugins: [
+      'karma-phantomjs-shim',
       'karma-phantomjs-launcher',
       'karma-jasmine-jquery',
       'karma-jasmine',
@@ -91,9 +98,9 @@ module.exports = function(config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     // browsers: ['Chrome'],
-    browsers: ['Chrome', 'Firefox', 'Safari'],
+    // browsers: ['Chrome', 'Firefox', 'Safari'],
     // browsers: ['PhantomJS', 'Chrome'],
-    // browsers: ['PhantomJS'],
+    browsers: ['PhantomJS'],
 
     // you can define custom flags 
     customLaunchers: {
