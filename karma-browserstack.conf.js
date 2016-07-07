@@ -106,6 +106,7 @@ module.exports = function(config) {
             browser_version: '21.0',
             os: 'OS X',
             os_version: 'Mountain Lion',
+            startTunnel: false,
             tunnelIdentifier: 'test_chrome_mac'
         },
         bs_chrome_mac: {
@@ -114,6 +115,7 @@ module.exports = function(config) {
             browser_version: '53',
             os: 'OS X',
             os_version: 'Mountain Lion',
+            startTunnel: false,
             tunnelIdentifier: 'test_firefox_mac'
         },
         bs_iphone5: {
@@ -121,6 +123,7 @@ module.exports = function(config) {
             device: 'iPhone 5',
             os: 'ios',
             os_version: '6.0',
+            startTunnel: false,
             tunnelIdentifier: 'test_iphone5_mac'
         },
     },
