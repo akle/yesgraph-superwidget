@@ -71,6 +71,10 @@ module.exports = function(config) {
     // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
     logLevel: config.LOG_INFO,
 
+    browserStack: {
+      username: process.env.BROWSERSTACK_USERNAME,
+      accessKey: process.env.BROWSERSTACK_KEY
+    },
 
     // enable / disable watching file and executing tests whenever any file changes
     autoWatch: true,
@@ -106,8 +110,6 @@ module.exports = function(config) {
             browser_version: '21.0',
             os: 'OS X',
             os_version: 'Mountain Lion',
-            startTunnel: false,
-            tunnelIdentifier: 'test_chrome_mac'
         },
         bs_chrome_mac: {
             base: 'BrowserStack',
@@ -115,16 +117,12 @@ module.exports = function(config) {
             browser_version: '53',
             os: 'OS X',
             os_version: 'Mountain Lion',
-            startTunnel: false,
-            tunnelIdentifier: 'test_firefox_mac'
         },
         bs_iphone5: {
             base: 'BrowserStack',
             device: 'iPhone 5',
             os: 'ios',
             os_version: '6.0',
-            startTunnel: false,
-            tunnelIdentifier: 'test_iphone5_mac'
         },
     },
 
