@@ -95,8 +95,8 @@ module.exports = function(config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     // browsers: ['Chrome'],
-    // browsers: ['Chrome', 'Firefox', 'Safari'],
-    browsers: ['bs_firefox_mac', 'bs_chrome_mac'],
+    browsers: ['Chrome', 'Firefox', 'Safari'],
+    // browsers: ['bs_firefox_mac', 'bs_chrome_mac'],
 
     // you can define custom flags 
     customLaunchers: {
@@ -104,10 +104,17 @@ module.exports = function(config) {
             base: 'Chrome',
             flags: ['--no-sandbox']
         },
-        bs_firefox_mac: {
+        bs_firefox21_mac: {
             base: 'BrowserStack',
             browser: 'firefox',
             browser_version: '21.0',
+            os: 'OS X',
+            os_version: 'Mountain Lion',
+        },
+        bs_firefox47_mac: {
+            base: 'BrowserStack',
+            browser: 'firefox',
+            browser_version: '47.0',
             os: 'OS X',
             os_version: 'Mountain Lion',
         },
@@ -137,7 +144,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS) {
         //config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.browsers = ['bs_firefox_mac', 'bs_chrome_mac'];
+        config.browsers = ['bs_firefox21_mac', 'bs_firefox47_mac', 'bs_chrome_mac'];
         config.reporters = ['progress', 'coverage', 'coveralls'];
     }
     else if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
