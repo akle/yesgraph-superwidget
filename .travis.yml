@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-- '0.10'
+- '6.1'
 script: 
     #- node_modules/karma/bin/karma start karma.conf.js --single-run
 - gulp build; node_modules/karma/bin/karma start karma-browserstack.conf.js --single-run; gulp lint;
