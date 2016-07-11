@@ -72,8 +72,8 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
 
     browserStack: {
-      username: process.env.BROWSERSTACK_USERNAME,
-      accessKey: process.env.BROWSERSTACK_KEY
+      username: process.env.BROWSER_STACK_USERNAME,
+      accessKey: process.env.BROWSER_STACK_ACCESS_KEY
     },
 
     // enable / disable watching file and executing tests whenever any file changes
@@ -100,10 +100,6 @@ module.exports = function(config) {
 
     // you can define custom flags 
     customLaunchers: {
-        Chrome_travis_ci: {
-            base: 'Chrome',
-            flags: ['--no-sandbox']
-        },
         bs_firefox21_mac: {
             base: 'BrowserStack',
             browser: 'firefox',
@@ -144,12 +140,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS) {
         //config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.browsers = ['bs_firefox21_mac', 'bs_firefox47_mac', 'Chrome_travis_ci', 'Firefox', ];
-        config.reporters = ['progress', 'coverage', 'coveralls'];
-    }
-    else if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
-    // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
-        config.browsers = ['Chrome_travis_ci', 'Firefox', 'Safari'];
+        config.browsers = ['bs_firefox21_mac', 'bs_firefox47_mac',];
         config.reporters = ['progress', 'coverage', 'coveralls'];
     }
 };
