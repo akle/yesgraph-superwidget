@@ -144,7 +144,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS) {
         //config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.browsers = ['bs_firefox21_mac', 'bs_firefox47_mac', 'bs_chrome_mac'];
+        config.browsers = ['bs_firefox21_mac', 'bs_firefox47_mac', 'Chrome_travis_ci', 'Firefox', ];
         config.reporters = ['progress', 'coverage', 'coveralls'];
     }
     else if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
