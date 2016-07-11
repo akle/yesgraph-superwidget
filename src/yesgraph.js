@@ -286,7 +286,7 @@
                     self.app = self.app || options.app;
                     for (var opt in options) {
                         val = options[opt];
-                        if (typeof val === "string" && val.startsWith("CURRENT_USER")) {
+                        if (typeof val === "string" && val.slice(0,12) == "CURRENT_USER") {
                             loadedDefaultParams = true;
                         }
                         if (self.settings.hasOwnProperty(opt)) {
