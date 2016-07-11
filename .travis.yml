@@ -14,6 +14,7 @@ os:
 - linux
 before_script:
 - npm install
+- gulp build
 notifications:
   slack:
     rooms:
