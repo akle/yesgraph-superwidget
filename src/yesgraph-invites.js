@@ -700,13 +700,110 @@
                                 "text": widgetCopy.manualInputSendBtn || "Add Emails",
                                 "class": "yes-default-btn yes-manual-input-submit"
                             }),
-                            includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
                             includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
+                            includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
                             includeYahoo = OPTIONS.settings.oauthServices.indexOf("yahoo") !== -1,
-                            btnCount = 0 + Number(includeGoogle) + Number(includeYahoo) + (Number(includeOutlook) * 2),
+                            includeSlack = OPTIONS.settings.oauthServices.indexOf("slack") !== -1,
+                            contactImportingServices = [
+                                {
+                                    id: "google",
+                                    name: "Gmail",
+                                    include: includeGoogle,
+                                    authManagerOptions: {
+                                        id: "google",
+                                        name: "Gmail",
+                                        baseAuthUrl: "https://accounts.google.com/o/oauth2/auth",
+                                        authParams: {
+                                            access_type: "offline",
+                                            client_id: null,
+                                            prompt: "consent", // Ensures that a refresh_token will be included
+                                            redirect_uri: null,
+                                            response_type: "code",
+                                            scope: [
+                                                "https://www.google.com/m8/feeds/",
+                                                "https://www.googleapis.com/auth/userinfo.email"
+                                            ].join(" "),
+                                            state: window.location.href
+                                        },
+                                        popupSize: "width=550, height=550",
+                                        parsePhotos: YesGraphAPI.utils.parseGooglePhotos
+                                    }
+                                },
+                                {
+                                    id: "outlook",
+                                    name: "Outlook",
+                                    include: includeOutlook,
+                                    authManagerOptions: {
+                                        id: "outlook",
+                                        name: "Outlook",
+                                        baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                                        authParams: {
+                                            client_id: null,
+                                            redirect_uri: null,
+                                            response_type: "token",
+                                            scope: "https://outlook.office.com/contacts.read",
+                                            state: window.location.href
+                                        },
+                                        popupSize: "width=900, height=700"
+                                    }
+                                },
+                                {
+                                    id: "hotmail",
+                                    name: "Hotmail",
+                                    include: includeOutlook,
+                                    authManagerOptions: {
+                                        id: "outlook",
+                                        name: "Hotmail",
+                                        baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                                        authParams: {
+                                            client_id: null,
+                                            redirect_uri: null,
+                                            response_type: "token",
+                                            scope: "https://outlook.office.com/contacts.read",
+                                            state: window.location.href
+                                        },
+                                        popupSize: "width=900, height=700"
+                                    }
+                                },
+                                {
+                                    id: "yahoo",
+                                    name: "Yahoo",
+                                    include: includeYahoo,
+                                    authManagerOptions: {
+                                        id: "yahoo",
+                                        name: "Yahoo",
+                                        baseAuthUrl: "https://api.login.yahoo.com/oauth2/request_auth",
+                                        authParams: {
+                                            client_id: null,
+                                            redirect_uri: null,
+                                            response_type: "token",
+                                            state: window.location.href
+                                        },
+                                        popupSize: "width=900, height=700"
+                                    }
+                                },
+                                {
+                                    id: "slack",
+                                    name: "Slack",
+                                    include: includeSlack,
+                                    authManagerOptions: {
+                                        id: "slack",
+                                        name: "Slack",
+                                        baseAuthUrl: "https://slack.com/oauth/authorize",
+                                        authParams: {
+                                            client_id: null,
+                                            redirect_uri: null,
+                                            scope: "users:read",
+                                            state: window.location.href
+                                        },
+                                        popupSize: "width=900, height=700"
+                                    }
+                                }
+                            ],
                             contactImportSection = $("<div>", {
                                 "class": "yes-contact-import-section"
                             }),
+                            btnCount = 0 + Number(includeGoogle) + Number(includeYahoo) + (Number(includeOutlook) * 2),
                             btnText = "";
 
                         manualInputForm.append(manualInputField, manualInputSubmit);
@@ -727,69 +824,27 @@
                         if (OPTIONS.settings.oauthServices.length <= 1) {
                             btnText = (OPTIONS.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
                         }
-                        if (includeGoogle) {
-                            var gmailBtn =  generateContactImportBtn({
-                                "id": "google",
-                                "name": "Gmail"
-                            });
-                            contactImportSection.append(gmailBtn);
+                        contactImportingServices.forEach(function(service){
+                            if (service.include === true) {
+                                // Create contact import button for each service
+                                var btn = generateContactImportBtn(service);
+                                contactImportSection.append(btn);
 
-                            // Define oauth behavior for Gmail
-                            gmailBtn.on("click", function (evt) {
-                                // Attempt to auth & pull contacts
-                                gmail.authPopup().done(function (contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
-                                    contactsModal.loadContacts(contacts, noSuggestions);
-                                }).fail(function (data) {
-                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
-                                    flash.error("Gmail Authorization Failed.");
+                                // Define oauth behavior for each service
+                                service.authManager = new AuthManager(service.authManagerOptions);
+                                btn.on("click", function (evt) {
+                                    // Attempt to auth the user & pull their contacts
+                                    service.authManager.authFlow().done(function(contacts, noSuggestions) {
+                                        if (!contactsModal.isOpen()) { contactsModal.openModal(); }
+                                        contactsModal.loadContacts(contacts, noSuggestions);
+                                    }).fail(function (response) {
+                                        if (contactsModal.isOpen()) { contactsModal.closeModal(); }
+                                        YesGraphAPI.utils.error(response.error);
+                                        flash.error(service.name + " Authorization Failed.");
+                                    });
                                 });
-                            });
-                        }
-
-                        if (includeOutlook) {
-                            var outlookBtn = generateContactImportBtn({
-                                    "id": "outlook",
-                                    "name": "Outlook"
-                                }),
-                                hotmailBtn = generateContactImportBtn({
-                                    "id": "hotmail",
-                                    "name": "Hotmail"
-                                });
-                            contactImportSection.append(outlookBtn, hotmailBtn);
-
-                            // Define oauth behavior for Outlook
-                            outlookBtn.add(hotmailBtn).on("click", function (evt) {
-                                // Attempt to auth & pull contacts
-                                outlook.authPopup().done(function (contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
-                                    contactsModal.loadContacts(contacts, noSuggestions);
-                                }).fail(function (data) {
-                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
-                                    flash.error($(this).prop("title") + " Authorization Failed.");
-                                });
-                            });
-                        }
-
-                        if (includeYahoo) {
-                            var yahooBtn = generateContactImportBtn({
-                                "id": "yahoo",
-                                "name": "Yahoo"
-                            });
-                            contactImportSection.append(yahooBtn);
-
-                            // Define oauth behavior for Yahoo
-                            yahooBtn.on("click", function (evt) {
-                                // Attempt to auth & pull contacts
-                                yahoo.authPopup().done(function (contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
-                                    contactsModal.loadContacts(contacts, noSuggestions);
-                                }).fail(function (data) {
-                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
-                                    flash.error("Yahoo Authorization Failed.");
-                                });
-                            });
-                        }
+                            }
+                        });
 
                         $(targetSelector).append(container);
                         YesGraphAPI.Superwidget.isReady = true;
@@ -980,423 +1035,144 @@
                     };
                 }());
 
-                // Module for the Yahoo oauth flow & contact importing
-                var yahoo = (function () {
+                function AuthManager (service) {
+                    var self = this;
+                    this.service = service;
 
-                    function authPopup() {
-                        // Open the Yahoo OAuth popup & retrieve the access token from it
-                        var d = $.Deferred(),
-                            oauthInfo = getOAuthInfo(),
-                            url = oauthInfo[0],
-                            redirect = oauthInfo[1],
-                            msg,
-                            win = open(url, "Yahoo Authorization", 'width=900, height=700'),
-                            count = 0,
-                            token,
-                            pollTimer = setInterval(function () {
-                                try {
-                                    if (win.document.URL.indexOf(redirect) !== -1) {
-                                        // Stop waiting & resolve or reject with results
-                                        var responseUrl = win.document.URL,
-                                            errorType = getUrlParam(responseUrl, "error"),
-                                            errorDescription = getUrlParam(responseUrl, "error_description"),
-                                            accessToken = getUrlParam(responseUrl, "access_token");
-                                        clearInterval(pollTimer);
-                                        win.close();
+                    this.authFlow = function () {
+                        var d = $.Deferred();
+                        var addrbookSource;
+                        self.authPopup().done(function(authData){
+                            // show the loading spinner while we're fetching contacts
+                            contactsModal.loading();
 
-                                        if (accessToken) {
-                                            contactsModal.loading();
-                                            // Get and rank contacts server-side
-                                            var tokenData = {
-                                                access_token: accessToken
-                                            };
-                                            if (errorType) {
-                                                tokenData.error = errorType;
-                                                tokenData.error_description = errorDescription;
-                                            }
-                                            YesGraphAPI.hitAPI("/oauth", "GET", {
-                                                "service": "yahoo",
-                                                "token_data": JSON.stringify(tokenData)
-                                            }).done(function (response) {
-                                                if (response.error) {
-                                                    d.reject(response);
-                                                } else {
-                                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [{
-                                                            name: undefined,
-                                                            email: undefined,
-                                                            type: "yahoo"
-                                                        }, response.data.raw_contacts, response.meta ]);
-                                                    var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
-                                                    d.resolve(response.data.ranked_contacts, noSuggestions);
-                                                }
-                                            }).fail(function (response) {
-                                                d.reject(response);
-                                            });
-                                        } else {
-                                            d.reject({
-                                                error: OUTLOOK_FAILED_MSG
-                                            });
-                                            msg = errorDescription ? errorType + " - " + errorDescription.replace(/\+/g, " ") : errorType;
-                                            YesGraphAPI.utils.error(msg);
-                                        }
-                                    }
-                                } catch (e) {
-                                    var okErrorMessages = [
-                                            "Cannot read property 'URL' of undefined",
-                                            "undefined is not an object (evaluating 'win.document.URL')",
-                                            'Permission denied to access property "document"'
-                                        ],
-                                        canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
-
-                                    if (count >= 1000 || !canIgnoreError) {
-                                        msg = canIgnoreError ? e.message : OUTLOOK_FAILED_MSG;
-                                        YesGraphAPI.utils.error(msg, false);
-                                        d.reject({
-                                            "error": msg
-                                        });
-                                        win.close();
-                                        clearInterval(pollTimer);
-                                    }
-                                    count++;
+                            self.fetchContacts(authData).done(function(response){
+                                // Trigger DOM event "imported.yesgraph.contacts"
+                                if (response.data.source === "gmail") {
+                                    response.data.source = "google";
                                 }
-                            }, 100);
+                                $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [response.data.source, response.data.raw_contacts, response.meta]);
+                                var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
+                                d.resolve(response.data.ranked_contacts, noSuggestions);
 
-                        function getOAuthInfo() {
-                            var REDIRECT;
-                            if (window.location.hostname === "localhost" || OPTIONS.integrations.yahoo.usingDefaultCredentials) {
-                                REDIRECT = window.location.origin;
-                            } else {
-                                REDIRECT = OPTIONS.integrations.yahoo.redirectUrl;
-                            }
+                                // Save photo data
+                                if (typeof service.parsePhotos === "function") {
+                                    var photoData = service.parsePhotos(response.data.raw_contacts, response.meta);
+                                    self.savePhotos(photoData);
+                                }
 
-                            var authUrl = "https://api.login.yahoo.com/oauth2/request_auth?";
-                            var params = {
-                                response_type: "token",
-                                client_id: OPTIONS.integrations.yahoo.clientId,
-                                redirect_uri: OPTIONS.integrations.yahoo.redirectUrl,
-                                state: window.location.href
-                            };
-                            var fullUrl = authUrl + $.param(params);
-                            return [fullUrl, REDIRECT];
-                        }
-
+                            }).fail(function(err){
+                                contactsModal.stopLoading();
+                                contactsModal.closeModal();
+                                d.reject(err);
+                            });
+                        }).fail(d.reject);
                         return d.promise();
-                    }
-                    return {
-                        authPopup: authPopup
                     };
-                }());
 
-                // Module for the Outlook oauth flow & contact importing
-                var outlook = (function () {
-                    var OUTLOOK_ACCESS_TOKEN,
-                        readContactsScope = "https://outlook.office.com/contacts.read",
-                        OUTLOOK_FAILED_MSG = "Outlook Authorization Failed";
-
-                    function authPopup() {
-                        // Open the Outlook OAuth popup & retrieve the access token from it
-                        var d = $.Deferred(),
-                            oauthInfo = getOAuthInfo(),
-                            url = oauthInfo[0],
-                            redirect = oauthInfo[1],
-                            msg,
-                            win = open(url, "Outlook Authorization", 'width=900, height=700'),
-                            count = 0,
-                            token,
-                            pollTimer = setInterval(function () {
-                                try {
-                                    if (win.document.URL.indexOf(redirect) !== -1) {
-                                        // Stop waiting & resolve or reject with results
-                                        var responseUrl = win.document.URL;
-                                        var errorType = getUrlParam(responseUrl, "error");
-                                        var errorDescription = getUrlParam(responseUrl, "error_description");
-                                        token = getUrlParam(responseUrl, "access_token");
-                                        clearInterval(pollTimer);
-                                        win.close();
-
-                                        if (token) {
-                                            contactsModal.loading();
-                                            // Get and rank contacts server-side
-                                            var tokenData = {
-                                                access_token: token
-                                            };
-                                            if (errorType) {
-                                                tokenData.error = errorType;
-                                                tokenData.error_description = errorDescription;
-                                            }
-                                            YesGraphAPI.hitAPI("/oauth", "GET", {
-                                                "service": "outlook",
-                                                "token_data": JSON.stringify(tokenData)
-                                            }).done(function (response) {
-                                                if (response.error) {
-                                                    d.reject(response);
-                                                } else {
-                                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [{
-                                                        name: undefined, // FIXME
-                                                        email: undefined, // FIXME
-                                                        type: "outlook" // FIXME
-                                                    }, response.data.raw_contacts, response.meta ]);
-                                                    var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
-                                                    d.resolve(response.data.ranked_contacts, noSuggestions);
-                                                }
-                                            }).fail(function (response) {
-                                                d.reject(response);
-                                            });
-                                        } else {
-                                            d.reject({
-                                                error: OUTLOOK_FAILED_MSG
-                                            });
-                                            msg = errorDescription ? errorType + " - " + errorDescription.replace(/\+/g, " ") : errorType;
-                                            YesGraphAPI.utils.error(msg);
-                                        }
-                                    }
-                                } catch (e) {
-                                    var okErrorMessages = [
-                                            "Cannot read property 'URL' of undefined",
-                                            "undefined is not an object (evaluating 'win.document.URL')",
-                                            'Permission denied to access property "document"'
-                                        ],
-                                        canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
-
-                                    if (count >= 1000 || !canIgnoreError) {
-                                        msg = canIgnoreError ? e.message : OUTLOOK_FAILED_MSG;
-                                        YesGraphAPI.utils.error(msg, false);
-                                        d.reject({
-                                            "error": msg
-                                        });
-                                        win.close();
-                                        clearInterval(pollTimer);
-                                    }
-                                    count++;
-                                }
-                            }, 100);
-
-
-                        function getOAuthInfo() {
-                            var REDIRECT;
-                            if (window.location.hostname === "localhost" || OPTIONS.integrations.outlook.usingDefaultCredentials) {
-                                REDIRECT = window.location.origin;
-                            } else {
-                                REDIRECT = OPTIONS.integrations.outlook.redirectUrl;
-                            }
-
-                            var authUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?";
-                            var params = {
-                                response_type: "token",
-                                client_id: OPTIONS.integrations.outlook.clientId,
-                                state: window.location.href,
-                                redirect_uri: OPTIONS.integrations.outlook.redirectUrl
-                            };
-                            var scope = concatScopes([readContactsScope]);
-                            var fullUrl = authUrl + $.param(params) + "&scope=" + scope;
-                            return [fullUrl, REDIRECT];
+                    this.savePhotos = function(photoData) {
+                        if (photoData.entries.length > 0) {
+                            YesGraphAPI.hitAPI("/photo/upload/google", "POST", photoData);
                         }
-
-                        function concatScopes(scopes) {
-                            var escaped_scopes = [];
-                            scopes.forEach(function(scope){
-                                escaped_scopes.push(encodeURIComponent(scope));
-                            });
-                            return escaped_scopes.join("+");
-                        }
-
-                        return d.promise();
-                    }
-
-                    return {
-                        authPopup: authPopup
                     };
-                }());
 
-
-                // Module for all of our gmail functionality
-                // (e.g., OAuth, contact importing, etc.)
-                var gmail = (function () {
-                    var GMAIL_FAILED_MSG = "Gmail Authorization Failed";
-
-                    function authPopup() {
-                        // Open the Google OAuth popup & retrieve the access token from it
-                        var d = $.Deferred(),
-                            oauthInfo = getOAuthInfo(),
-                            url = oauthInfo[0],
-                            redirect = oauthInfo[1],
-                            msg,
-                            win = open(url, "Google Authorization", 'width=550, height=550'),
-                            count = 0,
-                            access_code,
-                            pollTimer = setInterval(function () {
-                                try {
-                                    if (win.document.URL.indexOf(redirect) !== -1) {
-                                        // Stop waiting & resolve or reject with results
-                                        var responseUrl = win.document.URL;
-                                        var errorMsg = getUrlParam(responseUrl, "error");
-                                        access_code = getUrlParam(responseUrl, "code");
-
-                                        if (access_code) {
-                                            contactsModal.loading();
-                                            // Get and rank contacts server-side
-                                            var tokenData = {
-                                                code: access_code,
-                                                token_type: "code"
-                                            };
-                                            if (errorMsg) {
-                                                tokenData.error = errorMsg;
-                                            }
-                                            YesGraphAPI.hitAPI("/oauth", "GET", {
-                                                "service": "google",
-                                                "token_data": JSON.stringify(tokenData)
-                                            }).done(function (response) {
-                                                if (response.error) {
-                                                    d.reject(response);
-                                                } else {
-                                                    // Parse the source data from the contacts feed
-                                                    var source = {
-                                                        type: "google"
-                                                    };
-                                                    var authors = response.data.raw_contacts.feed.author;
-                                                    if (authors.length > 0) {
-                                                        var author = authors[0];
-                                                        if (typeof author.name === "object") {
-                                                            source.name = author.name.$t;
-                                                        }
-                                                        if (typeof author.email === "object") {
-                                                            source.name = author.email.address;
-                                                        }
-                                                    }
-                                                    // Trigger DOM event "imported.yesgraph.contacts"
-                                                    $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [source, response.data.raw_contacts, response.meta]);
-                                                    var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
-                                                    d.resolve(response.data.ranked_contacts, noSuggestions);
-
-                                                    // Upload photo data
-                                                    var photoData = parsePhotoData(response.data.raw_contacts, response.meta);
-                                                    if (photoData.entries.length > 0) {
-                                                        YesGraphAPI.hitAPI("/photo/upload/google", "POST", photoData);                                                        
-                                                    }
-                                                }
-                                            }).fail(function (response) {
-                                                contactsModal.stopLoading();
-                                                d.reject(response);
-                                            });
-
-                                            clearInterval(pollTimer);
-                                            win.close();
-                                        } else if (errorMsg === "access_denied") {
-                                            d.reject({
-                                                "error": "Access Denied"
-                                            });
-                                            clearInterval(pollTimer);
-                                            win.close();
-                                        }
-                                        // If access was neither granted nor denied, keep waiting.
-                                        // This occurs in some versions of Safari before the oauth
-                                        // flow occurs, so we should keep polling in those cases.
-                                    }
-                                } catch (e) {
-                                    var okErrorMessages = [
-                                            "Cannot read property 'URL' of undefined",
-                                            "undefined is not an object (evaluating 'win.document.URL')",
-                                            'Permission denied to access property "document"'
-                                        ],
-                                        canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
-
-                                    if (count >= 1000 || !canIgnoreError) {
-                                        var msg = e.message;
-                                        if (canIgnoreError) {
-                                            msg = GMAIL_FAILED_MSG;
-                                        }
-                                        YesGraphAPI.utils.error(msg, false);
-                                        d.reject({
-                                            error: msg
-                                        });
-                                        win.close();
-                                        clearInterval(pollTimer);
-                                    }
-                                    count++;
-                                }
-                            }, 100);
-
-                        function getOAuthInfo() {
-                            var REDIRECT;
-                            var localHostnames = ["localhost", "lvh.me"];
-                            if (localHostnames.indexOf(window.location.hostname) !== -1 || OPTIONS.integrations.google.usingDefaultCredentials) {
-                                REDIRECT = window.location.origin;
+                    this.fetchContacts = function(authData) {
+                        var d = $.Deferred();
+                        YesGraphAPI.hitAPI("/oauth", "GET", {
+                            "service": self.service.id,
+                            "token_data": JSON.stringify(authData)
+                        }).done(function(response){
+                            if (response.error) {
+                                d.reject(response);
                             } else {
-                                REDIRECT = OPTIONS.integrations.google.redirectUrl;
+                                d.resolve(response);
                             }
-
-                            var params = {
-                                access_type: "offline",
-                                client_id: OPTIONS.integrations.google.clientId,
-                                prompt: "consent", // Ensures that a refresh_token will be included
-                                redirect_uri: OPTIONS.integrations.google.redirectUrl,
-                                response_type: "code",
-                                state: window.location.href
-                            };
-                            var scope = concatScopes([
-                                "https://www.google.com/m8/feeds/",
-                                "https://www.googleapis.com/auth/userinfo.email"
-                            ]);
-                            var fullUrl = "https://accounts.google.com/o/oauth2/auth?" + $.param(params) + "&scope=" + scope;
-                            return [fullUrl, REDIRECT];
-                        }
-
-                        function concatScopes(scopes) {
-                            var escaped_scopes = [];
-                            scopes.forEach(function(scope){
-                                escaped_scopes.push(encodeURIComponent(scope));
-                            });
-                            return escaped_scopes.join("+");
-                        }
-
+                        }).fail(d.reject);
                         return d.promise();
-                    }
+                    };
 
-                    function parsePhotoData (contacts, meta) {
-                        var photoList = [];
-
-                        // Loop through the contacts, checking for photos
-                        contacts.feed.entry.forEach(function(entry){
-                            var email, emails, phone, phones, photoEntry;
-                            if (!entry.link) return;
-
-                            // Loop through links, storing any photo urls
-                            entry.link.forEach(function(link) {
-                                if (!link.type.startsWith("image/") || !link.rel.endsWith("#photo")) return;
-                                photoEntry = {
-                                    type: "google",
-                                    url: link.href
-                                };
-                                emails = entry.gd$email || [];
-                                phones = entry.gd$phoneNumber || [];
-                                if (phones.length > 0 && typeof phones[0].uri === "string") {
-                                    photoEntry.phone = phones[0].uri.replace("tel:", "");
+                    this.authPopup = function () {
+                        var d = $.Deferred();
+                        var msg, authCode, accessToken, errorMsg, responseUrl;
+                        var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
+                        var oauthInfo = self.getOAuthInfo(self.service);
+                        var win = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
+                        var count = 0;
+                        var pollTimer = setInterval(function() {
+                            try {
+                                // If the flow has finished, resolve with the token or reject with the error
+                                if (win.document.URL.indexOf(oauthInfo.redirect) !== -1) {
+                                    responseUrl = win.document.URL;
+                                    errorMsg = getUrlParam(responseUrl, "error_description") || getUrlParam(responseUrl, "error");
+                                    authCode = getUrlParam(responseUrl, "code");
+                                    accessToken = getUrlParam(responseUrl, "access_token") || getUrlParam(responseUrl, "token");
+                                    if (errorMsg) {
+                                        d.reject({ error: errorMsg });
+                                    } else if (authCode) {
+                                        d.resolve({
+                                            auth_code: authCode,
+                                            token_type: "code"
+                                        });
+                                    } else if (accessToken) {
+                                        d.resolve({
+                                            access_token: accessToken,
+                                            token_type: "access_token"
+                                        });
+                                    } else {
+                                        d.reject({ error: defaultAuthErrorMessage }); // This should never happen
+                                    }
+                                    clearInterval(pollTimer);
+                                    win.close();
                                 }
-                                if (emails.length > 0 && typeof emails[0].address === "string") {
-                                    photoEntry.email = emails[0].address;
+                            } catch (e) {
+                                // Check the error message, then either keep waiting or reject with the error
+                                var okErrorMessages = [
+                                        "Cannot read property 'URL' of undefined",
+                                        "undefined is not an object (evaluating 'win.document.URL')",
+                                        'Permission denied to access property "document"'
+                                    ],
+                                    canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
+
+                                if (count >= 30 || !canIgnoreError) {
+                                    msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
+                                    d.reject({
+                                        error: msg
+                                    });
+                                    YesGraphAPI.utils.error(msg, false);
+                                    clearInterval(pollTimer);
+                                    win.close();
                                 }
-                                photoList.push(photoEntry);
-                            });
-                        });
-                        // Return the photo data, formatted to POST to YesGraph
+                                count++;
+                            }
+                        }, 500);
+                        return d.promise();
+                    };
+
+                    this.getOAuthInfo = function (settings) {
+                        var redirect, localHostnames = ["localhost", "lvh.me"];
+                        if (localHostnames.indexOf(window.location.hostname) !== -1 || OPTIONS.integrations[settings.id].usingDefaultCredentials) {
+                            redirect = window.location.origin;
+                        } else {
+                            redirect = OPTIONS.integrations[settings.id].redirectUrl;
+                        }
+                        if (settings.authParams.client_id === null) {
+                            settings.authParams.client_id = OPTIONS.integrations[settings.id].clientId;
+                        }
+                        if (settings.authParams.client_secret === null) {
+                            settings.authParams.client_secret = OPTIONS.integrations[settings.id].clientSecret;
+                        }
+                        if (settings.authParams.redirect_uri === null) {
+                            settings.authParams.redirect_uri = OPTIONS.integrations[settings.id].redirectUrl;
+                        }
+                        var fullUrl = settings.baseAuthUrl + "?" + $.param(settings.authParams);
                         return {
-                            user_id: meta.user_id,
-                            sdk: "superwidget",
-                            access_token: meta.oauth_credentials.google.access_token,
-                            refresh_token: meta.oauth_credentials.google.refresh_token,
-                            token_expires_at: meta.oauth_credentials.google.expires_at,
-                            entries: photoList
+                            url: fullUrl,
+                            redirect: redirect
                         };
-                    }
-
-                    return {
-                        authPopup: authPopup,
-                        parsePhotoData: parsePhotoData
                     };
-                }());
+                }
 
                 // Helper functions
-
                 function waitForAPIConfig() {
                     var d = $.Deferred();
                     var timer = setInterval(function () {
@@ -1418,6 +1194,43 @@
                     }, 100);
                     return d.promise();
                 }
+
+                YesGraphAPI.utils.parseGooglePhotos = function (contacts, meta) {
+                    var photoList = [];
+
+                    // Loop through the contacts, checking for photos
+                    contacts.feed.entry.forEach(function(entry){
+                        var email, emails, phone, phones, photoEntry;
+                        if (!entry.link) return;
+
+                        // Loop through links, storing any photo urls
+                        entry.link.forEach(function(link) {
+                            if (!link.type.startsWith("image/") || !link.rel.endsWith("#photo")) return;
+                            photoEntry = {
+                                type: "google",
+                                url: link.href
+                            };
+                            emails = entry.gd$email || [];
+                            phones = entry.gd$phoneNumber || [];
+                            if (phones.length > 0 && typeof phones[0].uri === "string") {
+                                photoEntry.phone = phones[0].uri.replace("tel:", "");
+                            }
+                            if (emails.length > 0 && typeof emails[0].address === "string") {
+                                photoEntry.email = emails[0].address;
+                            }
+                            photoList.push(photoEntry);
+                        });
+                    });
+                    // Return the photo data, formatted to POST to YesGraph
+                    return {
+                        user_id: meta.user_id,
+                        sdk: "superwidget",
+                        access_token: meta.oauth_credentials.google.access_token,
+                        refresh_token: meta.oauth_credentials.google.refresh_token,
+                        token_expires_at: meta.oauth_credentials.google.expires_at,
+                        entries: photoList
+                    };
+                };
 
                 YesGraphAPI.utils.getSelectedRecipients = function(elem) {
                     var recipients = [],
@@ -1563,7 +1376,6 @@
                     }
                     return settingsAreValid;
                 }
-
 
                 // Initialize Superwidget config
                 YesGraphAPI.Superwidget = {
