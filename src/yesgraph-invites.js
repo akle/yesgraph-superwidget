@@ -1133,7 +1133,7 @@
                                     ],
                                     canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
 
-                                if (count >= 1000 || !canIgnoreError) {
+                                if (count >= 30 || !canIgnoreError) {
                                     msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
                                     d.reject({
                                         error: msg
@@ -1144,7 +1144,7 @@
                                 }
                                 count++;
                             }
-                        });
+                        }, 500);
                         return d.promise();
                     };
 
