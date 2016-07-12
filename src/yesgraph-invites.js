@@ -1205,7 +1205,7 @@
 
                         // Loop through links, storing any photo urls
                         entry.link.forEach(function(link) {
-                            if (!link.type.startsWith("image/") || !link.rel.endsWith("#photo")) return;
+                            if (link.type.slice(0,6) !== "image/" || link.rel.slice(-6) !== "#photo") return;
                             photoEntry = {
                                 type: "google",
                                 url: link.href
