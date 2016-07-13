@@ -28,7 +28,6 @@
         CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
         CLICK_COPY_LINK: "Clicked to Copy Invite Link"
     };
-
     function loadSuperwidget() {
         var protocol;
         if (window.location.protocol.indexOf("http") !== -1) {
@@ -62,6 +61,7 @@
                 YesGraphAPI.hasLoadedSuperwidget = true;
             }
             var $ = window.jQuery; // Required by Karma tests
+
             requireScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function (Clipboard) {
                 var target;
                 var TESTMODE;
@@ -254,7 +254,16 @@
                         $("body").append(overlay, modal);
                         applyStyling();
 
+                        // Check that the viewport is set, so that the contacts
+                        // modal is properly centered on mobile devices
+                        if ($("meta[name='viewport']").length === 0) {
+                            $("head").prepend($("<meta>", {
+                                name: "viewport",
+                                content: "width=device-width, initial-scale=1.0"
+                            }));
+                        }
                         $(window).on("resize", centerModal);
+
                         modalCloseBtn.on("click", closeModal);
                         overlay.on("click", closeModal);
                         modalSendBtn.on("click", send);

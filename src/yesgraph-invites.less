@@ -27,6 +27,7 @@
     }
 
     .yes-default-btn {
+        appearance: none;
         background: #1d89cf;
         border: 0;
         border-radius: 3px;
@@ -145,7 +146,6 @@
     position: relative;
     padding: 10px;
     text-align: center;
-    .strict-width(400px);
 
     .yes-header-1 {
         font-size: 24px;
@@ -213,8 +213,8 @@
     background: white;
     border-radius: 3px;
     font-size: 16px;
+    max-width: 650px;
     position: absolute;
-    width: 650px;
     z-index: 100000000000;
 
     .yes-modal-header {
@@ -279,16 +279,13 @@
         padding: 6px;
         width: 100%;
 
-        div {
-            display: table-cell;
-        }
-
         &:even {
             background-color: #f1f1f1;
         }
     }
 
     .yes-contact-row-checkbox {
+        display: table-cell;
         padding: 0 10px 0 0;
         width: 15px;
     }
@@ -323,7 +320,6 @@
     .yes-contact-row-email {
         font-style: italic;
         font-weight: 300;
-        padding-left: 1em;
         .strict-width(330px);
     }
     .yes-loading-icon {
@@ -360,3 +356,22 @@
     z-index: 10000000000;
 }
 
+// Desktop Specific Styles
+@media only screen and (max-width: 480px) {
+    .yes-modal .yes-contact-row .yes-contact-details {
+        display: table-cell;
+    }
+}
+
+@media only screen and (min-width: 480px) {
+    .yes-widget-container {
+        .strict-width(400px);
+    }
+    .yes-modal .yes-contact-row .yes-contact-details {
+        display: table-cell;
+
+        >.yes-contact-row-name, >.yes-contact-row-email {
+            display: table-cell;        
+        }
+    }
+}
