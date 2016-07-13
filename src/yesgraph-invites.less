@@ -136,6 +136,10 @@
 
     .yes-contact-import-btn-slack {
         .btn-icon(slack);
+
+        &.yes-alt-icon {
+            .btn-icon(slack-monochrome);
+        }
     }
 }
 
@@ -356,13 +360,14 @@
     z-index: 10000000000;
 }
 
-// Desktop Specific Styles
+// Mobile Specific Styles
 @media only screen and (max-width: 480px) {
     .yes-modal .yes-contact-row .yes-contact-details {
         display: table-cell;
     }
 }
 
+// Desktop Specific Styles
 @media only screen and (min-width: 480px) {
     .yes-widget-container {
         .strict-width(400px);

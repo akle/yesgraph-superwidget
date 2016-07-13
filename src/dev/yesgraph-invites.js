@@ -882,9 +882,16 @@
                                 }).append(innerWrapper),
                                 btnClass = "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
                                 btn = $("<button>", {
-                                    "class": btnClass + (btnCount > 3 ? " yes-no-label" : ""), // Only show the icon if there are more than 3 btns
+                                    "class": btnClass,
                                     "title": service.name
                                 }).append(outerWrapper);
+
+                            if (btnCount > 3) {
+                                btn.addClass("yes-no-label"); // Only show the icon if there are more than 3 buttons
+                            } else if (service.id === "slack") {
+                                btn.addClass("yes-alt-icon"); // Use the monochrome icon
+                            }
+
                             btn.on("click", function(){
                                 YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN, ".yes-contact-import-btn-" + service.id, null, LIBRARY);
                             });
