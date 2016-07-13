@@ -298,6 +298,7 @@
 
                         if (contact.emails && contact.emails.length !== 0) {
                             var contactRow,
+                                contactDetails,
                                 contactEmail,
                                 checkbox,
                                 emailCount = allEmails ? contact.emails.length : 1,
@@ -320,15 +321,18 @@
                                     contactRow = $('<div>', {
                                         class: "yes-contact-row"
                                     });
+                                    contactDetails = $("<div>", {
+                                        class: "yes-contact-details"
+                                    });
 
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-checkbox"
-                                    }).append(checkbox));
+                                    }).append(checkbox), contactDetails);
 
-                                    contactRow.append($('<div>', {
+                                    contactDetails.append($('<div>', {
                                         class: "yes-contact-row-name"
-                                    }).append($("<div>")));
-                                    contactRow.append($('<div>', {
+                                    }));
+                                    contactDetails.append($('<div>', {
                                         class: "yes-contact-row-email"
                                     }).append($("<div>").append(contactEmail)));
 
@@ -832,6 +836,7 @@
 
                                 // Define oauth behavior for each service
                                 service.authManager = new AuthManager(service.authManagerOptions);
+
                                 btn.on("click", function (evt) {
                                     // Attempt to auth the user & pull their contacts
                                     service.authManager.authFlow().done(function(contacts, noSuggestions) {
@@ -1097,8 +1102,11 @@
                         var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
                         var oauthInfo = self.getOAuthInfo(self.service);
                         var win = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
-                        var count = 0;
                         var pollTimer = setInterval(function() {
+                            if (win.closed === true) {
+                                d.reject({ error: defaultAuthErrorMessage });
+                                return;
+                            }
                             try {
                                 // If the flow has finished, resolve with the token or reject with the error
                                 if (win.document.URL.indexOf(oauthInfo.redirect) !== -1) {
@@ -1132,8 +1140,7 @@
                                         'Permission denied to access property "document"'
                                     ],
                                     canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
-
-                                if (count >= 30 || !canIgnoreError) {
+                                if (!canIgnoreError) {
                                     msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
                                     d.reject({
                                         error: msg
@@ -1142,7 +1149,6 @@
                                     clearInterval(pollTimer);
                                     win.close();
                                 }
-                                count++;
                             }
                         }, 500);
                         return d.promise();
