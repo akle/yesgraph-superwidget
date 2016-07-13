@@ -95,8 +95,9 @@ module.exports = function(config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     // browsers: ['Chrome'],
-    browsers: ['Chrome', 'Firefox', 'Safari'],
+    // browsers: ['Chrome', 'Firefox', 'Safari'],
     // browsers: ['bs_firefox_mac', 'bs_chrome_mac'],
+    browsers: ['bs_iphone5', 'bs_iphone6_ios8', 'bs_iphone6_ios9'],
 
     // you can define custom flags 
     customLaunchers: {
@@ -127,6 +128,18 @@ module.exports = function(config) {
             os: 'ios',
             os_version: '6.0',
         },
+        bs_iphone6_ios8: {
+            base: 'BrowserStack',
+            device: 'iPhone 6',
+            os: 'ios',
+            os_version: '8.0',
+        },
+        bs_iphone6_ios9: {
+            base: 'BrowserStack',
+            device: 'iPhone 6',
+            os: 'ios',
+            os_version: '9.0',
+        },
     },
 
     // Continuous Integration mode
@@ -140,7 +153,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS) {
         //config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.browsers = ['bs_firefox21_mac', 'bs_firefox47_mac',];
+        config.browsers = ['bs_iphone5'];
         config.reporters = ['progress', 'coverage', 'coveralls'];
     }
 };
