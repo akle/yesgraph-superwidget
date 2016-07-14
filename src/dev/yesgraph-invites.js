@@ -28,7 +28,6 @@
         CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
         CLICK_COPY_LINK: "Clicked to Copy Invite Link"
     };
-
     function loadSuperwidget() {
         var protocol;
         if (window.location.protocol.indexOf("http") !== -1) {
@@ -62,6 +61,7 @@
                 YesGraphAPI.hasLoadedSuperwidget = true;
             }
             var $ = window.jQuery; // Required by Karma tests
+
             requireScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function (Clipboard) {
                 var target;
                 var TESTMODE;
@@ -254,7 +254,16 @@
                         $("body").append(overlay, modal);
                         applyStyling();
 
+                        // Check that the viewport is set, so that the contacts
+                        // modal is properly centered on mobile devices
+                        if ($("meta[name='viewport']").length === 0) {
+                            $("head").prepend($("<meta>", {
+                                name: "viewport",
+                                content: "width=device-width, initial-scale=1.0"
+                            }));
+                        }
                         $(window).on("resize", centerModal);
+
                         modalCloseBtn.on("click", closeModal);
                         overlay.on("click", closeModal);
                         modalSendBtn.on("click", send);
@@ -298,6 +307,7 @@
 
                         if (contact.emails && contact.emails.length !== 0) {
                             var contactRow,
+                                contactDetails,
                                 contactEmail,
                                 checkbox,
                                 emailCount = allEmails ? contact.emails.length : 1,
@@ -320,15 +330,18 @@
                                     contactRow = $('<div>', {
                                         class: "yes-contact-row"
                                     });
+                                    contactDetails = $("<div>", {
+                                        class: "yes-contact-details"
+                                    });
 
                                     contactRow.append($('<div>', {
                                         class: "yes-contact-row-checkbox"
-                                    }).append(checkbox));
+                                    }).append(checkbox), contactDetails);
 
-                                    contactRow.append($('<div>', {
+                                    contactDetails.append($('<div>', {
                                         class: "yes-contact-row-name"
-                                    }).append($("<div>")));
-                                    contactRow.append($('<div>', {
+                                    }));
+                                    contactDetails.append($('<div>', {
                                         class: "yes-contact-row-email"
                                     }).append($("<div>").append(contactEmail)));
 
@@ -832,6 +845,7 @@
 
                                 // Define oauth behavior for each service
                                 service.authManager = new AuthManager(service.authManagerOptions);
+
                                 btn.on("click", function (evt) {
                                     // Attempt to auth the user & pull their contacts
                                     service.authManager.authFlow().done(function(contacts, noSuggestions) {
@@ -868,9 +882,16 @@
                                 }).append(innerWrapper),
                                 btnClass = "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
                                 btn = $("<button>", {
-                                    "class": btnClass + (btnCount > 3 ? " yes-no-label" : ""), // Only show the icon if there are more than 3 btns
+                                    "class": btnClass,
                                     "title": service.name
                                 }).append(outerWrapper);
+
+                            if (btnCount > 3) {
+                                btn.addClass("yes-no-label"); // Only show the icon if there are more than 3 buttons
+                            } else if (service.id === "slack") {
+                                btn.addClass("yes-alt-icon"); // Use the monochrome icon
+                            }
+
                             btn.on("click", function(){
                                 YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN, ".yes-contact-import-btn-" + service.id, null, LIBRARY);
                             });
@@ -1097,8 +1118,11 @@
                         var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
                         var oauthInfo = self.getOAuthInfo(self.service);
                         var win = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
-                        var count = 0;
                         var pollTimer = setInterval(function() {
+                            if (win.closed === true) {
+                                d.reject({ error: defaultAuthErrorMessage });
+                                return;
+                            }
                             try {
                                 // If the flow has finished, resolve with the token or reject with the error
                                 if (win.document.URL.indexOf(oauthInfo.redirect) !== -1) {
@@ -1132,8 +1156,7 @@
                                         'Permission denied to access property "document"'
                                     ],
                                     canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
-
-                                if (count >= 30 || !canIgnoreError) {
+                                if (!canIgnoreError) {
                                     msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
                                     d.reject({
                                         error: msg
@@ -1142,7 +1165,6 @@
                                     clearInterval(pollTimer);
                                     win.close();
                                 }
-                                count++;
                             }
                         }, 500);
                         return d.promise();
