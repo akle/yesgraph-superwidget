@@ -1150,12 +1150,9 @@
                                 }
                             } catch (e) {
                                 // Check the error message, then either keep waiting or reject with the error
-                                var okErrorMessages = [
-                                        "Cannot read property 'URL' of undefined",
-                                        "undefined is not an object (evaluating 'win.document.URL')",
-                                        'Permission denied to access property "document"'
-                                    ],
-                                    canIgnoreError = (okErrorMessages.indexOf(e.message) !== -1 || e.code === 18);
+                                var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "document")/, // jshint ignore:line
+                                    canIgnoreError = (code === 18 || okErrorMessages.test(e.message));
+
                                 if (!canIgnoreError) {
                                     msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
                                     d.reject({
