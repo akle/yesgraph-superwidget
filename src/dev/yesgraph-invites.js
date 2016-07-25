@@ -59,6 +59,7 @@
                 return;
             } else {
                 YesGraphAPI.hasLoadedSuperwidget = true;
+                YesGraphAPI.SUPERWIDGET_VERSION = VERSION;
             }
             var $ = window.jQuery; // Required by Karma tests
 
@@ -652,15 +653,22 @@
 
                     function init() {
                         var settings = YesGraphAPI.settings,
-                            targetSelector = settings.target || ".yesgraph-invites";
+                            targetSelector = settings.target || ".yesgraph-invites",
+                            JQUERY_VERSION = $.fn.jquery;
                         TESTMODE = settings.testmode || false;
 
                         var sections = [containerHeader, containerBody];
                         if (settings.inviteLink) { sections.push(inviteLinkSection); }
                         if (settings.shareBtns) { sections.push(shareBtnSection); }
-
                         sections.push(flashSection);
-                        container.append(sections);
+
+                        if (JQUERY_VERSION >= "1.8") {
+                            container.append(sections); // Appending an array is only possible in 1.8+
+                        } else {
+                            sections.forEach(function(section){
+                                container.append(section);
+                            });
+                        }
 
                         if (OPTIONS.poweredByYesgraph) {
                             container.append(poweredByYesgraph);
