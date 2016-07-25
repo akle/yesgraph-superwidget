@@ -568,15 +568,10 @@
                             }
                         });
 
-                        YesGraphAPI.utils.sendEmailInvites(recipients)
-                            .fail(function (data) {
-                                flash.error("Email invite sending failed");
-                                YesGraphAPI.utils.error("Email invite sending failed");
-                            })
-                            .always(function () {
-                                modalSendBtn.prop("disabled", false);
-                                closeModal();
-                            });
+                        YesGraphAPI.utils.sendEmailInvites(recipients).always(function () {
+                            modalSendBtn.prop("disabled", false);
+                            closeModal();
+                        });
                     }
 
                     function openModal(evt) {
@@ -1151,7 +1146,7 @@
                             } catch (e) {
                                 // Check the error message, then either keep waiting or reject with the error
                                 var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "document")/, // jshint ignore:line
-                                    canIgnoreError = (code === 18 || okErrorMessages.test(e.message));
+                                    canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
 
                                 if (!canIgnoreError) {
                                     msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
@@ -1341,8 +1336,17 @@
                                     }
 
                                 }).fail(function (data) {
-                                    flash.error(data.error);
-                                    YesGraphAPI.utils.error(data.error, false);
+                                    if (data.errors) {
+                                        var error, description;
+                                        for (error in data.errors) {
+                                            if (data.errors.hasOwnProperty(error)) {
+                                                description = data.errors[error];
+                                                YesGraphAPI.utils.error(error + ": " + description);
+                                            }
+                                        }
+                                    } else {
+                                        YesGraphAPI.utils.error(data.error, false);
+                                    }                                    
                                     d.reject(data);
                                 });
 
@@ -1357,6 +1361,8 @@
                             msg = "You've added " + recipients.length;
                             msg += recipients.length === 1 ? " friend!" : " friends!";
                             flash.success(msg);
+                        }).fail(function () {
+                            flash.error("Email sending failed");
                         });
                     }
                     return d.promise();

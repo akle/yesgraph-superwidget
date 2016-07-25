@@ -91,6 +91,9 @@
                 includePaths: [
                     /https?:\/\/cdn\.yesgraph\.com*/
                 ],
+                whitelistUrls: [
+                    /https?:\/\/cdn\.yesgraph\.com*/
+                ],
                 shouldSendCallback: function(data) {
                     // Don't send the error to Sentry if the property noLog was set to true
                     return !(data.hasOwnProperty("noLog") && (!data.noLog));
