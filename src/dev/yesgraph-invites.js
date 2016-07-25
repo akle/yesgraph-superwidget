@@ -741,8 +741,7 @@
                                             ].join(" "),
                                             state: window.location.href
                                         },
-                                        popupSize: "width=550, height=550",
-                                        parsePhotos: YesGraphAPI.utils.parseGooglePhotos
+                                        popupSize: "width=550, height=550"
                                     }
                                 },
                                 {
@@ -915,20 +914,6 @@
                         return d.promise();
                     }
 
-                    function rankContacts(contacts) {
-                        var d = $.Deferred(),
-                            noSuggestions;
-                        YesGraphAPI.rankContacts(contacts)
-                            .done(function (data) {
-                                noSuggestions = Boolean(data.meta.exception_matching_email_domain);
-                                d.resolve(data.data, noSuggestions);
-                            }).fail(function (data) {
-                                YesGraphAPI.utils.error("Contact ranking failed", false);
-                                d.reject(contacts.entries);
-                            });
-                        return d.promise();
-                    }
-
                     function buildShareButtons(target) {
                         if (OPTIONS.shareButtons.length === 0) { return false; }
                         var buttonsDiv = $("<div>"),
@@ -1075,15 +1060,10 @@
                                 if (response.data.source === "gmail") {
                                     response.data.source = "google";
                                 }
-                                $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [response.data.source, response.data.raw_contacts, response.meta]);
+                                var contacts = response.data.ranked_contacts;
+                                $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [response.data.source, contacts, response.meta]);
                                 var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
-                                d.resolve(response.data.ranked_contacts, noSuggestions);
-
-                                // Save photo data
-                                if (typeof service.parsePhotos === "function") {
-                                    var photoData = service.parsePhotos(response.data.raw_contacts, response.meta);
-                                    self.savePhotos(photoData);
-                                }
+                                d.resolve(contacts, noSuggestions);
 
                             }).fail(function(err){
                                 contactsModal.stopLoading();
@@ -1092,12 +1072,6 @@
                             });
                         }).fail(d.reject);
                         return d.promise();
-                    };
-
-                    this.savePhotos = function(photoData) {
-                        if (photoData.entries.length > 0) {
-                            YesGraphAPI.hitAPI("/photo/upload/google", "POST", photoData);
-                        }
                     };
 
                     this.fetchContacts = function(authData) {
@@ -1216,43 +1190,6 @@
                     }, 100);
                     return d.promise();
                 }
-
-                YesGraphAPI.utils.parseGooglePhotos = function (contacts, meta) {
-                    var photoList = [];
-
-                    // Loop through the contacts, checking for photos
-                    contacts.feed.entry.forEach(function(entry){
-                        var email, emails, phone, phones, photoEntry;
-                        if (!entry.link) return;
-
-                        // Loop through links, storing any photo urls
-                        entry.link.forEach(function(link) {
-                            if (link.type.slice(0,6) !== "image/" || link.rel.slice(-6) !== "#photo") return;
-                            photoEntry = {
-                                type: "google",
-                                url: link.href
-                            };
-                            emails = entry.gd$email || [];
-                            phones = entry.gd$phoneNumber || [];
-                            if (phones.length > 0 && typeof phones[0].uri === "string") {
-                                photoEntry.phone = phones[0].uri.replace("tel:", "");
-                            }
-                            if (emails.length > 0 && typeof emails[0].address === "string") {
-                                photoEntry.email = emails[0].address;
-                            }
-                            photoList.push(photoEntry);
-                        });
-                    });
-                    // Return the photo data, formatted to POST to YesGraph
-                    return {
-                        user_id: meta.user_id,
-                        sdk: "superwidget",
-                        access_token: meta.oauth_credentials.google.access_token,
-                        refresh_token: meta.oauth_credentials.google.refresh_token,
-                        token_expires_at: meta.oauth_credentials.google.expires_at,
-                        entries: photoList
-                    };
-                };
 
                 YesGraphAPI.utils.getSelectedRecipients = function(elem) {
                     var recipients = [],
