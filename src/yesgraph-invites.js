@@ -1093,6 +1093,7 @@
 
                     this.authPopup = function () {
                         var d = $.Deferred();
+                        var getUrlParam = YesGraphAPI.utils.getUrlParam;
                         var msg, authCode, accessToken, errorMsg, responseUrl;
                         var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
                         var oauthInfo = self.getOAuthInfo(self.service);
@@ -1254,7 +1255,7 @@
                         // Only send the emails if emailSending was not set to `false`
                         if (YesGraphAPI.settings.emailSending) {
 
-                            if (validateSettings(OPTIONS.settings || {})) {
+                            if (YesGraphAPI.utils.validateSettings(OPTIONS.settings || {})) {
                                 YesGraphAPI.hitAPI("/send-email-invites", "POST", {
                                     recipients: recipients,
                                     test: TESTMODE || undefined,
@@ -1317,13 +1318,13 @@
                     return d.promise();
                 };
 
-                function getUrlParam(url, name) {
+                YesGraphAPI.utils.getUrlParam = function (url, name) {
                     name = name.replace(new RegExp("/[[]/"), "\[").replace(new RegExp("/[]]/"), "\]");
                     var regexS = "[\?&#]" + name + "=([^&#]*)";
                     var regex = new RegExp(regexS);
                     var results = regex.exec(url);
                     return results == null ? null : results[1]; // jshint ignore:line
-                }
+                };
 
                 function isValidEmail(email) {
                     var re = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+.[A-Z]{2,4}/igm;
@@ -1337,7 +1338,7 @@
                     return TESTMODE;
                 }
 
-                function validateSettings(settings) {
+                YesGraphAPI.utils.validateSettings = function (settings) {
                     var settingsAreValid, settingsErrors;
                     if (settings.hasValidEmailSettings !== undefined) {
                         settingsAreValid = settings.hasValidEmailSettings[0];
@@ -1349,7 +1350,7 @@
                         flash.error(settingsErrors);
                     }
                     return settingsAreValid;
-                }
+                };
 
                 // Initialize Superwidget config
                 YesGraphAPI.Superwidget = {
