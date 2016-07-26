@@ -367,13 +367,13 @@
                         // Wrapping and styling allows divs with unspecified
                         // heights to behave like scrollable tables
                         var innerWrapper = $("<div>", {
-                            style: "height: 100%; position: relative; overflow: auto;"
+                            style: "height: 100%; position: relative; overflow-x: hidden;"
                         }).append(totalList);
                         var wrappedTotalList = $("<div>", {
                             style: "height: 100%; display: table-cell; width: 100%;"
                         }).append(innerWrapper);
                         var wrappedSuggestedList = $("<div>", {
-                            style: "max-height: 180px; overflow: scroll;"
+                            style: "max-height: 180px; overflow-x: hidden;"
                         }).append(suggestedList);
                         var noContactsWarning = $("<p>", {
                             "text": "None found!",

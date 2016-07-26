@@ -34,7 +34,8 @@
         promoteMatchingDomain: false,
         emailSending: true,
         inviteLink: true,
-        shareBtns: true
+        shareBtns: true,
+        nolog: false
     };
     var YesGraphAPI = new YesGraphAPIConstructor();
 
@@ -64,10 +65,7 @@
     function waitForYesGraphTarget() {
         // Check the dom periodically until we find an
         // element with the id `yesgraph` to get settings from
-        var d = jQuery.Deferred(),
-            target,
-            targetData,
-            userData = {},
+        var d = jQuery.Deferred(), target,
             timer = setInterval(function() {
                 target = jQuery("#yesgraph");
                 if (target.length > 0) {
@@ -168,7 +166,7 @@
                 var level;
                 if (200 <= resp.status < 300) {
                     level = "info";
-                } else if (resp.status > 500) {
+                } else if (resp.status >= 500) {
                     level = "error";
                 } else {
                     level = "warning";
@@ -232,12 +230,16 @@
 
             self.AnalyticsManager = new AnalyticsManager(self);
 
-            loadRaven().done(function(_Raven){
-                self.Raven = _Raven;
-                ravenDeferred.resolve();
-            });
-
             waitForOptions().done(function(userData){
+                // Configure Sentry/Raven for error logging
+                if (self.settings.nolog) {
+                    ravenDeferred.resolve();
+                } else {
+                    loadRaven().done(function(_Raven){
+                        self.Raven = _Raven;
+                        ravenDeferred.resolve();
+                    });
+                }
                 self.utils.getOrFetchClientToken(userData).done(function(){
                     clientTokenDeferred.resolve();
                     self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
@@ -245,29 +247,33 @@
             });
 
             // If the client token fails, log that to Sentry
-            clientTokenDeferred.fail(function(clientTokenResponse){
-                ravenDeferred.done(function(){
-                    self.Raven.captureBreadcrumb({
-                        timestamp: new Date(),
-                        message: "Client Token Request Failed",
-                        level: "error",
-                        data: clientTokenResponse
+            if (self.Raven) {
+                clientTokenDeferred.fail(function(clientTokenResponse){
+                    ravenDeferred.done(function(){
+                        self.Raven.captureBreadcrumb({
+                            timestamp: new Date(),
+                            message: "Client Token Request Failed",
+                            level: "error",
+                            data: clientTokenResponse
+                        });
+                        self.Raven.captureException(new Error("Client Token Request Failed"));
                     });
-                    self.Raven.captureException(new Error("Client Token Request Failed"));
                 });
-            });
+            }
 
             jQuery.when(ravenDeferred, clientTokenDeferred).done(function(){
-                self.Raven.setTagsContext({
-                    sdk_version: self.SDK_VERSION,
-                    app: self.app,
-                    client_token: self.clientToken,
-                    jquery_version: jQuery.fn.jquery
-                });
-                self.Raven.captureBreadcrumb({
-                    timestamp: new Date(),
-                    message: "YesGraphAPI Is Ready"
-                });
+                if (self.Raven) {
+                    self.Raven.setTagsContext({
+                        sdk_version: self.SDK_VERSION,
+                        app: self.app,
+                        client_token: self.clientToken,
+                        jquery_version: jQuery.fn.jquery
+                    });
+                    self.Raven.captureBreadcrumb({
+                        timestamp: new Date(),
+                        message: "YesGraphAPI Is Ready"
+                    });
+                }
                 self.isReady = true;
             });
 
@@ -437,13 +443,15 @@
             }
             if (self.isReady) {
                 // Log a breadcrumb to Sentry, in case an error occurs later
-                self.YesGraphAPI.Raven.captureBreadcrumb({
-                    timestamp: timestamp || new Date(),
-                    message: type,
-                    data: {
-                        target: target
-                    }
-                });
+                if (self.YesGraphAPI.Raven) {
+                    self.YesGraphAPI.Raven.captureBreadcrumb({
+                        timestamp: timestamp || new Date(),
+                        message: type,
+                        data: {
+                            target: target
+                        }
+                    });
+                }
                 // Collect all postponed events (in addition to the event
                 // currently being logged), and send them in a batch to the API.
                 var evts = [];
