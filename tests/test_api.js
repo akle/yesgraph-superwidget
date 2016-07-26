@@ -1,11 +1,11 @@
 describe('testAPI', function() {
 
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
+    jasmine.getFixtures().load('fixtures.html.js');   // load a template
 
 
     beforeEach(function (done) {
-        jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
-        jasmine.getFixtures().load('fixtures.html.js');   // load a template
         
         if (window.YesGraphAPI.isReady) {
             done();

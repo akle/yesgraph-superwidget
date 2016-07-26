@@ -56,7 +56,7 @@ describe('testSuperwidgetUI', function() {
             expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
             expect(YesGraphAPI.utils.getUrlParam(url, "qux")).toEqual("quux");
 
-            url = "www.example.com"
+            url = "www.example.com";
             expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toBeNull();
         });
     });

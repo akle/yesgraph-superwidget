@@ -16,6 +16,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'http://code.jquery.com/jquery-1.7.2.js',
       'tests/fixtures.html',
       'tests/*.js',
       'src/dev/yesgraph-invites.css', 
@@ -44,7 +45,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'tests/fixtures.html': ['html2js'],
+      '**/*.html': ['html2js'],
       'src/dev/*.js': ['coverage']
     },
 
@@ -90,8 +91,8 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    // browsers: ['Chrome'],
-    browsers: ['Chrome', 'Firefox', 'Safari'],
+    browsers: ['Chrome'],
+    // browsers: ['Chrome', 'Firefox', 'Safari'],
     // browsers: ['PhantomJS', 'Chrome'],
     // browsers: ['PhantomJS'],
 
@@ -135,7 +136,7 @@ module.exports = function(config) {
     }
     else if (process.env.TRAVIS) {
         config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.reporters = ['progress', 'coverage', 'coveralls'];
+        config.reporters = ['progress', 'coverage'];
         
     }
 };
