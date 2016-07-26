@@ -62,7 +62,7 @@
     // Warning for old versions of jQuery
     if (window.jQuery && jQuery.fn.jquery < "1.7" && window.console) {
         var msg = "You are using an unsupported version of jQuery (" + jQuery.fn.jquery + "). YesGraph supports jQuery 1.7+";
-        console.warn ? console.warn(msg) : console.log(msg);
+        console.warn ? console.warn(msg) : console.log(msg); // jshint ignore:line
     }
 
     requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function(jQuery){
