@@ -864,10 +864,12 @@
 
                         $(targetSelector).append(container);
                         YesGraphAPI.Superwidget.isReady = true;
-                        YesGraphAPI.Raven.captureBreadcrumb({
-                            timestamp: new Date(),
-                            message: "Superwidget Is Ready"
-                        });
+                        if (YesGraphAPI.Raven) {
+                            YesGraphAPI.Raven.captureBreadcrumb({
+                                timestamp: new Date(),
+                                message: "Superwidget Is Ready"
+                            });
+                        }
 
                         function generateContactImportBtn(service) {
                             var icon = $("<div>", {
@@ -1176,10 +1178,12 @@
                             clearInterval(timer);
                             inviteLinkInput.val(YesGraphAPI.inviteLink);
                             YesGraphAPI.isTestMode = isTestMode;
-                            YesGraphAPI.Raven.setTagsContext({
-                                superwidget_version: VERSION,
-                                css_version: CSS_VERSION
-                            });
+                            if (YesGraphAPI.Raven) {
+                                YesGraphAPI.Raven.setTagsContext({
+                                    superwidget_version: VERSION,
+                                    css_version: CSS_VERSION
+                                });
+                            }
                             // Add custom superwidget events
                             YesGraphAPI.events = $.extend(YesGraphAPI.events, {
                                 SET_RECIPIENTS: "set.yesgraph.recipients",
