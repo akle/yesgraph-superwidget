@@ -44,6 +44,23 @@ describe('testSuperwidgetUI', function() {
         });
     });
 
+    describe("testOAuthUtils", function() {
+        it("Should parse URL params", function() {
+            var url = "www.example.com/?foo=bar";
+            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
+
+            url = "www.example.com/#foo=bar";
+            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
+
+            url = "www.example.com/?foo=bar#qux=quux";
+            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
+            expect(YesGraphAPI.utils.getUrlParam(url, "qux")).toEqual("quux");
+
+            url = "www.example.com"
+            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toBeNull();
+        });
+    });
+
     describe("testEmailValidation", function() {
         it("Should identify valid email recipients", function() {
             var inputField = widget.container.find(".yes-manual-input-field");
@@ -73,30 +90,40 @@ describe('testSuperwidgetUI', function() {
             expect(widget.modal.container).toBeDefined();
         });
 
+        it('Should handle empty contacts list', function() {
+            widget.modal.loading();
+            widget.modal.loadContacts([]);
+            var modalSendBtn = widget.modal.container.find(".yes-modal-submit-btn");
+            var modalTitle = widget.modal.container.find(".yes-modal-title");
+            expect(modalSendBtn.css("visibility")).toEqual("hidden");
+            expect(modalTitle.text()).toEqual("No contacts found!");
+        });
+
+        it('Should optionally exclude suggestions', function() {
+            var personCount = 30;
+            var emailsPerPerson = 3;
+            var invalidEntryCount = 5;
+            var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
+            var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
+
+            widget.modal.loading();
+            widget.modal.loadContacts(contacts, true); // noSuggestions = true
+            var totalRows = widget.modal.container.find(".yes-contact-row");
+            var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
+            expect(totalRows.length).toEqual(expectedRowCount);
+            expect(suggestedRows.length).toEqual(0);
+        });
+
         it('Should display contacts', function() {
             // Generate dummy contact entries to load into the widget
             var personCount = 30;
             var emailsPerPerson = 3;
             var invalidEntryCount = 5;
+            var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
             var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
             var expectedSuggestionCount = 5;
-            var contacts = [];
 
-            for (var i=0; i < personCount; i++) {
-                var entry = {
-                    name: generateRandomString(),
-                    emails: []
-                };
-                // Exclude emails from the first few entries. They should then be filtered
-                // out of the results and the next suggestions should be shown instead.
-                if (i >= invalidEntryCount) {
-                    for (var j=0; j < emailsPerPerson; j++) {
-                        entry.emails.push("someone@email" + Math.random() + new Date());
-                    }
-                }
-                contacts.push(entry);
-            }
-
+            widget.modal.loading();
             widget.modal.loadContacts(contacts);
             var totalRows = widget.modal.container.find(".yes-contact-row");
             var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
@@ -106,6 +133,24 @@ describe('testSuperwidgetUI', function() {
     });
 });
 
+function generateContacts(personCount, emailsPerPerson, invalidEntryCount) {
+    var contacts = [];
+    for (var i=0; i < personCount; i++) {
+        var entry = {
+            name: generateRandomString(),
+            emails: []
+        };
+        // Exclude emails from the first few entries. They should then be filtered
+        // out of the results and the next suggestions should be shown instead.
+        if (i >= invalidEntryCount) {
+            for (var j=0; j < emailsPerPerson; j++) {
+                entry.emails.push("someone@email" + Math.random() + new Date());
+            }
+        }
+        contacts.push(entry);
+    }
+    return contacts;
+}
 
 function generateRandomString(len){
     // Start with an empty string & a charlist.
