@@ -22,8 +22,9 @@
             clearInterval(domReadyTimer);
         }
     }, 100);
-    var EVENTS = {
-        LOAD_SUPERWIDGET: "Loaded Superwidget",
+
+    var EVENTS = { // Should we make this into a constant
+        LOAD_SUPERWIDGET: "Loaded Superwidget", // We're not using this event in the code/load_superwidget
         CLICK_CONTACT_IMPORT_BTN: "Clicked Contact Import Button",
         CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
         CLICK_COPY_LINK: "Clicked to Copy Invite Link"
@@ -63,6 +64,7 @@
             }
             var $ = window.jQuery; // Required by Karma tests
 
+            // There is a lot of code in this requireScript method. Should we put some into a separate method?
             requireScript("Clipboard", "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js", function (Clipboard) {
                 var target;
                 var TESTMODE;
