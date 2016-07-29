@@ -317,8 +317,7 @@
                                     return $(elem).data("email");
                                 });
 
-                            var i;
-                            for (i = 0; i < emailCount; i += 1) {
+                            for (var i = 0; i < emailCount; i += 1) {
                                 // Check if they're also in the suggested list
                                 if (suggestedEmails.indexOf(contact.emails[i]) === -1) {
                                     contactEmail = $("<span>", {
@@ -352,7 +351,7 @@
                                         }));
                                     }
 
-                                    checkbox.data("email", contact.emails[0]);
+                                    checkbox.data("email", contact.emails[1]);
                                     checkbox.data("name", contact.name || undefined);
                                     checkbox.data("");
                                     contactRow.on("click", toggleSelected);
@@ -492,10 +491,10 @@
                             suggestedList.find("input[type='checkbox']").prop("checked", true);
                         }
 
-                        // Uppercase "Contains" is a case-insensitive
+                        // Uppercase "YesContains" is a case-insensitive
                         // version of jQuery "contains" used for doing
                         // case-insensitive searches
-                        $.expr[':'].Contains = function (a, i, m) {
+                        $.expr[':'].YesContains = function (a, i, m) {
                             return jQuery(a).text().toUpperCase()
                                 .indexOf(m[3].toUpperCase()) >= 0;
                         };
@@ -507,7 +506,7 @@
                                 list;
 
                             totalList.find('.yes-contact-row').hide();
-                            matching_rows = totalList.find('.yes-contact-row:Contains("' + searchString + '")');
+                            matching_rows = totalList.find('.yes-contact-row:YesContains("' + searchString + '")');
                             matching_rows.show();
                             if (matching_rows.length === 0) {
                                 noContactsWarning.show();
@@ -1099,8 +1098,9 @@
                         var oauthInfo = self.getOAuthInfo(self.service);
                         var win = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
                         var pollTimer = setInterval(function() {
-                            if (win.closed === true) {
+                            if (win && win.closed === true) {
                                 d.reject({ error: defaultAuthErrorMessage });
+                                clearInterval(pollTimer);
                                 return;
                             }
                             try {
