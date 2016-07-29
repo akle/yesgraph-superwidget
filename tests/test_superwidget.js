@@ -130,6 +130,32 @@ describe('testSuperwidgetUI', function() {
             expect(totalRows.length).toEqual(expectedRowCount);
             expect(suggestedRows.length).toEqual(expectedSuggestionCount);
         });
+
+        it('Should correctly handle contacts with the same name', function() {
+            var emails = ["jane.doe@gmail.com", "jdoe@yahoo.net",
+                          "jane.doe@about.me", "jdoe@hotmail.com"]
+            var contacts = [
+                {
+                    name: "Jane Doe",
+                    emails: emails.slice(0,2)
+                },
+                {
+                    name: "Jane Doe",
+                    emails: emails.slice(2)
+                }
+            ];
+            widget.modal.loading();
+            widget.modal.loadContacts(contacts);
+            var contactRows = widget.modal.container.find(".yes-contact-row");
+
+            // Check that the email stored in the contact row data
+            // is the same as the email that is displayed
+            emails.forEach(function(email) {
+                var contactRow = contactRows.filter(":contains('" + email + "')");
+                var storedEmail = contactRow.find("input[type='checkbox']").data("email");
+                expect(storedEmail).toEqual(email);
+            });
+        });
     });
 });
 
