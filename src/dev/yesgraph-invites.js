@@ -147,6 +147,7 @@
                     $("head").prepend(yesgraphCSS);
                 }
 
+                // Can this method be loaded async at the top of the file?
                 // Module for "flashing" stateful information
                 // to the user (e.g., success, error, etc.)
                 var flash = (function () {
@@ -1328,11 +1329,14 @@
                     return results == null ? null : results[1]; // jshint ignore:line
                 };
 
+
+                // This is a shared function, can be placed outside of the block
                 function isValidEmail(email) {
                     var re = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+.[A-Z]{2,4}/igm;
                     return re.test(email);
                 }
 
+                // This is a shared function, can be placed outside of the block
                 function isTestMode(bool) {
                     if (typeof bool === "boolean") {
                         TESTMODE = bool;
