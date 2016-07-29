@@ -351,7 +351,7 @@
                                         }));
                                     }
 
-                                    checkbox.data("email", contact.emails[1]);
+                                    checkbox.data("email", contact.emails[i]);
                                     checkbox.data("name", contact.name || undefined);
                                     checkbox.data("");
                                     contactRow.on("click", toggleSelected);
