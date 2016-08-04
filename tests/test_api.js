@@ -35,7 +35,6 @@ describe('testAPI', function() {
     });
 
     describe("testInstall", function() {
-
         it('Should load YesGraphAPI.Raven', function() {
             // After Raven loads automatically, remove it and
             // check that we can replace it with loadRaven()
@@ -44,8 +43,8 @@ describe('testAPI', function() {
             YesGraphAPI.Raven = undefined
             expect(window.YesGraphAPI.Raven).not.toBeDefined();
 
-            spyOn($j, 'getScript').and.callFake(function(url){
-                var d = $j.Deferred();
+            spyOn($, 'getScript').and.callFake(function(url){
+                var d = $.Deferred();
                 YesGraphAPI.Raven = oldRaven;
                 d.resolve();
                 return d.promise();
@@ -53,7 +52,7 @@ describe('testAPI', function() {
 
             // Calling loadRaven() again should re-add it
             window.YesGraphAPI.utils.loadRaven();
-            expect($j.getScript).toHaveBeenCalled();
+            expect($.getScript).toHaveBeenCalled();
             expect(window.YesGraphAPI.Raven).toBeDefined();
         });
 
@@ -67,21 +66,21 @@ describe('testAPI', function() {
 
             // Force clientToken request to succeed
             spyOn(YesGraphAPI, "hitAPI").and.callFake(function() {
-                var d = $j.Deferred();
+                var d = $.Deferred();
                 d.resolve({ token: oldAPI.clientToken });
                 return d.promise();
             });
 
             // Force loadRaven() to fail
-            spyOn($j, 'getScript').and.callFake(function(){
-                var d = $j.Deferred();
+            spyOn($, 'getScript').and.callFake(function(){
+                var d = $.Deferred();
                 d.reject();
                 return d.promise();
             });
 
             YesGraphAPI.install({ app: oldAPI.app });
             expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
-            expect($j.getScript).toHaveBeenCalled();
+            expect($.getScript).toHaveBeenCalled();
 
             // Check that it succesfully installed
             var interval = setInterval(function(){

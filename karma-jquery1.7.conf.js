@@ -16,7 +16,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'http://code.jquery.com/jquery-1.7.2.js',
+      'http://code.jquery.com/jquery-1.7.2.min.js',
       'tests/fixtures.html',
       'tests/*.js',
       'src/dev/yesgraph-invites.css', 
