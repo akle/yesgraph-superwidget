@@ -16,6 +16,10 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      // include jQuery explicitly, so that we can access it through
+      // the "$" variable in our tests (not "$j", which is the built-in
+      // jquery instance that comes with karma-jasmine-jquery)
+      'http://code.jquery.com/jquery-2.1.1.min.js',
       'tests/fixtures.html',
       'tests/*.js',
       'src/dev/yesgraph-invites.css', 

@@ -11,7 +11,13 @@ describe('testSuperwidgetUI', function() {
             finishPrep();
         }
         else {
-            setTimeout(finishPrep, 1000);
+            var interval = setInterval(function(){
+                if (window.YesGraphAPI.isReady
+                    && window.YesGraphAPI.Superwidget.isReady) {
+                    clearInterval(interval);
+                    finishPrep();
+                }
+            }, 100);
         }
         function finishPrep(){
             widget = window.YesGraphAPI.Superwidget;
@@ -21,8 +27,8 @@ describe('testSuperwidgetUI', function() {
     });
 
     afterEach(function() {
-        //jasmine.getFixtures().cleanUp();
-        ///jasmine.getFixtures().clearCache();
+        // jasmine.getFixtures().cleanUp();
+        // jasmine.getFixtures().clearCache();
     });
 
     describe('testWidgetContainer', function(){

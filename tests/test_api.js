@@ -1,24 +1,24 @@
 describe('testAPI', function() {
 
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
     jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
     jasmine.getFixtures().load('fixtures.html.js');   // load a template
 
-
     beforeEach(function (done) {
-        
         if (window.YesGraphAPI.isReady) {
             done();
-        }
-        else {
-            setTimeout(function() {
-                done();
-            }, 5000);
+        } else {
+            var interval = setInterval(function(){
+                if (window.YesGraphAPI.isReady) {
+                    clearInterval(interval);
+                    done();
+                }
+            }, 100);
         }
     });
     afterEach(function() {
-        //jasmine.getFixtures().cleanUp();
-        ///jasmine.getFixtures().clearCache();
+        // jasmine.getFixtures().cleanUp();
+        // jasmine.getFixtures().clearCache();
     });
 
     it('Should have yesgraph', function() {
@@ -26,8 +26,75 @@ describe('testAPI', function() {
         expect(window.YesGraphAPI).toBeDefined();
     });
 
-    it('Should have YesGraphAPI.Raven', function() {
-        expect(window.YesGraphAPI.Raven).toBeDefined();
+    it('Should be removed by YesGraphAPI.noConflict', function() {
+        expect(window.YesGraphAPI).toBeDefined();
+        var _api = window.YesGraphAPI.noConflict();
+        expect(window.YesGraphAPI).not.toBeDefined();
+        window.YesGraphAPI = _api;
+        expect(window.YesGraphAPI).toBeDefined();
+    });
+
+    describe("testInstall", function() {
+        it('Should load YesGraphAPI.Raven', function() {
+            // After Raven loads automatically, remove it and
+            // check that we can replace it with loadRaven()
+            expect(window.YesGraphAPI.Raven).toBeDefined();
+            var oldRaven = YesGraphAPI.Raven;
+            YesGraphAPI.Raven = undefined
+            expect(window.YesGraphAPI.Raven).not.toBeDefined();
+
+            spyOn($, 'getScript').and.callFake(function(url){
+                var d = $.Deferred();
+                YesGraphAPI.Raven = oldRaven;
+                d.resolve();
+                return d.promise();
+            });
+
+            // Calling loadRaven() again should re-add it
+            window.YesGraphAPI.utils.loadRaven();
+            expect($.getScript).toHaveBeenCalled();
+            expect(window.YesGraphAPI.Raven).toBeDefined();
+        });
+
+        it('Should install successfully even if Raven fails', function(done) {
+            // Remove the YesGraphAPI object
+            var oldAPI = YesGraphAPI.noConflict();
+            expect(window.YesGraphAPI).not.toBeDefined();
+
+            // Try to re-install
+            window.YesGraphAPI = new YesGraphAPIConstructor();
+
+            // Force clientToken request to succeed
+            spyOn(YesGraphAPI, "hitAPI").and.callFake(function() {
+                var d = $.Deferred();
+                d.resolve({ token: oldAPI.clientToken });
+                return d.promise();
+            });
+
+            // Force loadRaven() to fail
+            spyOn($, 'getScript').and.callFake(function(){
+                var d = $.Deferred();
+                d.reject();
+                return d.promise();
+            });
+
+            YesGraphAPI.install({ app: oldAPI.app });
+            expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
+            expect($.getScript).toHaveBeenCalled();
+
+            // Check that it succesfully installed
+            var interval = setInterval(function(){
+                if (YesGraphAPI.isReady) {
+                    clearInterval(interval);
+                    done();
+                }
+            }, 100);
+
+            // Cleanup! We should replace the original YesGraphAPI object
+            // because the Superwidget is associated with that instance
+            window.YesGraphAPI.noConflict();
+            window.YesGraphAPI = oldAPI;
+        });
     });
 
     describe("testEndpoints", function() {
@@ -95,22 +162,34 @@ describe('testAPI', function() {
     });
 
     describe("testAnalyticsManager", function() {
+        beforeEach(function (done) {
+            if (YesGraphAPI.AnalyticsManager.isReady) {
+                done();
+            } else {
+                var interval = setInterval(function(){
+                    if (YesGraphAPI.AnalyticsManager.isReady) {
+                        clearInterval(interval);
+                        done();
+                    }
+                }, 100);
+            }
+        });
 
         it('Should have YesGraphAPI.AnalyticsManager', function() {
-            expect(window.YesGraphAPI.AnalyticsManager).toBeDefined();
+            expect(YesGraphAPI.AnalyticsManager).toBeDefined();
         });
 
         it('Should hit analytics endpoint with events', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI');
-            window.YesGraphAPI.AnalyticsManager.log("Test Event");
-            expect(window.YesGraphAPI.hitAPI).toHaveBeenCalled();
+            spyOn(YesGraphAPI, 'hitAPI');
+            YesGraphAPI.AnalyticsManager.log("Test Event");
+            expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
         });
 
         it('Should not hit analytics endpoint without events', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI');
-            window.YesGraphAPI.AnalyticsManager.postponed = []; // Clear any postponed events
-            window.YesGraphAPI.AnalyticsManager.log(); // There should be no events to log
-            expect(window.YesGraphAPI.hitAPI).not.toHaveBeenCalled();
+            spyOn(YesGraphAPI, 'hitAPI');
+            YesGraphAPI.AnalyticsManager.postponed = []; // Clear any postponed events
+            YesGraphAPI.AnalyticsManager.log(); // There should be no events to log
+            expect(YesGraphAPI.hitAPI).not.toHaveBeenCalled();
         });
     });
 
@@ -143,14 +222,6 @@ describe('testAPI', function() {
             }).not.toThrow();
 
             window.console = _console;
-        });
-
-        it('Should be removed by YesGraphAPI.noConflict', function() {
-            expect(window.YesGraphAPI).toBeDefined();
-            var _api = window.YesGraphAPI.noConflict();
-            expect(window.YesGraphAPI).not.toBeDefined();
-            window.YesGraphAPI = _api;
-            expect(window.YesGraphAPI).toBeDefined();
         });
     });
 });
