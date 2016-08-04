@@ -24,7 +24,8 @@
     var EVENTS = {
         LOAD_JS_SDK: "Loaded Javascript SDK",
         LOAD_DEFAULT_PARAMS: "Loaded Default CURRENT_USER Params",
-        SAW_ERROR_MSG: "Saw Error Message"
+        SAW_ERROR_MSG: "Saw Error Message",
+        RAVEN_FAILED: "Raven Failed to Load"
     };
     var settings = {
         app: null,
@@ -81,35 +82,6 @@
                 }
             }, 100);
         d.always(function(){ clearInterval(timer); });
-        return d.promise();
-    }
-
-    function loadRaven() {
-        // Load a local version of Raven, accessible as YesGraphAPI.Raven
-        // Use Raven.noConflict() to make sure that we don't overwrite
-        // any existing instance of Raven.
-        var d = jQuery.Deferred(),
-            oldRaven = window.Raven ? window.Raven.noConflict() : undefined,
-            newRaven,
-            src = "https://cdn.ravenjs.com/3.0.4/raven.min.js",
-            options = {
-                includePaths: [
-                    /https?:\/\/cdn\.yesgraph\.com*/
-                ],
-                whitelistUrls: [
-                    /https?:\/\/cdn\.yesgraph\.com*/
-                ],
-                shouldSendCallback: function(data) {
-                    // Don't send the error to Sentry if the property noLog was set to true
-                    return !(data.hasOwnProperty("noLog") && (!data.noLog));
-                }
-            };
-        jQuery.getScript(src, function(){
-            newRaven = window.Raven.noConflict();
-            if (!RUNNING_LOCALLY) { newRaven.config(PUBLIC_RAVEN_DSN, options).install(); }
-            if (oldRaven) { window.Raven = oldRaven; }
-            d.resolve(newRaven);
-        });
         return d.promise();
     }
 
@@ -237,15 +209,17 @@
 
             self.AnalyticsManager = new AnalyticsManager(self);
 
-            waitForOptions().done(function(userData){
+            waitForOptions(options).done(function(userData){
                 // Configure Sentry/Raven for error logging
                 if (self.settings.nolog) {
                     ravenDeferred.resolve();
                 } else {
-                    loadRaven().done(function(_Raven){
-                        self.Raven = _Raven;
-                        ravenDeferred.resolve();
-                    });
+                    self.utils.loadRaven()
+                        .fail(function(){
+                            self.AnalyticsManager.log(EVENTS.RAVEN_FAILED);
+                        }).always(function() {
+                            ravenDeferred.resolve(); // Fail gracefully no matter what
+                        });
                 }
                 self.utils.getOrFetchClientToken(userData).done(function(){
                     clientTokenDeferred.resolve();
@@ -284,7 +258,7 @@
                 self.isReady = true;
             });
 
-            function waitForOptions() {
+            function waitForOptions(options) {
                 var d1 = jQuery.Deferred();
                 var d2 = jQuery.Deferred();
 
@@ -321,6 +295,37 @@
         };
 
         this.utils = {
+            loadRaven: function(){
+                // Load a local version of Raven, accessible as YesGraphAPI.Raven
+                // Use Raven.noConflict() to make sure that we don't overwrite
+                // any existing instance of Raven.
+                var d = jQuery.Deferred(),
+                    oldRaven = window.Raven ? window.Raven.noConflict() : undefined,
+                    newRaven,
+                    src = "https://cdn.ravenjs.com/3.0.4/raven.min.js",
+                    options = {
+                        includePaths: [
+                            /https?:\/\/cdn\.yesgraph\.com*/
+                        ],
+                        whitelistUrls: [
+                            /https?:\/\/cdn\.yesgraph\.com*/
+                        ],
+                        shouldSendCallback: function(data) {
+                            // Don't send the error to Sentry if the property noLog was set to true
+                            return !(data.hasOwnProperty("noLog") && (!data.noLog));
+                        }
+                    };
+                jQuery.getScript(src, function(){
+                    newRaven = window.Raven.noConflict();
+                    if (!RUNNING_LOCALLY) { newRaven.config(PUBLIC_RAVEN_DSN, options).install(); }
+                    if (oldRaven) { window.Raven = oldRaven; }
+                    self.Raven = newRaven;
+                    d.resolve(newRaven);
+                }).fail(function(){
+                    d.reject();
+                });
+                return d.promise();
+            },
             readCookie: function(key) {
                 var cookieName = key + "=";
                 var cookies = document.cookie.split(';');
