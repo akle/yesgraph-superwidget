@@ -20,6 +20,7 @@ module.exports = function(config) {
       // the "$" variable in our tests (not "$j", which is the built-in
       // jquery instance that comes with karma-jasmine-jquery)
       'http://code.jquery.com/jquery-2.1.1.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
       'tests/fixtures.html',
       'tests/*.js',
       'src/dev/yesgraph-invites.css', 
