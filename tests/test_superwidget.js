@@ -7,10 +7,10 @@ describe('testSuperwidgetUI', function() {
     var widget;
 
     beforeEach(function (done) {
+        // Wait for the Superwidget to be ready
         if (window.YesGraphAPI.Superwidget && window.YesGraphAPI.Superwidget.isReady) {
             finishPrep();
-        }
-        else {
+        } else {
             var interval = setInterval(function(){
                 if (window.YesGraphAPI.isReady
                     && window.YesGraphAPI.Superwidget.isReady) {
@@ -29,6 +29,47 @@ describe('testSuperwidgetUI', function() {
     afterEach(function() {
         // jasmine.getFixtures().cleanUp();
         // jasmine.getFixtures().clearCache();
+    });
+
+    describe("testInstall", function() {
+        beforeEach(function (done){
+            // Wait for Clipboard.js to be ready
+            if (window.Clipboard) {
+                done();
+            } else {
+                var interval = setInterval(function(){
+                    if (window.Clipboard) {
+                        clearInterval(interval);
+                        done();
+                    }
+                }, 100);
+            }
+        });
+
+        it('Should load Clipboard.js', function() {
+            var originalClipboard = window.Clipboard;
+            spyOn($, 'getScript').and.callFake(function(url){
+                var d = $.Deferred();
+                window.Clipboard = originalClipboard;
+                d.resolve();
+                return d.promise();
+            });
+
+            // Clipboard has been loaded already, so
+            // check that we don't reload the script
+            expect(window.Clipboard).toBeDefined();
+            window.YesGraphAPI.utils.loadClipboard();
+            expect($.getScript).not.toHaveBeenCalled();
+
+            // Remove Clipboard, and then check that
+            // we can replace it with loadClipboard()
+            window.Clipboard = undefined;
+            expect(window.Clipboard).not.toBeDefined();
+
+            window.YesGraphAPI.utils.loadClipboard();
+            expect($.getScript).toHaveBeenCalled();
+            expect(window.Clipboard).toBeDefined();
+        });
     });
 
     describe('testWidgetContainer', function(){
