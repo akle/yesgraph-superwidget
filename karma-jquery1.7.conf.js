@@ -17,6 +17,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'http://code.jquery.com/jquery-1.7.2.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
       'tests/fixtures.html',
       'tests/*.js',
       'src/dev/yesgraph-invites.css', 
