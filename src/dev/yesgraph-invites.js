@@ -16,18 +16,36 @@
         name: "yesgraph-invites.js",
         version: VERSION
     };
-    var domReadyTimer = setInterval(function () {
-        if (document.readyState === "complete" || document.readyState === "interactive") {
-            loadSuperwidget();
-            clearInterval(domReadyTimer);
-        }
-    }, 100);
     var EVENTS = {
         LOAD_SUPERWIDGET: "Loaded Superwidget",
         CLICK_CONTACT_IMPORT_BTN: "Clicked Contact Import Button",
         CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
         CLICK_COPY_LINK: "Clicked to Copy Invite Link"
     };
+    var domReadyTimer = setInterval(function () {
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            loadSuperwidget();
+            clearInterval(domReadyTimer);
+        }
+    }, 100);
+
+    function requireScript(globalVar, script, func) {
+        // Get the specified script if it hasn't been loaded already
+        if (window.hasOwnProperty(globalVar)) {
+            func(window[globalVar]);
+        } else {
+            return (function (d, t) {
+                var g = d.createElement(t);
+                var s = d.getElementsByTagName(t)[0];
+                g.src = script;
+                s.parentNode.insertBefore(g, s);
+                g.onload = function () {
+                    func(window[globalVar]);
+                };
+            }(document, 'script'));
+        }
+    }
+
     function loadSuperwidget() {
         var protocol;
         if (window.location.protocol.indexOf("http") !== -1) {
@@ -36,22 +54,6 @@
             protocol = "http:";
         }
 
-        function requireScript(globalVar, script, func) {
-            // Get the specified script if it hasn't been loaded already
-            if (window.hasOwnProperty(globalVar)) {
-                func(window[globalVar]);
-            } else {
-                return (function (d, t) {
-                    var g = d.createElement(t);
-                    var s = d.getElementsByTagName(t)[0];
-                    g.src = script;
-                    s.parentNode.insertBefore(g, s);
-                    g.onload = function () {
-                        func(window[globalVar]);
-                    };
-                }(document, 'script'));
-            }
-        }
 
         requireScript("YesGraphAPI", "https://cdn.yesgraph.com/" + SDK_VERSION + "/yesgraph.min.js", function (YesGraphAPI) {
             if (YesGraphAPI.hasLoadedSuperwidget) {
