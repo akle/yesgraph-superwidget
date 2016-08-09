@@ -48,7 +48,11 @@ module.exports = {
             files: src.root + "/**/yesgraph-invites.less"
         },
         version: {
-            files: src.root + "/**/*"
+            files: [
+                "./**/yesgraph?(-invites)?(.min).@(js|css)",
+                "./package.json",
+                "./gulp/config.js"
+            ]
         },
         update: {
             files: src.dev + "/yesgraph?(-invites)?(.min).@(js|less|css)"
