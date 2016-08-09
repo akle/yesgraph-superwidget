@@ -11,7 +11,7 @@ var newVersions = {
     css: undefined
 }
 
-gulp.task("_getVersion", function() {
+gulp.task("_getVersion-old", function() {
     return gulp.src(config.tasks.version.files, {base: config.src.root})
         .pipe(prompt.prompt([{
             type: 'list',
@@ -40,7 +40,7 @@ gulp.task("_getVersion", function() {
         }));
 });
 
-gulp.task("version", ["_getVersion"] , function() {
+gulp.task("version-old", ["_getVersion-old"] , function() {
     // Update the config file to persist the version change
     gulp.src(__dirname + "/../config.js")
         .pipe(replace(/__(\w*)_VERSION__ ?\= ?[\'\"]\S*[\'\"];/g, configVersionReplacer))

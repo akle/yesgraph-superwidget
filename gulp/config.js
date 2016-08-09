@@ -42,7 +42,7 @@ module.exports = {
             files: src.root + "/**/yesgraph?(-invites).js"
         },
         minifyCss: {
-            files: src.root + "/**/yesgraph-invites.css"
+            files: dest.root + "/**/yesgraph-invites.css"
         },
         watch: {
             files: src.root + "/**/yesgraph-invites.less"

@@ -11,14 +11,14 @@ gulp.task("minify:js", function() {
         .pipe(uglify({preserveComments: "license"}))
         .pipe(rename({suffix: ".min"}))
         .pipe(sourcemaps.write("."))
-        .pipe(gulp.dest(config.src.root));
+        .pipe(gulp.dest(config.dest.root));
 });
 
 gulp.task("minify:css", ["compile:less"], function() {
-    return gulp.src(config.tasks.minifyCss.files, {base: config.src.root})
+    return gulp.src(config.tasks.minifyCss.files, {base: config.dest.root})
         .pipe(cleanCSS({keepSpecialComments: 1}))
         .pipe(rename({suffix: ".min"}))
-        .pipe(gulp.dest(config.src.root));
+        .pipe(gulp.dest(config.dest.root));
 });
 
 gulp.task("minify", ["minify:js", "minify:css"]);
