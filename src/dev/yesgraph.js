@@ -107,7 +107,9 @@
         this.isReady = false;
         this.hasLoadedSuperwidget = false;
         this.settings = settings;
-
+        this.events = {
+            INSTALLED_SDK: "installed.yesgraph.sdk"
+        };
         var self = this;
 
         this.hitAPI = function (endpoint, method, data, done, deferred) {
@@ -256,6 +258,7 @@
                     });
                 }
                 self.isReady = true;
+                $(document).trigger(self.events.INSTALLED_SDK);
             });
 
             function waitForOptions(options) {
@@ -363,9 +366,9 @@
                 // If there is a client token available in the user's cookies,
                 // hitting the API will validate the token and return the same one.
                 // Otherwise, the API will create a new client token.
-                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(data) {
-                    var errorMsg = ((!data.error) || (data.error === "error")) ? "Client Token Request Failed." : data.error;
-                    self.utils.error(errorMsg + " Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
+                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(error) {
+                    var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Token Request Failed" : error.error;
+                    self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
                 });
             },
             error: function (msg, fail, noLog) {
@@ -376,10 +379,6 @@
                         timestamp: new Date(),
                         message: msg,
                         level: fail ? "error" : "warning",
-                        data: {
-                            is_fatal: fail,
-                            should_log: !noLog
-                        }
                     });
                 }
                 self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG, msg);
