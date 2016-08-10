@@ -1368,7 +1368,12 @@
                 try {
                     clipboard = new Clipboard('#yes-invite-link-copy-btn');
                     clipboardExists = true;
-                } catch (e) {}
+                } catch (e) {
+                    if (console) {
+                        var msg = "Clipboard could not be configured.";
+                        console.warn ? console.warn(msg) : console.log(msg); // jshint ignore:line
+                    }
+                }
 
                 // Add the copy button to the UI
                 if (clipboardExists) {
