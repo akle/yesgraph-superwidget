@@ -128,6 +128,8 @@
                 "width": "100%",
                 "font-size": "0.85em",
                 "margin": "5px 0"
+            }).on("click", function() {
+                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, "#yes-invite-link-copy-btn", null, LIBRARY);
             }).append(inviteLinkInput);
 
             // If we haven't loaded the css already, add the YesGraph default styling
@@ -1353,24 +1355,28 @@
             };
 
             YesGraphAPI.utils.configureClipboard = function () {
-                // Add the copy button to the UI
-                inviteLinkSection.append(copyInviteLinkBtn);
-                copyInviteLinkBtn.on("click", function() {
-                    YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, "#yes-invite-link-copy-btn", null, LIBRARY);
-                });
                 // Enable copying with the copy button
-                var clipboard = new Clipboard('#yes-invite-link-copy-btn');
-                clipboard.on('success', function (e) {
-                    var originalCopy = e.trigger.textContent;
-                    e.trigger.textContent = "Copied!";
-                    setTimeout(function () {
-                        e.trigger.textContent = originalCopy;
-                    }, 3000);
-                });
-                clipboard.on('error', function (e) {
-                    var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
-                    flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
-                });
+                var clipboardExists = false;
+                try {
+                    var clipboard = new Clipboard('#yes-invite-link-copy-btn');
+                    clipboardExists = true;
+                } catch (e) {}
+
+                // Add the copy button to the UI
+                if (clipboardExists) {
+                    inviteLinkSection.append(copyInviteLinkBtn);
+                    clipboard.on('success', function (e) {
+                        var originalCopy = e.trigger.textContent;
+                        e.trigger.textContent = "Copied!";
+                        setTimeout(function () {
+                            e.trigger.textContent = originalCopy;
+                        }, 3000);
+                    });
+                    clipboard.on('error', function (e) {
+                        var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
+                        flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
+                    });                    
+                }
             };
 
             // Initialize Superwidget config
