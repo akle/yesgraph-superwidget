@@ -70,6 +70,28 @@ describe('testSuperwidgetUI', function() {
             expect($.getScript).toHaveBeenCalled();
             expect(window.Clipboard).toBeDefined();
         });
+
+        it('configureClipboard() should fail gracefully', function() {
+            // Save the existing version of Clipboard
+            var originalClipboard = window.Clipboard;
+            expect(originalClipboard).toBeDefined();
+
+            // Replace it with an illegal constructor
+            var someInvalidConstructor = "foo";
+            window.Clipboard = someInvalidConstructor;
+
+            // Because window.Clipboard is defined,
+            // loadClipboard() won't reload the script
+            window.YesGraphAPI.utils.loadClipboard();
+
+            // Because window.Clipboard is not a valid constructor,
+            // configureClipboard() should fail gracefully
+            expect(window.YesGraphAPI.utils.configureClipboard).not.toThrow();
+
+            // Cleanup
+            window.Clipboard = originalClipboard;
+        });
+
     });
 
     describe('testWidgetContainer', function(){
