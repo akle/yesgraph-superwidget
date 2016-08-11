@@ -449,7 +449,7 @@
                             // console.log(completedTries)
                         });
                     return d;
-                };
+                }
                 // Return a promise, so that we can chain methods
                 // as we would with regular jQuery ajax calls
                 return tryAjax().promise();
