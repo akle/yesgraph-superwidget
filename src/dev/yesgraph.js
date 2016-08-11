@@ -112,8 +112,8 @@
         };
         var self = this;
 
-        this.hitAPI = function (endpoint, method, data, done, deferred) {
-            var d = deferred || jQuery.Deferred();
+        this.hitAPI = function (endpoint, method, data, done, maxTries, interval) {
+            var d = jQuery.Deferred();
             if (typeof method !== "string") {
                 d.reject({error: "Expected method as string, not " + typeof method});
                 return d.promise();
@@ -126,13 +126,6 @@
                 contentType: "application/json; charset=UTF-8",
                 headers: {
                     "Authorization": "ClientToken " + YesGraphAPI.clientToken
-                },
-                success: function(data) {
-                    data = typeof data === "string" ? JSON.parse(data) : data;
-                    d.resolve(data);
-                },
-                error: function(data) {
-                    d.reject(data.responseJSON || {error: data.statusText});
                 }
             };
 
@@ -143,61 +136,73 @@
                 ajaxSettings.method = method;
             }
 
-            jQuery.ajax(ajaxSettings).always(function(resp) {
-                var level;
-                if (200 <= resp.status < 300) {
-                    level = "info";
-                } else if (resp.status >= 500) {
-                    level = "error";
-                } else {
-                    level = "warning";
-                }
-                if (self.Raven) {
-                    self.Raven.captureBreadcrumb({
-                        timestamp: new Date(),
-                        level: level,
-                        data: {
-                            url: ajaxSettings.url,
-                            method: ajaxSettings.method || ajaxSettings.type,
-                            status_code: resp.status,
-                            reason: resp.statusText,
-                            requestData: ajaxSettings.data
-                        }
-                    });
-                }
-            });
+            // Make an ajax call, retrying up to the specified number of times,
+            // waiting the specified interval (in milliseconds) between tries
+            new self.utils.AjaxRetry(ajaxSettings, maxTries, interval)
+                .done(function(data) {
+                    try {
+                        data = typeof data === "string" ? JSON.parse(data) : data;
+                    } catch (ignore) {}
+                    d.resolve(data);
+                })
+                .fail(function(error) {
+                    d.reject(error.responseJSON || {error: error.statusText});
+                })
+                .always(function(resp) {
+                    var level;
+                    if (200 <= resp.status < 300) {
+                        level = "info";
+                    } else if (resp.status >= 500) {
+                        level = "error";
+                    } else {
+                        level = "warning";
+                    }
+                    if (self.Raven) {
+                        self.Raven.captureBreadcrumb({
+                            timestamp: new Date(),
+                            level: level,
+                            data: {
+                                url: ajaxSettings.url,
+                                method: ajaxSettings.method || ajaxSettings.type,
+                                status_code: resp.status,
+                                reason: resp.statusText,
+                                requestData: ajaxSettings.data
+                            }
+                        });
+                    }
+                });
 
             if (done) { d.done(done); }
             return d.promise();
         };
 
-        this.rankContacts = function (rawContacts, done) {
+        this.rankContacts = function (rawContacts, done, maxTries, interval) {
             var matchDomain = settings.promoteMatchingDomain,
                 domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
             rawContacts.promote_matching_domain = domainVal;
-            return self.hitAPI(ADDRBOOK_ENDPOINT, "POST", rawContacts, done);
+            return self.hitAPI(ADDRBOOK_ENDPOINT, "POST", rawContacts, done, maxTries, interval);
         };
 
-        this.getRankedContacts = function (done) {
+        this.getRankedContacts = function (done, maxTries, interval) {
             var matchDomain = settings.promoteMatchingDomain,
                 domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
-            return self.hitAPI(ADDRBOOK_ENDPOINT, "GET", {promote_matching_domain: domainVal}, done);
+            return self.hitAPI(ADDRBOOK_ENDPOINT, "GET", {promote_matching_domain: domainVal}, done, maxTries, interval);
         };
 
-        this.postSuggestedSeen = function (seenContacts, done) {
-            return self.hitAPI(SUGGESTED_SEEN_ENDPOINT, "POST", seenContacts, done);
+        this.postSuggestedSeen = function (seenContacts, done, maxTries, interval) {
+            return self.hitAPI(SUGGESTED_SEEN_ENDPOINT, "POST", seenContacts, done, maxTries, interval);
         };
 
-        this.postInvitesAccepted = function (invitesAccepted, done) {
-            return self.hitAPI(INVITES_ACCEPTED_ENDPOINT, "POST", invitesAccepted, done);
+        this.postInvitesAccepted = function (invitesAccepted, done, maxTries, interval) {
+            return self.hitAPI(INVITES_ACCEPTED_ENDPOINT, "POST", invitesAccepted, done, maxTries, interval);
         };
 
-        this.postInvitesSent = function (invitesSent, done) {
-            return self.hitAPI(INVITES_SENT_ENDPOINT, "POST", invitesSent, done);
+        this.postInvitesSent = function (invitesSent, done, maxTries, interval) {
+            return self.hitAPI(INVITES_SENT_ENDPOINT, "POST", invitesSent, done, maxTries, interval);
         };
 
-        this.test = function (done) {
-            return self.hitAPI('/test', "GET", null, done);
+        this.test = function (done, maxTries, interval) {
+            return self.hitAPI('/test', "GET", null, done, maxTries, interval);
         };
 
         this.noConflict = function() {
@@ -366,19 +371,24 @@
                 // If there is a client token available in the user's cookies,
                 // hitting the API will validate the token and return the same one.
                 // Otherwise, the API will create a new client token.
-                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken).fail(function(error) {
+
+                // Retry failed request up to 3 times, waiting 500ms between tries
+                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken, 3, 500).fail(function(error) {
                     var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Token Request Failed" : error.error;
                     self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
                 });
             },
-            error: function (msg, fail, noLog) {
+            error: function (msg, fail, noLog, level) {
                 var e = new Error(msg);
                 e.name = "YesGraphError";
+                if (!level) {
+                    level = fail ? "error" : "warning";
+                }
                 if (self.Raven) {
                     self.Raven.captureBreadcrumb({
                         timestamp: new Date(),
                         message: msg,
-                        level: fail ? "error" : "warning",
+                        level: level,
                     });
                 }
                 self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG, msg);
@@ -386,10 +396,63 @@
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;
                 } else {
-                    if (window.console && window.console.log) {
-                        console.log("YesGraphError", e);
+                    if (window.console) {
+                        if (level === "warning" && console.warn) {
+                            console.warn("YesGraph", e);
+                        } else if ((["warning", "error"].indexOf(level) !== -1) && console.error) {
+                            console.error("YesGraph", e);
+                        } else if (console.info) {
+                            console.info("YesGraph", e);
+                        } else if (console.log) {
+                            console.log("YesGraph", e);
+                        }
                     }
                 }
+            },
+            AjaxRetry: function (settings, maxTries, interval) {
+                var api = self;
+                var completedTries = 0;
+                maxTries = typeof maxTries === "number" ? maxTries : 1;
+                interval = (typeof interval === "number" && maxTries > 1) ? interval : 0;
+
+                function tryAjax (deferred) {
+                    var d = deferred || $.Deferred();
+                    $.ajax(settings)
+                        .done(function(data) {
+                            // If it succeeds, don't keep retrying
+                            completedTries++;
+                            d.resolve(data);
+                        })
+                        .fail(function(error) {
+                            completedTries++;
+                            // Log a breadcrumb to Sentry
+                            if (api.Raven) {
+                                api.Raven.captureBreadcrumb({
+                                    timestamp: new Date(),
+                                    message: "Retrying request to " + settings.url,
+                                    level: "warning"
+                                });
+                            }
+                            // Recursively call this function again (after a timeout)
+                            // until either it succeeds or we hit the max number of tries
+                            if (completedTries < maxTries) {
+                                setTimeout(function() {
+                                    if (window.console) {
+                                        api.utils.error("Retrying request to " + settings.url);
+                                    }
+                                    tryAjax(d);
+                                }, interval);
+                            } else {
+                                d.reject(error);
+                            }
+                        }).always(function(){
+                            // console.log(completedTries)
+                        });
+                    return d;
+                }
+                // Return a promise, so that we can chain methods
+                // as we would with regular jQuery ajax calls
+                return tryAjax().promise();
             }
         };
     }
@@ -475,7 +538,8 @@
                     evts.push(evt);
                 });
                 if (evts.length > 0) {
-                    self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts });
+                    // Retry failed request up to 3 times, waiting 1000ms between tries
+                    self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts }, null, 3, 1000);
                 }
                 self.postponed = [];
             } else {

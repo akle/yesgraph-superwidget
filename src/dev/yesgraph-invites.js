@@ -895,7 +895,8 @@
                 function getWidgetOptions() {
                     var d = $.Deferred();
                     var OPTIONS_ENDPOINT = '/apps/' + YesGraphAPI.app + '/js/get-options';
-                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET").done(function (data) {
+                    // Retry failed request up to 3 times, waiting 300ms between tries
+                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 300).done(function (data) {
                         OPTIONS = data;
                         d.resolve(data);
                     }).fail(function (error) {
@@ -1370,8 +1371,7 @@
                     clipboardExists = true;
                 } catch (e) {
                     if (console) {
-                        var msg = "Clipboard could not be configured.";
-                        console.warn ? console.warn(msg) : console.log(msg); // jshint ignore:line
+                        YesGraphAPI.utils.error("Clipboard could not be configured.");
                     }
                 }
 

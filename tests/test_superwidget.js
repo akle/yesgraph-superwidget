@@ -11,13 +11,7 @@ describe('testSuperwidgetUI', function() {
         if (window.YesGraphAPI.Superwidget && window.YesGraphAPI.Superwidget.isReady) {
             finishPrep();
         } else {
-            var interval = setInterval(function(){
-                if (window.YesGraphAPI.isReady
-                    && window.YesGraphAPI.Superwidget.isReady) {
-                    clearInterval(interval);
-                    finishPrep();
-                }
-            }, 100);
+            $(document).on("installed.yesgraph.superwidget", finishPrep);
         }
         function finishPrep(){
             widget = window.YesGraphAPI.Superwidget;
