@@ -8,12 +8,7 @@ describe('testAPI', function() {
         if (window.YesGraphAPI.isReady) {
             done();
         } else {
-            var interval = setInterval(function(){
-                if (window.YesGraphAPI.isReady) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 100);
+            $(document).on("installed.yesgraph.sdk", done);
         }
     });
     afterEach(function() {
@@ -43,7 +38,7 @@ describe('testAPI', function() {
             YesGraphAPI.Raven = undefined
             expect(window.YesGraphAPI.Raven).not.toBeDefined();
 
-            spyOn($, 'getScript').and.callFake(function(url){
+            var getScriptSpy = spyOn($, 'getScript').and.callFake(function(url){
                 var d = $.Deferred();
                 YesGraphAPI.Raven = oldRaven;
                 d.resolve();
@@ -52,7 +47,7 @@ describe('testAPI', function() {
 
             // Calling loadRaven() again should re-add it
             window.YesGraphAPI.utils.loadRaven();
-            expect($.getScript).toHaveBeenCalled();
+            expect(getScriptSpy).toHaveBeenCalled();
             expect(window.YesGraphAPI.Raven).toBeDefined();
         });
 
@@ -65,24 +60,24 @@ describe('testAPI', function() {
             window.YesGraphAPI = new YesGraphAPIConstructor();
 
             // Force clientToken request to succeed
-            spyOn(YesGraphAPI, "hitAPI").and.callFake(function() {
+            var hitApiSpy = spyOn(YesGraphAPI, "hitAPI").and.callFake(function() {
                 var d = $.Deferred();
                 d.resolve({ token: oldAPI.clientToken });
                 return d.promise();
             });
 
             // Force loadRaven() to fail
-            spyOn($, 'getScript').and.callFake(function(){
+            var getScriptSpy = spyOn($, 'getScript').and.callFake(function(){
                 var d = $.Deferred();
                 d.reject();
                 return d.promise();
             });
 
             YesGraphAPI.install({ app: oldAPI.app });
-            expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
-            expect($.getScript).toHaveBeenCalled();
+            expect(hitApiSpy).toHaveBeenCalled();
+            expect(getScriptSpy).toHaveBeenCalled();
 
-            // Check that it succesfully installed
+            // Check that it succesfully installed            
             var interval = setInterval(function(){
                 if (YesGraphAPI.isReady) {
                     clearInterval(interval);
@@ -98,14 +93,65 @@ describe('testAPI', function() {
     });
 
     describe("testEndpoints", function() {
+        it('Should retry failed ajax requests', function(done) {
+            var endpoint = "/test";
+            var ajaxCallCount = 0;
+
+            // Force the ajax request to fail (triggering a retry)
+            var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings){
+                var d = $.Deferred();
+                if (settings.url.indexOf(endpoint) !== -1) {
+                    ajaxCallCount++;
+                }
+                d.reject({});
+                return d.promise();
+            });
+
+            // Check that we retried 3 times
+            var maxTries = 3;
+            var interval = 100; // 100ms
+            YesGraphAPI.hitAPI(endpoint, "GET", {}, undefined, maxTries, interval).always(function(){
+                expect(ajaxCallCount).toEqual(maxTries);
+                done();
+            });
+        });
+
+        it("Shouldn't retry successful ajax requests", function(done) {
+            var endpoint = "/test";
+            var ajaxCallCount = 0;
+
+            // Force the ajax request to succeed (preventing a retry)
+            var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings){
+                var d = $.Deferred();
+                if (settings.url.indexOf(endpoint) !== -1) {
+                    ajaxCallCount++;
+                }
+                d.resolve({});
+                return d.promise();
+            });
+
+            // Check that we didn't retry
+            var maxTries = 3;
+            var interval = 100; // 100ms
+            YesGraphAPI.hitAPI(endpoint, "GET", {}, undefined, maxTries, interval).always(function(){
+                expect(ajaxCallCount).toEqual(1);
+                done();
+            });
+
+        });
 
         it('Should hit test endpoint', function() {
+            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
+                expect(endpoint).toEqual("/test");
+                expect(method).toEqual("GET");
+                return {};
+            });
             var result = window.YesGraphAPI.test();
             expect(result).not.toBe(null);
         });
 
         it('Should POST to /address-book endpoint', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
+            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
                 expect(endpoint).toEqual("/address-book");
                 expect(method).toEqual("POST");
                 return {};
@@ -115,7 +161,7 @@ describe('testAPI', function() {
         });
 
         it('Should GET from /address-book endpoint', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
+            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
                 expect(endpoint).toEqual("/address-book");
                 expect(method).toEqual("GET");
                 return {};
@@ -125,7 +171,7 @@ describe('testAPI', function() {
         });
 
         it('Should POST to /suggested-seen endpoint', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
+            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
                 expect(endpoint).toEqual("/suggested-seen");
                 expect(method).toEqual("POST");
                 return {};
@@ -135,7 +181,7 @@ describe('testAPI', function() {
         });
 
         it('Should POST to /invites-sent endpoint', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
+            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
                 expect(endpoint).toEqual("/invites-sent");
                 expect(method).toEqual("POST");
                 return {};
@@ -145,7 +191,7 @@ describe('testAPI', function() {
         });
 
         it('Should POST to /invites-accepted endpoint', function() {
-            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, deferred) {
+            spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
                 expect(endpoint).toEqual("/invites-accepted");
                 expect(method).toEqual("POST");
                 return {};
