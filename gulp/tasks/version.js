@@ -1,55 +1,38 @@
+"use strict";
+var argv = require("yargs").argv;
+var config = require("../config");
+var filter = require('gulp-filter');
 var gulp = require('gulp');
 var prompt = require("gulp-prompt");
-var semver = require("semver");
 var replace = require("gulp-replace");
-var filter = require('gulp-filter');
+var semver = require("semver");
+var versions = config.version;
 
-var config = require("../config");
-var oldVersions = config.version;
-var newVersions = {};
-
-
+/*
+ * This task handles versioning process, updating version numbers on each
+ * file according to the command line options specified.
+ *
+ * Options:
+ * --update:patch [files]
+ * --update:minor [files]
+ * --update:major [files]
+ *
+ * Example: Patch the SDK and the Superwidget, do nothing to the CSS
+ * `$ gulp version --update:patch sdk,superwidget`
+ *
+ * Example: Minor update on the Superwidget, patch the CSS, do nothing to the SDK
+ * `$ gulp version --update:minor superwidget --update:patch css`
+ */
 gulp.task("version", function() {
 
     var sourceCodeFilter = filter("dist/**/yesgraph?(-invites)?(.min).@(js|css)", { restore: true });
     var packageFilter = filter("package.json", { restore: true });
     var configFilter = filter("gulp/config.js", { restore: true });
-
     var CURRENT_DATE = new Date();
-    var updateMessage = "Which type of update should be used for the ";
-    var updateChoices = ["none", "patch", "minor", "major"];
+
+    setUpdateType();
 
     return gulp.src(config.tasks.version.files)
-
-        // Check which type of update we should do
-        .pipe(prompt.prompt([{
-            type: 'list',
-            name: 'sdk',
-            message: updateMessage + 'SDK?',
-            choices: updateChoices
-        },
-        {
-            type: 'list',
-            name: 'superwidget',
-            message: updateMessage + 'Superwidget?',
-            choices: updateChoices
-        },
-        {
-            type: 'list',
-            name: 'css',
-            message: updateMessage + 'CSS?',
-            choices: updateChoices
-        }], function(res) {
-            ["sdk", "superwidget", "css"].forEach(function(file){
-                updateType = res[file];
-                if (updateType === "none") {
-                    newVersions[file] = oldVersions[file];
-                } else {
-                    newVersions[file] = semver.inc(oldVersions[file], updateType);
-                }
-                console.log(file + ":", newVersions[file]);
-            });
-        }))
 
         // Update version in code files
         .pipe(sourceCodeFilter)
@@ -72,14 +55,28 @@ gulp.task("version", function() {
 });
 
 function fileVersionReplacer(match, target) {
-    return newVersions[target.toLowerCase()]
+    return versions[target.toLowerCase()]
 }
 
 function configVersionReplacer(match, target) {
-    var version = newVersions[target.toLowerCase()]
+    var version = versions[target.toLowerCase()]
     return '__' + target.toUpperCase() + '_VERSION__ = "' + version + '";';
 }
 
 function packageVersionReplacer(match) {
-    return '"version": "' + newVersions.superwidget.replace(/^v/, "") + '"' // strip version prefix "v"
+    return '"version": "' + versions.superwidget.replace(/^v/, "") + '"' // strip version prefix "v"
+}
+
+function setUpdateType() {
+    // Loop through the valid update types and check the command line args
+    // for any files specified with that update type
+    ["patch", "minor", "major"].forEach(function(updateType){
+        var filesToUpdate = argv["update:" + updateType];
+        if (!filesToUpdate) return;
+        // Loop through files specified for this update type and
+        // set the new version numbers based on the update type
+        filesToUpdate.split(",").forEach(function(file){
+            versions[file] = 'v' + semver.inc(versions[file], updateType);
+        });
+    });
 }

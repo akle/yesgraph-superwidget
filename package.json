@@ -1,6 +1,6 @@
 {
   "name": "yesgraph-superwidget",
-  "version": "1.1.4",
+  "version": "1.1.6",
   "description": "YesGraph uses machine learning and social graph analysis to improve your app's viral growth. Given an address book, we rank your users' contacts so that they start sending more invites and you win!",
   "main": "yesgraph-invites.js",
   "directories": {
