@@ -128,6 +128,8 @@
                 "width": "100%",
                 "font-size": "0.85em",
                 "margin": "5px 0"
+            }).on("click", function() {
+                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, "#yes-invite-link-copy-btn", null, LIBRARY);
             }).append(inviteLinkInput);
 
             // If we haven't loaded the css already, add the YesGraph default styling
@@ -850,6 +852,7 @@
 
                     $(targetSelector).append(container);
                     YesGraphAPI.Superwidget.isReady = true;
+                    $(document).trigger(YesGraphAPI.events.INSTALLED_SUPERWIDGET);
                     if (YesGraphAPI.Raven) {
                         YesGraphAPI.Raven.captureBreadcrumb({
                             timestamp: new Date(),
@@ -890,13 +893,15 @@
                 }
 
                 function getWidgetOptions() {
-                    var d = $.Deferred(),
-                        OPTIONS_ENDPOINT = '/apps/' + YesGraphAPI.app + '/js/get-options';
-                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET").done(function (data) {
+                    var d = $.Deferred();
+                    var OPTIONS_ENDPOINT = '/apps/' + YesGraphAPI.app + '/js/get-options';
+                    // Retry failed request up to 3 times, waiting 1500ms between tries
+                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 1500).done(function (data) {
                         OPTIONS = data;
                         d.resolve(data);
                     }).fail(function (error) {
-                        YesGraphAPI.utils.error(error.error + ". Please see the YesGraph SuperWidget Dashboard.", true);
+                        var errorMsg = ((!error.error) || (error.error === "error")) ? "Something went wrong" : error.error;
+                        YesGraphAPI.utils.error(errorMsg + ". Please see the YesGraph Superwidget Dashboard.", true);
                         d.reject(data);
                     });
                     return d.promise();
@@ -1083,17 +1088,17 @@
                     var msg, authCode, accessToken, errorMsg, responseUrl;
                     var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
                     var oauthInfo = self.getOAuthInfo(self.service);
-                    var win = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
-                    var pollTimer = setInterval(function() {
-                        if (win && win.closed === true) {
+                    var popup = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
+                    var popupTimer = setInterval(function() {
+                        if (popup && popup.closed === true) {
                             d.reject({ error: defaultAuthErrorMessage });
-                            clearInterval(pollTimer);
+                            clearInterval(popupTimer);
                             return;
                         }
                         try {
                             // If the flow has finished, resolve with the token or reject with the error
-                            if (win.document.URL.indexOf(oauthInfo.redirect) !== -1) {
-                                responseUrl = win.document.URL;
+                            if (popup.document.URL.indexOf(oauthInfo.redirect) !== -1) {
+                                responseUrl = popup.document.URL;
                                 errorMsg = getUrlParam(responseUrl, "error_description") || getUrlParam(responseUrl, "error");
                                 authCode = getUrlParam(responseUrl, "code");
                                 accessToken = getUrlParam(responseUrl, "access_token") || getUrlParam(responseUrl, "token");
@@ -1112,8 +1117,10 @@
                                 } else {
                                     d.reject({ error: defaultAuthErrorMessage }); // This should never happen
                                 }
-                                clearInterval(pollTimer);
-                                win.close();
+                                clearInterval(popupTimer);
+                                if (popup) {
+                                    popup.close();    
+                                }
                             }
                         } catch (e) {
                             // Check the error message, then either keep waiting or reject with the error
@@ -1126,8 +1133,10 @@
                                     error: msg
                                 });
                                 YesGraphAPI.utils.error(msg, false);
-                                clearInterval(pollTimer);
-                                win.close();
+                                clearInterval(popupTimer);
+                                if (popup) {
+                                    popup.close();    
+                                }
                             }
                         }
                     }, 500);
@@ -1175,7 +1184,8 @@
                         // Add custom superwidget events
                         YesGraphAPI.events = $.extend(YesGraphAPI.events, {
                             SET_RECIPIENTS: "set.yesgraph.recipients",
-                            IMPORTED_CONTACTS: "imported.yesgraph.contacts"
+                            IMPORTED_CONTACTS: "imported.yesgraph.contacts",
+                            INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget"
                         });
                         d.resolve();
                     }
@@ -1353,24 +1363,33 @@
             };
 
             YesGraphAPI.utils.configureClipboard = function () {
-                // Add the copy button to the UI
-                inviteLinkSection.append(copyInviteLinkBtn);
-                copyInviteLinkBtn.on("click", function() {
-                    YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, "#yes-invite-link-copy-btn", null, LIBRARY);
-                });
                 // Enable copying with the copy button
-                var clipboard = new Clipboard('#yes-invite-link-copy-btn');
-                clipboard.on('success', function (e) {
-                    var originalCopy = e.trigger.textContent;
-                    e.trigger.textContent = "Copied!";
-                    setTimeout(function () {
-                        e.trigger.textContent = originalCopy;
-                    }, 3000);
-                });
-                clipboard.on('error', function (e) {
-                    var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
-                    flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
-                });
+                var clipboardExists = false;
+                var clipboard;
+                try {
+                    clipboard = new Clipboard('#yes-invite-link-copy-btn');
+                    clipboardExists = true;
+                } catch (e) {
+                    if (console) {
+                        YesGraphAPI.utils.error("Clipboard could not be configured.");
+                    }
+                }
+
+                // Add the copy button to the UI
+                if (clipboardExists) {
+                    inviteLinkSection.append(copyInviteLinkBtn);
+                    clipboard.on('success', function (e) {
+                        var originalCopy = e.trigger.textContent;
+                        e.trigger.textContent = "Copied!";
+                        setTimeout(function () {
+                            e.trigger.textContent = originalCopy;
+                        }, 3000);
+                    });
+                    clipboard.on('error', function (e) {
+                        var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
+                        flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
+                    });                    
+                }
             };
 
             // Initialize Superwidget config

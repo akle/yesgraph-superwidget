@@ -17,6 +17,12 @@
 <script src="dist/dev/yesgraph.js"></script>
 <script src="dist/dev/yesgraph-invites.js"></script>
 <script>
+$(document).on("installed.yesgraph.sdk", function(evt) {
+    console.debug("SDK is ready");
+});
+$(document).on("installed.yesgraph.superwidget", function(evt) {
+    console.debug("Superwidget is ready");
+});
 $(document).on("imported.yesgraph.contacts", function(evt, src, contacts, meta){
     // Do something with the contacts
 });
