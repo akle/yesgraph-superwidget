@@ -10,6 +10,10 @@ var lazypipe = require("lazypipe");
 var prompt = require("gulp-prompt");
 var rename = require("gulp-rename");
 
+var sdkFiles = ["yesgraph.js", "yesgraph.min.js", "yesgraph.min.js.map"];
+var superwidgetFiles = ["yesgraph-invites.js", "yesgraph-invites.min.js", "yesgraph-invites.min.js.map"];
+var cssFiles = ["yesgraph-invites.css", "yesgraph-invites.min.css"];
+
 /*
  * This task handles the entire deploy process from start to finish,
  * but executes different task sequences based on whether we're updating
@@ -37,7 +41,7 @@ gulp.task("deploy", ["build"], function() {
     validateDeployType();
     var filesChanged = argv.dev ? "dev" : "all";
     var deployType = argv.live ? "live" : "test";
-    console.log("Running", deployType ,"deploy on", filesChanged, "files...");
+    console.log("Running", deployType, "deploy on", filesChanged, "files...");
 
     var deployPrep = lazypipe()
         .pipe(function(){
@@ -47,13 +51,12 @@ gulp.task("deploy", ["build"], function() {
         })
         .pipe(rename, function(path){
             // Add versions to the filepath
-            if (startsWith(path.basename, "yesgraph-invites") && path.extname == ".css") {
+            var filename = path.basename + path.extname;
+            if (cssFiles.indexOf(filename) !== -1) {
                 path.dirname += "/" + config.version.css;
-            } else if (startsWith(path.basename, "yesgraph-invites")
-                       && [".js", ".map"].indexOf(path.extname) !== -1) {
+            } else if (superwidgetFiles.indexOf(filename) !== -1) {
                 path.dirname += "/" + config.version.superwidget;
-            } else if (startsWith(path.basename, "yesgraph")
-                       && [".js", ".map"].indexOf(path.extname) !== -1) {
+            } else if (sdkFiles.indexOf(filename) !== -1) {
                 path.dirname += "/" + config.version.sdk;
             }
         })
