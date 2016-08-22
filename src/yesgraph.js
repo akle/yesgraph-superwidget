@@ -372,8 +372,8 @@
                 // hitting the API will validate the token and return the same one.
                 // Otherwise, the API will create a new client token.
 
-                // Retry failed request up to 3 times, waiting 500ms between tries
-                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken, 3, 500).fail(function(error) {
+                // Retry failed request up to 3 times, waiting 1500ms between tries
+                return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken, 3, 1500).fail(function(error) {
                     var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Token Request Failed" : error.error;
                     self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
                 });
@@ -538,8 +538,8 @@
                     evts.push(evt);
                 });
                 if (evts.length > 0) {
-                    // Retry failed request up to 3 times, waiting 1000ms between tries
-                    self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts }, null, 3, 1000);
+                    // Retry failed request up to 3 times, waiting 2000ms between tries
+                    self.YesGraphAPI.hitAPI("/analytics/sdk", "POST", { entries: evts }, null, 3, 2000);
                 }
                 self.postponed = [];
             } else {

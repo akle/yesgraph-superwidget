@@ -7,8 +7,8 @@ var dest = {
     dev: "./dist/dev",
     root: "./dist"
 };
-var __SDK_VERSION__ = "v0.1.6";
-var __SUPERWIDGET_VERSION__ = "v1.1.5";
+var __SDK_VERSION__ = "v0.1.7";
+var __SUPERWIDGET_VERSION__ = "v1.1.6";
 var __CSS_VERSION__ = "v0.0.6";
 
 module.exports = {
@@ -29,6 +29,7 @@ module.exports = {
                 root + "/jshint-report.txt",
                 src.root + "/**/*.@(css|min.*)",
                 dest.root,
+                root + '/deployed'
             ]
         },
         compileLess: {
@@ -42,13 +43,17 @@ module.exports = {
             files: src.root + "/**/yesgraph?(-invites).js"
         },
         minifyCss: {
-            files: src.root + "/**/yesgraph-invites.css"
+            files: dest.root + "/**/yesgraph-invites.css"
         },
         watch: {
             files: src.root + "/**/yesgraph-invites.less"
         },
         version: {
-            files: src.root + "/**/*"
+            files: [
+                "./**/yesgraph?(-invites)?(.min).@(js|css)",
+                "./package.json",
+                "./gulp/config.js"
+            ]
         },
         update: {
             files: src.dev + "/yesgraph?(-invites)?(.min).@(js|less|css)"

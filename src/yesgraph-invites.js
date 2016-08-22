@@ -895,8 +895,8 @@
                 function getWidgetOptions() {
                     var d = $.Deferred();
                     var OPTIONS_ENDPOINT = '/apps/' + YesGraphAPI.app + '/js/get-options';
-                    // Retry failed request up to 3 times, waiting 300ms between tries
-                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 300).done(function (data) {
+                    // Retry failed request up to 3 times, waiting 1500ms between tries
+                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 1500).done(function (data) {
                         OPTIONS = data;
                         d.resolve(data);
                     }).fail(function (error) {

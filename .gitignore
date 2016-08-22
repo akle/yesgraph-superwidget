@@ -3,9 +3,6 @@ node_modules
 sauce.json
 coverage
 dist
-src/dev/*.css
-src/*.css
-src/dev/*.min*
-src/*.min*
-gulptools/jshint-report.txt
+gulp/jshint-report.txt
 .envrc
+deployed
