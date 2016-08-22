@@ -5,3 +5,4 @@ coverage
 dist
 gulp/jshint-report.txt
 .envrc
+deployed

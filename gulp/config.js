@@ -29,6 +29,7 @@ module.exports = {
                 root + "/jshint-report.txt",
                 src.root + "/**/*.@(css|min.*)",
                 dest.root,
+                root + '/deployed'
             ]
         },
         compileLess: {

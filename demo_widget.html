@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="dist/dev/yesgraph-invites.css">
+<title>YesGraph</title>
+</head>
+<body>
+<div>
+
+<span id="yesgraph" class="yesgraph-invites"
+      data-app="YesGraph" data-email="some@email.com"
+      data-name="Some Name"
+      data-foo="bar">
+</span>
+
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="dist/dev/yesgraph.js"></script>
+<script src="dist/dev/yesgraph-invites.js"></script>
+<script>
+$(document).on("imported.yesgraph.contacts", function(evt, src, contacts, meta){
+    // Do something with the contacts
+});
+$(document).on("set.yesgraph.recipients", function(evt, recipients){
+    // Do something with the recipients
+});
+</script>
+</div>
+</body>
+</html>

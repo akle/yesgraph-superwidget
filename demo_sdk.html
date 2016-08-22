@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <style type="text/css">
+      .hidden {
+        display: none;
+      }
+    </style>
+
+    <button id="test">Test</button>
+    <button id="post-contacts">Post Contacts</button>
+    <button id="get-contacts">Get Contacts</button>
+    <button id="post-sugseen">Post Suggested & Seen</button>
+    <button id="post-invsent">Post Invites Sent</button>
+    <button id="post-invacc">Post Invites Accepted</button>
+
+    <pre id="response"></pre>
+
+<script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
+<script id="yesgraph" data-app="YesGraph" src="dist/dev/yesgraph.js"></script>
+<script>
+
+$('#post-contacts').on('click', function () {
+    YesGraphAPI.rankContacts(rawContacts, handleResponse);
+});
+
+$('#get-contacts').on('click', function () {
+    YesGraphAPI.getRankedContacts(handleResponse);
+});
+
+$('#post-sugseen').on('click', function () {
+    YesGraphAPI.postSuggestedSeen(seenContacts, handleResponse);
+});
+
+$('#post-invsent').on('click', function () {
+  YesGraphAPI.postInvitesSent(invitesSent, handleResponse);
+});
+
+$('#post-invacc').on('click', function () {
+  YesGraphAPI.postInvitesAccepted(invitesAccepted, handleResponse);
+});
+
+$('#test').on('click', function () {
+  YesGraphAPI.test(handleResponse);
+});
+
+function handleResponse (data) {
+  $('#response').html(JSON.stringify(data, undefined, 2));
+}
+
+
+var rawContacts = {
+  "source": {
+    "name": "Vincent Driessen",
+    "email": "vincent@yesgraph.com",
+    "type": "gmail"
+  },
+  "entries": [
+    {
+      "name": "Ivan Kirigin",
+      "emails": ["ivan@yesgraph.com"],
+      "phones": ["+1 555 123 4567"],
+      "data": {"picture_url": "http://j.mp/ivan_jpg"}
+    },
+    {
+      "name": "Jonathan Chu",
+      "nickname": "Jon",
+      "company": "YesGraph",
+      "title": "Software Engineer",
+      "last_message_sent_date": "2015-03-28T20:16:12+00:00",
+      "last_message_received_date": "2015-03-28T20:16:12+00:00",
+      "times_contacted": 100,
+      "is_favorite": 1,
+      "pinned": 10,
+      "websites": [{"url": "http://jonathanchu.com/", "type": "home"}],
+      "addresses": [{"po_box": "12345", "street": "708 Winslow", "city": "Redwood City", "state": "CA",
+                       "postal_code": "11111", "country": "USA", "type": "work"}],
+      "ims": [{"name": "jonchu", "type": "aol"}],
+      "emails": ["jonathan.chu@me.com"]
+    },
+    {
+      "name": "Vincent Driessen",
+      "emails": ["me@nvie.com", "vincent@yesgraph.com"]
+    },
+    {
+      "emails": ["post@posterous.com"]
+    },
+    {
+      "emails": ["hous-123456@craigslist.org"]
+    },
+    {
+      "name": "George Hickman",
+      "emails": ["george@yesgraph.com"],
+      "data": {"foo": "bar"}
+    }
+  ]
+};
+
+var seenContacts = {
+    "entries": [{
+        "name":"kendall",
+        "emails": ["kendall@yesgraph.com"],
+        "seen_at": "2015-02-28T20:16:12+00:00"
+    }]
+};
+
+var invitesSent = {
+    "entries": [{
+        "invitee_name":"kendall",
+        "email": "kendall@yesgraph.com",
+        "sent_at": "2015-02-28T20:19:12+00:00"
+    }]
+};
+
+var invitesAccepted = {
+    "entries": [{
+        "new_user_id":"12345",
+        "name": "Kendall",
+        "email": "kendall@yesgraph.com",
+        "accepted_at": "2015-03-05T20:16:12+00:00"
+    }]
+};
+
+</script>
+</body>
+</html>
