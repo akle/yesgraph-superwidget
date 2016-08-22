@@ -35,6 +35,9 @@ gulp.task("deploy", ["build"], function() {
     var cloneSink = clone.sink();
 
     validateDeployType();
+    var filesChanged = argv.dev ? "dev" : "all";
+    var deployType = argv.live ? "live" : "test";
+    console.log("Running", deployType ,"deploy on", filesChanged, "files...");
 
     var deployPrep = lazypipe()
         .pipe(function(){
@@ -79,8 +82,11 @@ function startsWith (str, substr) {
 }
 
 function validateDeployType() {
+    if (!(argv.test || argv.live)) {
+        throw new Error("Missing deploy options. Choose --test or --live");
+    }
     if (!(argv.prod || argv.dev)) {
-        throw new Error("Missing deploy type. Choose --prod or --dev");
+        throw new Error("Missing deploy options. Choose --prod or --dev");
     }
 }
 
