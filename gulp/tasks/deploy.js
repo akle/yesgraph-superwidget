@@ -25,11 +25,14 @@ var cssFiles = ["yesgraph-invites.css", "yesgraph-invites.min.css"];
  * --live   process files, push to S3, invalidate Cloudfront cache
  * --test   don't deploy; save processed files in /deployed folder
  *
+ * Example: Normal deploy. Process all files, and deploy to S3/Cloudfront
+ * `$ gulp deploy`
+ *
  * Example: Process all files, and save locally instead of deploying.
- * `$ gulp deploy --prod --test`
+ * `$ gulp deploy --test`
  *
  * Example: Process only files in the /dev folder, and deploy to S3/Cloudfront.
- * `$ gulp deploy --dev --live`
+ * `$ gulp deploy --dev`
  */
 
 gulp.task("deploy", ["build"], function() {    
@@ -38,9 +41,8 @@ gulp.task("deploy", ["build"], function() {
     var publisher = aws.create(config.s3);
     var cloneSink = clone.sink();
 
-    validateDeployType();
     var filesChanged = argv.dev ? "dev" : "all";
-    var deployType = argv.live ? "live" : "test";
+    var deployType = argv.test ? "test" : "live";
     console.log("Running", deployType, "deploy on", filesChanged, "files...");
 
     var deployPrep = lazypipe()
@@ -82,15 +84,6 @@ gulp.task("deploy", ["build"], function() {
 
 function startsWith (str, substr) {
     return str.slice(0,substr.length) === substr;
-}
-
-function validateDeployType() {
-    if (!(argv.test || argv.live)) {
-        throw new Error("Missing deploy options. Choose --test or --live");
-    }
-    if (!(argv.prod || argv.dev)) {
-        throw new Error("Missing deploy options. Choose --prod or --dev");
-    }
 }
 
 function isDevDeploy() {
