@@ -20,9 +20,7 @@ var cssFiles = ["yesgraph-invites.css", "yesgraph-invites.min.css"];
  * dev versions, prod versions, or simply running a test deploy locally.
  *
  * Options:
- * --prod   update all files
  * --dev    update only files from the /dev folder
- * --live   process files, push to S3, invalidate Cloudfront cache
  * --test   don't deploy; save processed files in /deployed folder
  *
  * Example: Normal deploy. Process all files, and deploy to S3/Cloudfront
