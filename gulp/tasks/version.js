@@ -23,7 +23,7 @@ var versions = config.version;
  * Example: Minor update on the Superwidget, patch the CSS, do nothing to the SDK
  * `$ gulp version --update:minor superwidget --update:patch css`
  */
-gulp.task("version", function() {
+gulp.task("version", ["minify:css", "minify:js"], function() {
 
     var sourceCodeFilter = filter("dist/**/yesgraph?(-invites)?(.min).@(js|css)", { restore: true });
     var packageFilter = filter("package.json", { restore: true });
