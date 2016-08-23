@@ -56,7 +56,7 @@
     "yargs": "^4.8.1"
   },
   "scripts": {
-    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
+    "test": "gulp build; node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
     "test:debug": "gulp lint; node_modules/karma/bin/karma start karma.conf.js;",
     "build": "gulp build",
     "lint": "gulp lint",
