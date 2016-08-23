@@ -69,9 +69,9 @@ gulp.task("deploy", ["build"], function() {
         return gulp.src(config.tasks.deploy.files)
             .pipe(deployPrep())
             .pipe(if_(isDevDeploy, filter(devFiles))) // only update files in the dev/ folder
-            .pipe(publisher.publish, {}, {force: true})
-            .pipe(aws.reporter)
-            .pipe(cloudfront, config.cloudfront);
+            .pipe(publisher.publish({}, {force: true}))
+            .pipe(aws.reporter())
+            .pipe(cloudfront(config.cloudfront));
     } else if (argv.test) {
         return gulp.src(config.tasks.deploy.files)
             .pipe(deployPrep())
