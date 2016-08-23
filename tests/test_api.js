@@ -5,7 +5,7 @@ describe('testAPI', function() {
     jasmine.getFixtures().load('fixtures.html.js');   // load a template
 
     beforeEach(function (done) {
-        if (window.YesGraphAPI.isReady) {
+        if (window.YesGraphAPI && window.YesGraphAPI.isReady) {
             done();
         } else {
             $(document).on("installed.yesgraph.sdk", done);
