@@ -20,9 +20,8 @@ module.exports = function(config) {
       'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
       'tests/fixtures.html',
       'tests/*.js',
-      'src/dev/yesgraph-invites.css', 
-      'src/dev/yesgraph-invites.js', 
-      'src/dev/yesgraph.js', 
+      'src/dev/yesgraph-invites.js',
+      'src/dev/yesgraph.js',
       //'tests/*.js', 
       //'tests/*.html', 
     // Source and spec files

@@ -8,7 +8,7 @@ describe('testSuperwidgetUI', function() {
 
     beforeEach(function (done) {
         // Wait for the Superwidget to be ready
-        if (window.YesGraphAPI.Superwidget && window.YesGraphAPI.Superwidget.isReady) {
+        if (window.YesGraphAPI && window.YesGraphAPI.Superwidget && window.YesGraphAPI.Superwidget.isReady) {
             finishPrep();
         } else {
             $(document).on("installed.yesgraph.superwidget", finishPrep);
