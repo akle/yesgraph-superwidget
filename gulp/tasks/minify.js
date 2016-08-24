@@ -1,3 +1,4 @@
+"use strict";
 var gulp = require("gulp");
 var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
@@ -14,7 +15,7 @@ gulp.task("minify:js", function() {
         .pipe(gulp.dest(config.dest.root));
 });
 
-gulp.task("minify:css", ["compile:less"], function() {
+gulp.task("minify:css", function() {
     return gulp.src(config.tasks.minifyCss.files, {base: config.dest.root})
         .pipe(cleanCSS({keepSpecialComments: 1}))
         .pipe(rename({suffix: ".min"}))

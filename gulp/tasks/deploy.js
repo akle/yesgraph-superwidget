@@ -33,7 +33,7 @@ var cssFiles = ["yesgraph-invites.css", "yesgraph-invites.min.css"];
  * `$ gulp deploy --dev`
  */
 
-gulp.task("deploy", ["build"], function() {    
+gulp.task("deploy", ["build"], function() {
     var config = require("../config");  // Load config after versioning
     var devFiles = "dist/dev/**/*.@(js|css|map)";
     var publisher = aws.create(config.s3);

@@ -1,17 +1,17 @@
 /*!
- * YesGraph Superwidget dev/__SUPERWIDGET_VERSION__
+ * YesGraph Superwidget dev/v1.1.8
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
  * 
- * Date: __BUILD_DATE__
+ * Date: Tue Aug 23 2016 17:18:53 GMT-0700 (PDT)
  */
 (function () {
     "use strict";
 
-    var VERSION = "dev/__SUPERWIDGET_VERSION__";
-    var SDK_VERSION = "dev/__SDK_VERSION__";
-    var CSS_VERSION = "dev/__CSS_VERSION__";
+    var VERSION = "dev/v1.1.8";
+    var SDK_VERSION = "dev/v0.1.7";
+    var CSS_VERSION = "dev/v0.0.6";
     var LIBRARY = {
         name: "yesgraph-invites.js",
         version: VERSION

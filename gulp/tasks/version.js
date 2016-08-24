@@ -23,9 +23,9 @@ var versions = config.version;
  * Example: Minor update on the Superwidget, patch the CSS, do nothing to the SDK
  * `$ gulp version --update:minor superwidget --update:patch css`
  */
-gulp.task("version", ["minify:css", "minify:js"], function() {
+gulp.task("version", function() {
 
-    var sourceCodeFilter = filter("dist/**/yesgraph?(-invites)?(.min).@(js|css)", { restore: true });
+    var sourceCodeFilter = filter("**/yesgraph?(-invites)?(.min).@(js|css|map)", { restore: true });
     var packageFilter = filter("package.json", { restore: true });
     var configFilter = filter("gulp/config.js", { restore: true });
     var CURRENT_DATE = new Date();
@@ -51,7 +51,7 @@ gulp.task("version", ["minify:css", "minify:js"], function() {
         .pipe(configFilter)
         .pipe(replace(/__(\w*)_VERSION__ ?\= ?[\'\"]\S*[\'\"];/g, configVersionReplacer))
         .pipe(gulp.dest("./gulp")) // stores config.js in gulp/ folder
-        .pipe(configFilter.restore);
+        .pipe(configFilter.restore)
 });
 
 function fileVersionReplacer(match, target) {
@@ -64,6 +64,7 @@ function configVersionReplacer(match, target) {
 }
 
 function packageVersionReplacer(match) {
+    
     return '"version": "' + versions.superwidget.replace(/^v/, "") + '"' // strip version prefix "v"
 }
 

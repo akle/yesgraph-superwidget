@@ -1,17 +1,17 @@
 /*!
- * YesGraph Superwidget __SUPERWIDGET_VERSION__
+ * YesGraph Superwidget dev/v1.1.8
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
  * 
- * Date: __BUILD_DATE__
+ * Date: Tue Aug 23 2016 17:18:53 GMT-0700 (PDT)
  */
 (function () {
     "use strict";
 
-    var VERSION = "__SUPERWIDGET_VERSION__";
-    var SDK_VERSION = "__SDK_VERSION__";
-    var CSS_VERSION = "__CSS_VERSION__";
+    var VERSION = "dev/v1.1.8";
+    var SDK_VERSION = "dev/v0.1.7";
+    var CSS_VERSION = "dev/v0.0.6";
     var LIBRARY = {
         name: "yesgraph-invites.js",
         version: VERSION
@@ -1097,7 +1097,7 @@
                         }
                         try {
                             // If the flow has finished, resolve with the token or reject with the error
-                            if (popup.document.URL.indexOf(oauthInfo.redirect) !== -1) {
+                            if (YesGraphAPI.utils.matchTargetUrl(popup.location, oauthInfo.redirect)) {
                                 responseUrl = popup.document.URL;
                                 errorMsg = getUrlParam(responseUrl, "error_description") || getUrlParam(responseUrl, "error");
                                 authCode = getUrlParam(responseUrl, "code");
@@ -1192,6 +1192,15 @@
                 }, 100);
                 return d.promise();
             }
+
+            YesGraphAPI.utils.matchTargetUrl = function(loc, targetUrl) {
+                // The location should be considered a match if
+                // (1) it includes the exact target url, or
+                // (2) it matches the origin of the current page, and a hash is present
+                if (loc.href.indexOf(targetUrl) !== -1) return true;
+                if (loc.origin == window.location.origin && loc.hash) return true;
+                return false;
+            };
 
             YesGraphAPI.utils.getSelectedRecipients = function(elem) {
                 var recipients = [],
