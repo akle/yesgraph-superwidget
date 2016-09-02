@@ -154,11 +154,19 @@ describe('testSuperwidgetUI', function() {
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
 
+            inputField.val(emails.join(";")); // separated by semicolon
+            recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
+            expect(recipients.length).toEqual(emails.length);
+
             inputField.val(emails.join(" ")); // separated by space
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
 
             inputField.val(emails.join("\n")); // separated by newline
+            recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
+            expect(recipients.length).toEqual(emails.length);
+
+            inputField.val(emails.join("\n, ")); // combined delimiters
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
         });

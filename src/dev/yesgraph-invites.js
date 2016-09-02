@@ -1209,7 +1209,7 @@
                     email;
 
                 if (elem.is("textarea")) {
-                    emails = elem.val().split(/\s+|,/);
+                    emails = elem.val().split(/\s+|,|;/);
                     emails.forEach(function (email, index, array){
                         email = email.replace(/^\s+|\s+$/g, ''); // strip whitespace
                         if (email) {
