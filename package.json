@@ -14,7 +14,6 @@
   },
   "devDependencies": {
     "brfs": "^1.4.3",
-    "concurrently": "^2.2.0",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.0",
@@ -61,7 +60,7 @@
     "build": "gulp build",
     "lint": "gulp lint",
     "clean": "gulp clean",
-    "start": "echo \"Starting server at localhost:8080\"; concurrently -k \"python3 -m http.server 8080\" \"gulp watch\""
+    "start": "echo \"Starting server at localhost:8080\"; python3 -m http.server 8080;"
   },
   "repository": {
     "type": "git",
