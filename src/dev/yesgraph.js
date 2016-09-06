@@ -1,5 +1,5 @@
 /*!
- * YesGraph Javascript SDK dev/v0.1.7
+ * YesGraph Javascript SDK dev/__SUPERWIDGET_VERSION__
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/javascript-sdk
@@ -10,7 +10,7 @@
 (function() {
     "use strict";
 
-    var VERSION = "dev/v0.1.7";
+    var VERSION = "dev/__SUPERWIDGET_VERSION__";
     var YESGRAPH_BASE_URL;
     var YESGRAPH_API_URL;
     var RUNNING_LOCALLY;
@@ -32,6 +32,7 @@
         testmode: false,
         target: ".yesgraph-invites",
         contactImporting: true,
+        showContacts: true,
         promoteMatchingDomain: false,
         emailSending: true,
         inviteLink: true,

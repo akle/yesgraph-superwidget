@@ -9,7 +9,7 @@
 
 <span id="yesgraph" class="yesgraph-invites"
       data-app="YesGraph" data-email="some@email.com"
-      data-name="Some Name"
+      data-name="Some Name" data-show-contacts="false"
       data-foo="bar">
 </span>
 
@@ -25,9 +25,11 @@ $(document).on("installed.yesgraph.superwidget", function(evt) {
 });
 $(document).on("imported.yesgraph.contacts", function(evt, src, contacts, meta){
     // Do something with the contacts
+    console.debug("Loaded " + meta.total_count + " " + src.type + " contacts for " + src.email);
 });
 $(document).on("set.yesgraph.recipients", function(evt, recipients){
     // Do something with the recipients
+    console.debug("Added " + recipients.length + " recipients.");
 });
 </script>
 </div>

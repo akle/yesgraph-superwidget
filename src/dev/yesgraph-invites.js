@@ -1,5 +1,5 @@
 /*!
- * YesGraph Superwidget dev/v1.1.8
+ * YesGraph Superwidget dev/__SUPERWIDGET_VERSION__
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
@@ -9,9 +9,9 @@
 (function () {
     "use strict";
 
-    var VERSION = "dev/v1.1.8";
-    var SDK_VERSION = "dev/v0.1.7";
-    var CSS_VERSION = "dev/v0.0.6";
+    var VERSION = "dev/__SUPERWIDGET_VERSION__";
+    var SDK_VERSION = "dev/__SDK_VERSION__";
+    var CSS_VERSION = "dev/__CSS_VERSION__";
     var LIBRARY = {
         name: "yesgraph-invites.js",
         version: VERSION
@@ -839,10 +839,14 @@
                             btn.on("click", function (evt) {
                                 // Attempt to auth the user & pull their contacts
                                 service.authManager.authFlow().done(function(contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
-                                    contactsModal.loadContacts(contacts, noSuggestions);
+                                    if (YesGraphAPI.settings.showContacts !== false) {
+                                        if (!contactsModal.isOpen()) { contactsModal.openModal(); }
+                                        contactsModal.loadContacts(contacts, noSuggestions);                                        
+                                    }
                                 }).fail(function (response) {
-                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
+                                    if (YesGraphAPI.settings.showContacts !== false && contactsModal.isOpen()) {
+                                        contactsModal.closeModal();
+                                    }
                                     YesGraphAPI.utils.error(response.error);
                                     flash.error(service.name + " Authorization Failed.");
                                 });
@@ -1046,8 +1050,9 @@
                     var addrbookSource;
                     self.authPopup().done(function(authData){
                         // show the loading spinner while we're fetching contacts
-                        contactsModal.loading();
-
+                        if (YesGraphAPI.settings.showContacts !== false) {
+                            contactsModal.loading();
+                        }
                         self.fetchContacts(authData).done(function(response){
                             // Trigger DOM event "imported.yesgraph.contacts"
                             if (response.data.source === "gmail") {

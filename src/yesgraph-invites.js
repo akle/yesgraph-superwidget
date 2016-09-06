@@ -1,5 +1,5 @@
 /*!
- * YesGraph Superwidget dev/v1.1.8
+ * YesGraph __SUPERWIDGET_VERSION__
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
@@ -9,9 +9,9 @@
 (function () {
     "use strict";
 
-    var VERSION = "dev/v1.1.8";
-    var SDK_VERSION = "dev/v0.1.7";
-    var CSS_VERSION = "dev/v0.0.6";
+    var VERSION = "__SUPERWIDGET_VERSION__";
+    var SDK_VERSION = "__SDK_VERSION__";
+    var CSS_VERSION = "__CSS_VERSION__";
     var LIBRARY = {
         name: "yesgraph-invites.js",
         version: VERSION
@@ -1209,7 +1209,7 @@
                     email;
 
                 if (elem.is("textarea")) {
-                    emails = elem.val().split(",");
+                    emails = elem.val().split(/\s+|,|;/);
                     emails.forEach(function (email, index, array){
                         email = email.replace(/^\s+|\s+$/g, ''); // strip whitespace
                         if (email) {
