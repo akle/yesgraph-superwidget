@@ -4,7 +4,7 @@
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
  * 
- * Date: Tue Aug 23 2016 17:18:53 GMT-0700 (PDT)
+ * Date: __BUILD_DATE__
  */
 (function () {
     "use strict";

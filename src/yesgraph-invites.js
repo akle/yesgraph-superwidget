@@ -1,10 +1,10 @@
 /*!
- * YesGraph __SUPERWIDGET_VERSION__
+ * YesGraph Superwidget __SUPERWIDGET_VERSION__
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
  * 
- * Date: Tue Aug 23 2016 17:18:53 GMT-0700 (PDT)
+ * Date: __BUILD_DATE__
  */
 (function () {
     "use strict";
@@ -839,10 +839,14 @@
                             btn.on("click", function (evt) {
                                 // Attempt to auth the user & pull their contacts
                                 service.authManager.authFlow().done(function(contacts, noSuggestions) {
-                                    if (!contactsModal.isOpen()) { contactsModal.openModal(); }
-                                    contactsModal.loadContacts(contacts, noSuggestions);
+                                    if (YesGraphAPI.settings.showContacts !== false) {
+                                        if (!contactsModal.isOpen()) { contactsModal.openModal(); }
+                                        contactsModal.loadContacts(contacts, noSuggestions);                                        
+                                    }
                                 }).fail(function (response) {
-                                    if (contactsModal.isOpen()) { contactsModal.closeModal(); }
+                                    if (YesGraphAPI.settings.showContacts !== false && contactsModal.isOpen()) {
+                                        contactsModal.closeModal();
+                                    }
                                     YesGraphAPI.utils.error(response.error);
                                     flash.error(service.name + " Authorization Failed.");
                                 });
@@ -1046,8 +1050,9 @@
                     var addrbookSource;
                     self.authPopup().done(function(authData){
                         // show the loading spinner while we're fetching contacts
-                        contactsModal.loading();
-
+                        if (YesGraphAPI.settings.showContacts !== false) {
+                            contactsModal.loading();
+                        }
                         self.fetchContacts(authData).done(function(response){
                             // Trigger DOM event "imported.yesgraph.contacts"
                             if (response.data.source === "gmail") {

@@ -4,7 +4,7 @@
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/javascript-sdk
  * 
- * Date: Tue Aug 23 2016 17:18:53 GMT-0700 (PDT)
+ * Date: __BUILD_DATE__
  */
 
 (function() {
@@ -32,6 +32,7 @@
         testmode: false,
         target: ".yesgraph-invites",
         contactImporting: true,
+        showContacts: true,
         promoteMatchingDomain: false,
         emailSending: true,
         inviteLink: true,

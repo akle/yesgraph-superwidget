@@ -1,16 +1,16 @@
 /*!
- * YesGraph Javascript SDK dev/__SUPERWIDGET_VERSION__
+ * YesGraph Javascript SDK dev/__SDK_VERSION__
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/javascript-sdk
  * 
- * Date: Tue Aug 23 2016 17:18:53 GMT-0700 (PDT)
+ * Date: __BUILD_DATE__
  */
 
 (function() {
     "use strict";
 
-    var VERSION = "dev/__SUPERWIDGET_VERSION__";
+    var VERSION = "dev/__SDK_VERSION__";
     var YESGRAPH_BASE_URL;
     var YESGRAPH_API_URL;
     var RUNNING_LOCALLY;
