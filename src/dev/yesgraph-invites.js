@@ -1129,7 +1129,7 @@
                             }
                         } catch (e) {
                             // Check the error message, then either keep waiting or reject with the error
-                            var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "document")/, // jshint ignore:line
+                            var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "\w*")/, // jshint ignore:line
                                 canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
 
                             if (!canIgnoreError) {
