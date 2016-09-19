@@ -1129,7 +1129,7 @@
                             }
                         } catch (e) {
                             // Check the error message, then either keep waiting or reject with the error
-                            var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "document")/, // jshint ignore:line
+                            var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "\w*")/, // jshint ignore:line
                                 canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
 
                             if (!canIgnoreError) {
@@ -1202,6 +1202,7 @@
                 // The location should be considered a match if
                 // (1) it includes the exact target url, or
                 // (2) it matches the origin of the current page, and a hash is present
+                if (!loc || !loc.href) return false;
                 if (loc.href.indexOf(targetUrl) !== -1) return true;
                 if (loc.origin == window.location.origin && loc.hash) return true;
                 return false;

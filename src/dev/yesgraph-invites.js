@@ -1202,6 +1202,7 @@
                 // The location should be considered a match if
                 // (1) it includes the exact target url, or
                 // (2) it matches the origin of the current page, and a hash is present
+                if (!loc || !loc.href) return false;
                 if (loc.href.indexOf(targetUrl) !== -1) return true;
                 if (loc.origin == window.location.origin && loc.hash) return true;
                 return false;
