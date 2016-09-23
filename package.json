@@ -21,6 +21,7 @@
     "gulp-clean-css": "^2.0.10",
     "gulp-clone": "^1.0.0",
     "gulp-cloudfront-invalidate": "^0.1.2",
+    "gulp-debug": "^2.1.2",
     "gulp-filter": "^4.0.0",
     "gulp-if": "^2.0.1",
     "gulp-jshint": "^2.0.1",

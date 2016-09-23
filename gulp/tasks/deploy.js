@@ -9,6 +9,7 @@ var if_ = require("gulp-if");
 var lazypipe = require("lazypipe");
 var prompt = require("gulp-prompt");
 var rename = require("gulp-rename");
+var debug = require("gulp-debug");
 
 var sdkFiles = ["yesgraph.js", "yesgraph.min.js", "yesgraph.min.js.map"];
 var superwidgetFiles = ["yesgraph-invites.js", "yesgraph-invites.min.js", "yesgraph-invites.min.js.map"];
@@ -67,6 +68,7 @@ gulp.task("deploy", ["build"], function() {
 
     if (!argv.test) {
         return gulp.src(config.tasks.deploy.files)
+            .pipe(debug({title: "deploy"}))
             .pipe(deployPrep())
             .pipe(if_(isDevDeploy, filter(devFiles))) // only update files in the dev/ folder
             .pipe(publisher.publish({}, {force: true}))
@@ -74,6 +76,7 @@ gulp.task("deploy", ["build"], function() {
             .pipe(cloudfront(config.cloudfront));
     } else if (argv.test) {
         return gulp.src(config.tasks.deploy.files)
+            .pipe(debug({title: "deploy"}))
             .pipe(deployPrep())
             .pipe(if_(isDevDeploy, filter(devFiles))) // only update files in the dev/ folder
             .pipe(gulp.dest("deployed"));

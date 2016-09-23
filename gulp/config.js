@@ -40,7 +40,7 @@ module.exports = {
             reportFile: root + "/jshint-report.txt"
         },
         minifyScripts: {
-            files: src.root + "/**/yesgraph?(-invites).js"
+            files: dest.root + "/**/yesgraph?(-invites).js"
         },
         minifyCss: {
             files: dest.root + "/**/yesgraph-invites.css"
@@ -50,9 +50,10 @@ module.exports = {
         },
         version: {
             files: [
-                "./**/yesgraph?(-invites)?(.min).@(js|css)",
-                "./package.json",
-                "./gulp/config.js"
+                src.root + "/**/yesgraph?(-invites)?(.min).js",
+                dest.root + "/**/yesgraph-invites?(.min).css",
+                root + "/package.json",
+                root + "/gulp/config.js"
             ]
         },
         update: {
