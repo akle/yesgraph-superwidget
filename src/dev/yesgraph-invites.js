@@ -1093,9 +1093,9 @@
                     var msg, authCode, accessToken, errorMsg, responseUrl;
                     var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
                     var oauthInfo = self.getOAuthInfo(self.service);
-                    var popup = open(oauthInfo.url, self.service.name + " Authorization", service.popupSize);
+                    var popup = open(oauthInfo.url, "_blank", service.popupSize);
                     var popupTimer = setInterval(function() {
-                        if (popup && popup.closed === true) {
+                        if (typeof popup !== "object" || popup.closed === true) {
                             d.reject({ error: defaultAuthErrorMessage });
                             clearInterval(popupTimer);
                             return;
@@ -1124,14 +1124,13 @@
                                 }
                                 clearInterval(popupTimer);
                                 if (popup) {
-                                    popup.close();    
+                                    popup.close();
                                 }
                             }
                         } catch (e) {
                             // Check the error message, then either keep waiting or reject with the error
                             var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "\w*")/, // jshint ignore:line
                                 canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
-
                             if (!canIgnoreError) {
                                 msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
                                 d.reject({
@@ -1140,7 +1139,7 @@
                                 YesGraphAPI.utils.error(msg, false);
                                 clearInterval(popupTimer);
                                 if (popup) {
-                                    popup.close();    
+                                    popup.close();
                                 }
                             }
                         }
