@@ -6,6 +6,7 @@ var gulp = require('gulp');
 var prompt = require("gulp-prompt");
 var replace = require("gulp-replace");
 var semver = require("semver");
+var debug = require("gulp-debug");
 var versions = config.version;
 
 /*
@@ -33,25 +34,26 @@ gulp.task("version", function() {
     setUpdateType();
 
     return gulp.src(config.tasks.version.files)
+        .pipe(debug({title: "version"}))
 
         // Update version in code files
         .pipe(sourceCodeFilter)
         .pipe(replace(/__(\w*)_VERSION__/g, fileVersionReplacer))
         .pipe(replace(/__BUILD_DATE__/g, CURRENT_DATE))
-        .pipe(gulp.dest(".")) // stores code in dist/ folder
+        .pipe(gulp.dest(config.dest.root)) // stores code in dist/ folder
         .pipe(sourceCodeFilter.restore)
 
         // Update version in package.json
         .pipe(packageFilter)
         .pipe(replace(/"version": ?"\S*"/, packageVersionReplacer))
-        .pipe(gulp.dest(".")) // stores package.json at root
+        .pipe(gulp.dest(config.root)) // stores package.json at root
         .pipe(packageFilter.restore)
 
         // Update config file to persist version change
         .pipe(configFilter)
         .pipe(replace(/__(\w*)_VERSION__ ?\= ?[\'\"]\S*[\'\"];/g, configVersionReplacer))
-        .pipe(gulp.dest("./gulp")) // stores config.js in gulp/ folder
-        .pipe(configFilter.restore)
+        .pipe(gulp.dest(config.root + "/gulp")) // stores config.js in gulp/ folder
+        .pipe(configFilter.restore);
 });
 
 function fileVersionReplacer(match, target) {

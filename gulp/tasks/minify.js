@@ -4,10 +4,12 @@ var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
 var cleanCSS = require("gulp-clean-css");
 var sourcemaps = require("gulp-sourcemaps");
+var debug = require('gulp-debug');
 var config = require("../config");
 
 gulp.task("minify:js", function() {
     return gulp.src(config.tasks.minifyScripts.files, {base: config.src.root})
+        .pipe(debug({title: "minify:js"}))
         .pipe(sourcemaps.init())
         .pipe(uglify({preserveComments: "license"}))
         .pipe(rename({suffix: ".min"}))
@@ -17,6 +19,7 @@ gulp.task("minify:js", function() {
 
 gulp.task("minify:css", function() {
     return gulp.src(config.tasks.minifyCss.files, {base: config.dest.root})
+        .pipe(debug({title: "minify:css"}))
         .pipe(cleanCSS({keepSpecialComments: 1}))
         .pipe(rename({suffix: ".min"}))
         .pipe(gulp.dest(config.dest.root));
