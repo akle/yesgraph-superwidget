@@ -9,6 +9,7 @@ var if_ = require("gulp-if");
 var lazypipe = require("lazypipe");
 var prompt = require("gulp-prompt");
 var rename = require("gulp-rename");
+var release = require("gulp-github-release");
 var debug = require("gulp-debug");
 
 var sdkFiles = ["yesgraph.js", "yesgraph.min.js", "yesgraph.min.js.map"];
@@ -73,7 +74,10 @@ gulp.task("deploy", ["build"], function() {
             .pipe(if_(isDevDeploy, filter(devFiles))) // only update files in the dev/ folder
             .pipe(publisher.publish({}, {force: true}))
             .pipe(aws.reporter())
-            .pipe(cloudfront(config.cloudfront));
+            .pipe(cloudfront(config.cloudfront))
+            .pipe(release({
+                manifest: require("./package.json")
+            }));
     } else if (argv.test) {
         return gulp.src(config.tasks.deploy.files)
             .pipe(debug({title: "deploy"}))
