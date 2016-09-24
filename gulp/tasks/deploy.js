@@ -68,17 +68,17 @@ gulp.task("deploy", ["build"], function() {
 
     if (!argv.test) {
         return gulp.src(config.tasks.deploy.files)
-            .pipe(debug({title: "deploy"}))
             .pipe(deployPrep())
             .pipe(if_(isDevDeploy, filter(devFiles))) // only update files in the dev/ folder
+            .pipe(debug({title: "deploy"}))
             .pipe(publisher.publish({}, {force: true}))
             .pipe(aws.reporter())
             .pipe(cloudfront(config.cloudfront));
     } else if (argv.test) {
         return gulp.src(config.tasks.deploy.files)
-            .pipe(debug({title: "deploy"}))
             .pipe(deployPrep())
             .pipe(if_(isDevDeploy, filter(devFiles))) // only update files in the dev/ folder
+            .pipe(debug({title: "deploy"}))
             .pipe(gulp.dest("deployed"));
     }
 });
