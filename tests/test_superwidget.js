@@ -147,7 +147,7 @@ describe('testSuperwidgetUI', function() {
 
         it("Should identify multiple email recipients", function() {
             var inputField = widget.container.find(".yes-manual-input-field");
-            var emails = ["valid+1@email.com", "valid+2@email.com", "valid+3@email.com"];
+            var emails = ["Valid Email 1 <valid+1@email.com>", "valid+2@email.com", "Valid Email 3 <valid+3@email.com>"];
             var recipients;
 
             inputField.val(emails.join(",")); // separated by comma

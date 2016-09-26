@@ -1212,21 +1212,22 @@
                     recipient,
                     emails,
                     email;
-
                 if (elem.is("textarea")) {
-                    emails = elem.val().split(/\s+|,|;/);
-                    emails.forEach(function (email, index, array){
-                        email = email.replace(/^\s+|\s+$/g, ''); // strip whitespace
-                        if (email) {
-                            if (isValidEmail(email)) {
-                                recipients.push({
-                                    "email": email
-                                });
-                            } else {
-                                flash.error('Invalid email "' + email + '".');
-                            }
-                        }
-                    });
+                    var text = elem.val();
+                    var regex = /([^<>\s,.;]*@[^<>\s,.;]*\.[^<>\s,.;]*)/gi;
+                    var match, lastMatchEnd = 0;
+                    while(true) {
+                        match = regex.exec(text);
+                        if (!match) break;
+                        var name = text.slice(lastMatchEnd, match.index)
+                                       .replace(/<|>|,|;/g, "")  // strip punctuation
+                                       .replace(/^\s+|\s+$/g, "");  // strip whitespace
+                        recipients.push({
+                            name: name || undefined,
+                            email: match[0] || undefined
+                        });
+                        lastMatchEnd = regex.lastIndex;
+                    }
                     return recipients;
 
                 } else {
