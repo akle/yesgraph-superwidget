@@ -46,7 +46,10 @@ module.exports = {
             files: dest.root + "/**/yesgraph-invites.css"
         },
         watch: {
-            files: src.root + "/**/yesgraph*"
+            files: {
+                js: src.dev + "/yesgraph?(-invites).js",
+                less: src.dev + "/yesgraph-invites.less"
+            }
         },
         version: {
             files: [

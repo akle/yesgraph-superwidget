@@ -147,28 +147,83 @@ describe('testSuperwidgetUI', function() {
 
         it("Should identify multiple email recipients", function() {
             var inputField = widget.container.find(".yes-manual-input-field");
-            var emails = ["valid+1@email.com", "valid+2@email.com", "valid+3@email.com"];
+            var emails = ["Valid Email 1 <valid+1@email.com>", "valid+2@email.com", "Valid Email 3 <valid+3@email.com>"];
             var recipients;
 
             inputField.val(emails.join(",")); // separated by comma
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
+            recipients.forEach(function(recipient){
+                if (recipient.email === "valid+1@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 1");
+                } else if (recipient.email === "valid+2@email.com") {
+                    expect(recipient.name).not.toBeDefined();
+                } else if (recipient.email === "valid+3@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 3");
+                } else {
+                    expect(true).toEqual(false);  // fail the test
+                }
+            });
 
             inputField.val(emails.join(";")); // separated by semicolon
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
+            recipients.forEach(function(recipient){
+                if (recipient.email === "valid+1@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 1");
+                } else if (recipient.email === "valid+2@email.com") {
+                    expect(recipient.name).not.toBeDefined();
+                } else if (recipient.email === "valid+3@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 3");
+                } else {
+                    expect(true).toEqual(false);  // fail the test
+                }
+            });
 
             inputField.val(emails.join(" ")); // separated by space
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
+            recipients.forEach(function(recipient){
+                if (recipient.email === "valid+1@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 1");
+                } else if (recipient.email === "valid+2@email.com") {
+                    expect(recipient.name).not.toBeDefined();
+                } else if (recipient.email === "valid+3@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 3");
+                } else {
+                    expect(true).toEqual(false);  // fail the test
+                }
+            });
 
             inputField.val(emails.join("\n")); // separated by newline
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
+            recipients.forEach(function(recipient){
+                if (recipient.email === "valid+1@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 1");
+                } else if (recipient.email === "valid+2@email.com") {
+                    expect(recipient.name).not.toBeDefined();
+                } else if (recipient.email === "valid+3@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 3");
+                } else {
+                    expect(true).toEqual(false);  // fail the test
+                }
+            });
 
             inputField.val(emails.join("\n, ")); // combined delimiters
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
+            recipients.forEach(function(recipient){
+                if (recipient.email === "valid+1@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 1");
+                } else if (recipient.email === "valid+2@email.com") {
+                    expect(recipient.name).not.toBeDefined();
+                } else if (recipient.email === "valid+3@email.com") {
+                    expect(recipient.name).toEqual("Valid Email 3");
+                } else {
+                    expect(true).toEqual(false);  // fail the test
+                }
+            });
         });
     });
 
