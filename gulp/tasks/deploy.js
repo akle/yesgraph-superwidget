@@ -63,7 +63,7 @@ gulp.task("deploy", ["build"], function() {
             }
         })
         .pipe(function(){
-            // Use both the clones &  the originals from now on
+            // Use both the clones & the originals from now on
             return cloneSink.tap();
         });
 
@@ -76,7 +76,7 @@ gulp.task("deploy", ["build"], function() {
             .pipe(aws.reporter())
             .pipe(cloudfront(config.cloudfront))
             .pipe(release({
-                manifest: require("./package.json")
+                manifest: require("../../package.json")
             }));
     } else if (argv.test) {
         return gulp.src(config.tasks.deploy.files)
