@@ -7,8 +7,8 @@ var dest = {
     dev: "./dist/dev",
     root: "./dist"
 };
-var __SDK_VERSION__ = "v0.1.7";
-var __SUPERWIDGET_VERSION__ = "v1.1.11";
+var __SDK_VERSION__ = "v0.2.0";
+var __SUPERWIDGET_VERSION__ = "v1.2.0";
 var __CSS_VERSION__ = "v0.0.6";
 
 module.exports = {
@@ -46,7 +46,10 @@ module.exports = {
             files: dest.root + "/**/yesgraph-invites.css"
         },
         watch: {
-            files: src.root + "/**/yesgraph*"
+            files: {
+                js: src.dev + "/yesgraph?(-invites).js",
+                less: src.dev + "/yesgraph-invites.less"
+            }
         },
         version: {
             files: [
