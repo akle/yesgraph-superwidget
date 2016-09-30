@@ -160,10 +160,11 @@ describe('testSuperwidgetUI', function() {
 
             // Click the contact import button, and check that the auth flow succeeds
             widget.container.find(".yes-contact-import-btn-google").click();
-            $(document).on("imported.yesgraph.contacts", function() {
-                // Check that the popup was opened
-                expect(window.open).toHaveBeenCalled();
 
+            // Check that the popup was opened
+            expect(window.open).toHaveBeenCalled();
+
+            $(document).on("imported.yesgraph.contacts", function() {
                 // Among the API calls made, one should be to the /oauth endpoint
                 var oauthEndpointCall;
                 YesGraphAPI.hitAPI.calls.all().forEach(function(call) {
