@@ -30,6 +30,13 @@ $(document).on("set.yesgraph.recipients", function(evt, recipients){
     // Do something with the recipients
     console.debug("Added " + recipients.length + " recipients.");
 });
+$(document).on("completed.yesgraph.oauth", function(evt, service, err){
+  	if (err) {
+  		console.debug(service, "oauth failed", err);
+  	} else {
+  		console.debug(service, "oauth succeeded");
+  	}
+});
 </script>
 </div>
 </body>

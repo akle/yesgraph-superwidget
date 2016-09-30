@@ -702,7 +702,8 @@
                         }).prop("placeholder", widgetCopy.manual_input_placeholder || "Enter emails here"),
                         manualInputSubmit = $('<button>', {
                             "text": widgetCopy.manualInputSendBtn || "Add Emails",
-                            "class": "yes-default-btn yes-manual-input-submit"
+                            "class": "yes-default-btn yes-manual-input-submit",
+                            "type": "button"
                         }),
                         includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
                         includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
@@ -1054,6 +1055,7 @@
                         if (YesGraphAPI.settings.showContacts !== false) {
                             contactsModal.loading();
                         }
+                        $(document).trigger(YesGraphAPI.events.COMPLETED_OAUTH, [self.service.id, null]);
                         self.fetchContacts(authData).done(function(response){
                             // Trigger DOM event "imported.yesgraph.contacts"
                             if (response.data.source === "gmail") {
@@ -1069,7 +1071,10 @@
                             contactsModal.closeModal();
                             d.reject(err);
                         });
-                    }).fail(d.reject);
+                    }).fail(function(err) {
+                        $(document).trigger(YesGraphAPI.events.COMPLETED_OAUTH, [self.service.id, err]);
+                        d.reject(err);
+                    });
                     return d.promise();
                 };
 
@@ -1193,7 +1198,8 @@
                         YesGraphAPI.events = $.extend(YesGraphAPI.events, {
                             SET_RECIPIENTS: "set.yesgraph.recipients",
                             IMPORTED_CONTACTS: "imported.yesgraph.contacts",
-                            INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget"
+                            INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget",
+                            COMPLETED_OAUTH: "completed.yesgraph.oauth"
                         });
                         d.resolve();
                     }
