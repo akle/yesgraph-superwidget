@@ -12,11 +12,12 @@ before_install:
       #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap Caskroom/cask; brew install Caskroom/cask/xquartz; sh -e /opt/X11/bin/Xvfb start          ; fi
       
 os:
-  - linux
+    #- linux
   - osx
 
 before_script:
     - npm install
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm install -g gulp ; fi
 notifications:
   slack:
     rooms:
