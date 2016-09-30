@@ -13,7 +13,7 @@ before_install:
       
 os:
   - linux
-    #- osx
+  - osx
 
 before_script:
     - npm install
