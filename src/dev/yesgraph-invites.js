@@ -1134,7 +1134,12 @@
                                 }
                             }
                         } catch (e) {
-                            // Check the error message, then either keep waiting or reject with the error
+                            /* This timer is checking periodically to see if the user has finished the auth flow.
+                             * If the auth flow is still in progress, the check itsef will throw an error, because
+                             * the auth page is on a different domain. We should catch and ignore those errors.
+                             * 
+                             * This `catch` block should decide whether to ignore the error or not.
+                             */
                             var okErrorMessages = /(Cannot read property\w*|undefined is not an object \(evaluating \w*\)|Permission denied\w*)/, // jshint ignore:line
                                 canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
                             if (!canIgnoreError) {

@@ -154,7 +154,6 @@ describe('testSuperwidgetUI', function() {
                         }
                     }
                 };
-                console.warn(url);
                 d.resolve(fakeRespone);
                 return d.promise();
             });
