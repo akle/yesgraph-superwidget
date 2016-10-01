@@ -144,7 +144,9 @@ module.exports = function(config) {
             'karma-firefox-launcher',
             'karma-safari-launcher',
             ];
-        
+        config.preprocessors = {
+            'tests/fixtures.html': ['html2js'],
+        };
     }
     else if (process.env.TRAVIS) {
         config.browsers = ['Chrome_travis_ci', 'Firefox'];
