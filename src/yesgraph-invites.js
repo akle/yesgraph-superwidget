@@ -702,7 +702,8 @@
                         }).prop("placeholder", widgetCopy.manual_input_placeholder || "Enter emails here"),
                         manualInputSubmit = $('<button>', {
                             "text": widgetCopy.manualInputSendBtn || "Add Emails",
-                            "class": "yes-default-btn yes-manual-input-submit"
+                            "class": "yes-default-btn yes-manual-input-submit",
+                            "type": "button"
                         }),
                         includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
                         includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
@@ -880,7 +881,8 @@
                             btnClass = "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
                             btn = $("<button>", {
                                 "class": btnClass,
-                                "title": service.name
+                                "title": service.name,
+                                "type": "button"
                             }).append(outerWrapper);
 
                         if (btnCount > 3) {
@@ -1053,6 +1055,7 @@
                         if (YesGraphAPI.settings.showContacts !== false) {
                             contactsModal.loading();
                         }
+                        $(document).trigger(YesGraphAPI.events.COMPLETED_OAUTH, [self.service.id, null]);
                         self.fetchContacts(authData).done(function(response){
                             // Trigger DOM event "imported.yesgraph.contacts"
                             if (response.data.source === "gmail") {
@@ -1068,7 +1071,10 @@
                             contactsModal.closeModal();
                             d.reject(err);
                         });
-                    }).fail(d.reject);
+                    }).fail(function(err) {
+                        $(document).trigger(YesGraphAPI.events.COMPLETED_OAUTH, [self.service.id, err]);
+                        d.reject(err);
+                    });
                     return d.promise();
                 };
 
@@ -1128,8 +1134,13 @@
                                 }
                             }
                         } catch (e) {
-                            // Check the error message, then either keep waiting or reject with the error
-                            var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "\w*")/, // jshint ignore:line
+                            /* This timer is checking periodically to see if the user has finished the auth flow.
+                             * If the auth flow is still in progress, the check itsef will throw an error, because
+                             * the auth page is on a different domain. We should catch and ignore those errors.
+                             * 
+                             * This `catch` block should decide whether to ignore the error or not.
+                             */
+                            var okErrorMessages = /(Cannot read property\w*|undefined is not an object \(evaluating \w*\)|Permission denied\w*)/, // jshint ignore:line
                                 canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
                             if (!canIgnoreError) {
                                 msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
@@ -1137,6 +1148,9 @@
                                     error: msg
                                 });
                                 YesGraphAPI.utils.error(msg, false);
+                                if (YesGraphAPI.Raven) {
+                                    YesGraphAPI.Raven.captureException(e);
+                                }
                                 clearInterval(popupTimer);
                                 if (popup) {
                                     popup.close();
@@ -1189,7 +1203,8 @@
                         YesGraphAPI.events = $.extend(YesGraphAPI.events, {
                             SET_RECIPIENTS: "set.yesgraph.recipients",
                             IMPORTED_CONTACTS: "imported.yesgraph.contacts",
-                            INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget"
+                            INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget",
+                            COMPLETED_OAUTH: "completed.yesgraph.oauth"
                         });
                         d.resolve();
                     }
