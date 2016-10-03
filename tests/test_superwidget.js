@@ -124,6 +124,60 @@ describe('testSuperwidgetUI', function() {
         });
     });
 
+    describe("testOAuthFlow", function() {
+        it("Should succesfully complete the OAuth flow", function(done) {
+
+            // When we open the popup, change the URL so we bypass the authorization process
+            var realOpen = window.open;
+            spyOn(window, "open").and.callFake(function(url){
+                var url = window.location.href + "#code=TEST";
+                return realOpen(url, "_blank");
+            });
+            var realHitAPI = YesGraphAPI.hitAPI;
+            spyOn(YesGraphAPI, "hitAPI").and.callFake(function(url) {
+                var d = $.Deferred();
+                var fakeRespone = {
+                    message: "Address book for TEST added.",
+                    batch_id: "TEST",
+                    meta: {
+                        app_name: "TEST",
+                        user_id: "TEST",
+                        total_count: 0,
+                        time: 1.5
+                    },
+                    data: {
+                        ranked_contacts: [],
+                        source: {
+                            name: "Test User",
+                            email: "test@user.com",
+                            type: "gmail"
+                        }
+                    }
+                };
+                d.resolve(fakeRespone);
+                return d.promise();
+            });
+
+            // Click the contact import button, and check that the auth flow succeeds
+            widget.container.find(".yes-contact-import-btn-google").click();
+
+            // Check that the popup was opened
+            expect(window.open).toHaveBeenCalled();
+
+            $(document).on("imported.yesgraph.contacts", function() {
+                // Among the API calls made, one should be to the /oauth endpoint
+                var oauthEndpointCall;
+                YesGraphAPI.hitAPI.calls.all().forEach(function(call) {
+                    if (call.args.indexOf("/oauth") !== 1) {
+                        oauthEndpointCall = call;
+                    }
+                });
+                expect(oauthEndpointCall).toBeDefined();
+                done();
+            });
+        });
+    });
+
     describe("testEmailValidation", function() {
         it("Should identify valid email recipients", function() {
             var inputField = widget.container.find(".yes-manual-input-field");
