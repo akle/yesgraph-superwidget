@@ -132,11 +132,34 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
     // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
-        config.browsers = ['Chrome_travis_ci', 'Firefox', 'Safari'];
+        config.browsers = ['Firefox', 'Safari'];
+        // Which plugins to enable
+        config.plugins = [
+            'karma-jasmine-jquery',
+            'karma-jasmine',
+            'karma-html2js-preprocessor',
+            'karma-firefox-launcher',
+            'karma-safari-launcher',
+            ];
+        config.preprocessors = {
+            'tests/fixtures.html': ['html2js'],
+        };
+            
+        
     }
     else if (process.env.TRAVIS) {
         config.browsers = ['Chrome_travis_ci', 'Firefox'];
-        config.reporters = ['progress', 'coverage'];
+        config.reporters = ['progress', 'coverage', 'coveralls'];
+        config.plugins = [
+            'karma-jasmine-jquery',
+            'karma-jasmine',
+            'karma-coverage',
+            'karma-chrome-launcher',
+            'karma-html2js-preprocessor',
+            'karma-firefox-launcher',
+            'karma-coveralls',
+        ];
+
         
     }
 };
