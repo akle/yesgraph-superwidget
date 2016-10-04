@@ -137,6 +137,7 @@ module.exports = function(config) {
     // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
         config.browsers = ['Firefox', 'Safari'];
         // Which plugins to enable
+        config.reporters = ['progress'];
         config.plugins = [
             'karma-jasmine-jquery',
             'karma-jasmine',
