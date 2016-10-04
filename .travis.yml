@@ -10,7 +10,8 @@ before_install:
       #    - sh -e /etc/init.d/xvfb start
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start          ; fi
       # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then Xvfb :99 -ac ; fi
-      
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then defaults write com.apple.Safari.plist WebKitJavaScriptCanOpenWindowsAutomatically 1 ; fi
+
 os:
   - linux
   - osx
