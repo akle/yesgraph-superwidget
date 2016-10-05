@@ -20,7 +20,9 @@
         LOAD_SUPERWIDGET: "Loaded Superwidget",
         CLICK_CONTACT_IMPORT_BTN: "Clicked Contact Import Button",
         CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
-        CLICK_COPY_LINK: "Clicked to Copy Invite Link"
+        CLICK_COPY_LINK: "Clicked to Copy Invite Link",
+        SUGGESTED_SEEN: "Viewed Suggested Contacts",
+        INVITES_SENT: "Invite(s) Sent",
     };
     var domReadyTimer = setInterval(function () {
         if (document.readyState === "complete" || document.readyState === "interactive") {
@@ -422,7 +424,8 @@
                                     seen_at: now
                                 };
                             }).get();
-                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });                                
+                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
+                            YesGraphAPI.AnalyticsManager.log(EVENTS.SUGGESTED_SEEN, null, null, LIBRARY);
                         }
                     }
 
@@ -571,10 +574,14 @@
                         }
                     });
 
-                    YesGraphAPI.utils.sendEmailInvites(recipients).always(function () {
-                        modalSendBtn.prop("disabled", false);
-                        closeModal();
-                    });
+                    YesGraphAPI.utils.sendEmailInvites(recipients)
+                        .done(function () {
+                            YesGraphAPI.AnalyticsManager.log(EVENTS.INVITES_SENT, ".yes-modal-submit-btn", null, LIBRARY);
+                        })
+                        .always(function () {
+                            modalSendBtn.prop("disabled", false);
+                            closeModal();
+                        });
                 }
 
                 function openModal(evt) {
@@ -820,7 +827,9 @@
                     manualInputSubmit.on("click", function (evt) {
                         evt.preventDefault();
                         var recipients = YesGraphAPI.utils.getSelectedRecipients(manualInputField);
-                        YesGraphAPI.utils.sendEmailInvites(recipients);
+                        YesGraphAPI.utils.sendEmailInvites(recipients).done(function() {
+                            YesGraphAPI.AnalyticsManager.log(EVENTS.INVITES_SENT, ".yes-manual-input-submit", null, LIBRARY);
+                        });
                         manualInputField.val("");
                     });
 

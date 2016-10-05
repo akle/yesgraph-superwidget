@@ -331,7 +331,7 @@ describe('testSuperwidgetUI', function() {
 
         it('Should correctly handle contacts with the same name', function() {
             var emails = ["jane.doe@gmail.com", "jdoe@yahoo.net",
-                          "jane.doe@about.me", "jdoe@hotmail.com"]
+                          "jane.doe@about.me", "jdoe@hotmail.com"];
             var contacts = [
                 {
                     name: "Jane Doe",
@@ -354,6 +354,54 @@ describe('testSuperwidgetUI', function() {
                 expect(storedEmail).toEqual(email);
             });
         });
+
+        it('Should log suggested seen analytics', function() {
+            spyOn(YesGraphAPI.AnalyticsManager, "log").and.callFake(function(evt){
+                expect(evt).toEqual("Viewed Suggested Contacts");
+            });
+
+            // Open the contacts modal w/ suggestions
+            var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
+            var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
+            widget.modal.loading();
+            widget.modal.loadContacts(contacts);
+
+            // Check that analytics were logged
+            expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+        });
+
+        it('Should log invites sent analytics', function() {
+            // Skip email sending & return a fake response
+            spyOn(YesGraphAPI, "hitAPI").and.callFake(function(){
+                var d = $.Deferred();
+                var fakeRespone = {
+                    "emails": {
+                        "succeeded": [[null, "test@email.com", 200, "success"]],
+                        "failed": []
+                    },
+                    "sent": [[null, "test@email.com"]]
+                };
+                d.resolve(fakeRespone);
+                return d.promise();
+            });
+
+            spyOn(YesGraphAPI.AnalyticsManager, "log").and.callFake(function(evt){
+                expect(evt).toEqual("Invite(s) Sent");
+            });
+
+            // Send invites from the manual input
+            widget.container.find(".yes-manual-input-field").val("test@email.com");
+            widget.container.find(".yes-manual-input-submit").click();
+            expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
+            expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+
+            // Send invites from the contacts modal
+            widget.modal.container.find("[type='checkbox']").prop("checked", true);
+            widget.modal.container.find(".yes-modal-submit-btn").click();
+            expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
+            expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+        });
+
     });
 });
 
