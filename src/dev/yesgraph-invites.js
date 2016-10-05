@@ -1082,7 +1082,8 @@
                     var d = $.Deferred();
                     YesGraphAPI.hitAPI("/oauth", "GET", {
                         "service": self.service.id,
-                        "token_data": JSON.stringify(authData)
+                        "token_data": JSON.stringify(authData),
+                        "settings": JSON.stringify(YesGraphAPI.settings)
                     }).done(function(response){
                         if (response.error) {
                             d.reject(response);
