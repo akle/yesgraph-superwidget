@@ -61,7 +61,7 @@
     "build": "gulp build",
     "lint": "gulp lint",
     "clean": "gulp clean",
-    "start": "echo \"Starting server at localhost:8080\"; python3 -m http.server 8080;"
+    "start": "gulp build; echo \"Starting server at localhost:8080\"; python3 -m http.server 8080;"
   },
   "repository": {
     "type": "git",
