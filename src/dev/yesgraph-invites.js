@@ -1092,7 +1092,7 @@
                     YesGraphAPI.hitAPI("/oauth", "GET", {
                         "service": self.service.id,
                         "token_data": JSON.stringify(authData),
-                        "settings": YesGraphAPI.settings
+                        "settings": JSON.stringify(YesGraphAPI.settings)
                     }).done(function(response){
                         if (response.error) {
                             d.reject(response);
