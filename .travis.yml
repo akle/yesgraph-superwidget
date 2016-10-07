@@ -16,6 +16,9 @@ os:
   - linux
   - osx
 
+addons:
+  firefox: "39.0"
+
 before_script:
     - npm install
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm install -g gulp ; fi

@@ -135,7 +135,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS && process.env.TRAVIS_OS_NAME == "osx") {
     // http://swizec.com/blog/how-to-run-javascript-tests-in-chrome-on-travis/swizec/6647
-        config.browsers = ['Firefox', 'Safari'];
+        config.browsers = ['Chrome_travis_ci', 'Firefox', 'Safari'];
         // Which plugins to enable
         config.reporters = ['progress'];
         config.plugins = [
