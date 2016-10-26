@@ -37,7 +37,21 @@ module.exports = {
         },
         lint: {
             files: src.root + "/**/yesgraph?(-invites).js",
-            reportFile: root + "/jshint-report.txt"
+            reportFile: root + "/jshint-report.txt",
+            options: { // http://jshint.com/docs/options/
+                esversion: 5,
+                globals: {
+                    "Clipboard": true,
+                },
+                browser: true,
+                devel: true,
+                jquery: true,
+                maxdepth: 3,
+                strict: true,
+                undef: true,
+                unused: true,
+                eqnull: true,
+            }
         },
         minifyScripts: {
             files: dest.root + "/**/yesgraph?(-invites).js"

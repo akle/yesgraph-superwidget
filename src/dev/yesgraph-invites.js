@@ -1,17 +1,14 @@
-/*!
- * YesGraph Superwidget dev/__SUPERWIDGET_VERSION__
- *
- * https://www.yesgraph.com
- * https://docs.yesgraph.com/docs/superwidget
- * 
- * Date: __BUILD_DATE__
- */
-(function () {
-    "use strict";
+/*
+- Load scripts somehow
+- Superwidget could be instantiated via constructor
+*/
 
-    var VERSION = "dev/__SUPERWIDGET_VERSION__";
-    var SDK_VERSION = "dev/__SDK_VERSION__";
-    var CSS_VERSION = "dev/__CSS_VERSION__";
+(function(){
+    "use strict";
+    // TODO: replace versions with variables
+    var VERSION = "dev";
+    var SDK_VERSION = "dev"; // jshint ignore:line
+    var CSS_VERSION = "dev";
     var LIBRARY = {
         name: "yesgraph-invites.js",
         version: VERSION
@@ -22,14 +19,16 @@
         CLICK_SOCIAL_MEDIA_BTN: "Clicked Social Media Button",
         CLICK_COPY_LINK: "Clicked to Copy Invite Link",
         SUGGESTED_SEEN: "Viewed Suggested Contacts",
-        INVITES_SENT: "Invite(s) Sent",
+        INVITES_SENT: "Invite(s) Sent"
     };
-    var domReadyTimer = setInterval(function () {
-        if (document.readyState === "complete" || document.readyState === "interactive") {
-            loadSuperwidget();
-            clearInterval(domReadyTimer);
-        }
-    }, 100);
+
+    // Check the protocol used by the window
+    var PROTOCOL;
+    if (window.location.protocol.indexOf("http") !== -1) {
+        PROTOCOL = window.location.protocol;
+    } else {
+        PROTOCOL = "http:";
+    }
 
     function requireScript(globalVar, script, func) {
         // Get the specified script if it hasn't been loaded already
@@ -48,1181 +47,1339 @@
         }
     }
 
-    function loadSuperwidget() {
-        var protocol;
-        if (window.location.protocol.indexOf("http") !== -1) {
-            protocol = window.location.protocol;
+    function MessageFactory(messageSection) {
+        var self = this;
+
+        this.message = function(msg, type, duration) {
+            var flashDiv = $("<div>", {
+                "class": "yes-flash yes-flash-" + type,
+                "text": msg || ""
+            });
+            messageSection.append(flashDiv.hide());
+            flashDiv.show(300);
+
+            window.setTimeout(function () {
+                flashDiv.hide(300, function () {
+                    $(this).remove();
+                });
+            }, duration || 3500);
+        };
+
+        this.success = function(msg, duration) {
+            msg = msg || "Success!";
+            self.message(msg, "success", duration);
+        };
+
+        this.error = function(msg, duration) {
+            msg = "Error: " + (msg || "Something went wrong.");
+            self.message(msg, "error", duration);
+        };
+    }
+
+    function ModalContainer() {
+        // Modal Header
+        var modalTitle = $("<p>", {
+            "class": "yes-modal-title"
+        });
+        var modalCloseBtn = $("<div>", {
+            "html": "&times;",
+            "class": "yes-modal-close-btn"
+        });
+        var modalHeader = $("<div>", {
+            "class": "yes-modal-header"
+        }).append(modalTitle, modalCloseBtn);
+
+        // Modal Body
+        var loader = $("<div>", {
+            "class": "yes-loading-icon"
+        });
+        var contactContainer = $("<div>", {
+            "class": "yes-contact-container"
+        });
+        var modalBody = $("<div>", {
+            "class": "yes-modal-body"
+        }).append(loader, contactContainer);
+
+        // Modal Footer
+        var modalSendBtn = $("<input>", {
+            "type": "submit",
+            "value": "Add",
+            "class": "yes-default-btn yes-modal-submit-btn"
+        });
+        var modalFooter = $("<div>", {
+            "class": "yes-modal-footer"
+        }).append(modalSendBtn);
+
+        var modal = $("<div>", {
+            "class": "yes-modal"
+        }).append(modalHeader, modalBody, modalFooter);
+
+        return modal;
+    }
+
+    function ModalOverlay() {
+        return  $("<div>", {
+            "class": "yes-modal-overlay"
+        });
+    }
+
+    function WidgetContainer(view, settings, options) {
+        var targetSelector = options.target || ".yesgraph-invites";
+        var JQUERY_VERSION = $.fn.jquery;
+
+        // Build the HTML template
+        var container = $("<div>", {
+            "class": "yes-widget-container"
+        });
+        var containerHeader = $("<div>", {
+            "class": "yes-header-1"
+        });
+        var containerBody = $("<div>");
+        var shareBtnSection = $("<div>", {
+            "class": "yes-share-btn-section"
+        });
+        var flashSection = $("<div>", {
+            "class": "yes-flash-message-section"
+        });
+        var linkback = $("<span>", {
+            "id": "powered-by-yesgraph",
+            "text": "Powered by ",
+            "style": "display: block !important; visibility: visible !important; font-size: 12px !important; font-style: italic !important;"
+        }).append($("<a>", {
+            "href": "https://www.yesgraph.com/demo?utm_source=superwidget&utm_medium=superwidget&utm_campaign=superwidget",
+            "text": "YesGraph",
+            "target": "_blank",
+            "style": "color: red !important; text-decoration: none !important;"
+        }));
+        var inviteLinkInput = $("<input>", {
+            "readonly": true,
+            "id": "yes-invite-link"
+        }).css({
+            "width": "100%",
+            "border": "1px solid #ccc",
+            "text-overflow": "ellipsis",
+            "padding": "5px 7px"
+        }).on("click", function () {
+            this.select();
+        });
+        var inviteLinkSection = $("<div>", {
+            "class": "yes-invite-link-section"
+        }).css({
+            "display": "table",
+            "width": "100%",
+            "font-size": "0.85em",
+            "margin": "5px 0"
+        }).append(inviteLinkInput);
+        var sections = [containerHeader, containerBody];
+        if (settings.inviteLink) { sections.push(inviteLinkSection); }
+        if (settings.shareBtns) { sections.push(shareBtnSection); }
+        sections.push(flashSection);
+
+        if (JQUERY_VERSION >= "1.8") {
+            container.append(sections); // Appending an array is only possible in 1.8+
         } else {
-            protocol = "http:";
+            sections.forEach(function(section){
+                container.append(section);
+            });
+        }
+        if (options.linkback) {
+            container.append(linkback);
         }
 
+        var widgetCopy = options.widgetCopy || {};
+        if (widgetCopy.widgetHeadline) {
+            var headline = $("<p>", {
+                "class": "yes-header-1",
+                "text": widgetCopy.widgetHeadline
+            });
+            containerHeader.append(headline);
+        }
 
-        requireScript("YesGraphAPI", "https://cdn.yesgraph.com/" + SDK_VERSION + "/yesgraph.min.js", function (YesGraphAPI) {
-            if (YesGraphAPI.hasLoadedSuperwidget) {
-                YesGraphAPI.utils.error("Superwidget has been loaded multiple times.", false);
-                return;
-            } else {
-                YesGraphAPI.hasLoadedSuperwidget = true;
-                YesGraphAPI.SUPERWIDGET_VERSION = VERSION;
+        // Add the social share buttons
+        var shareBtns = generateShareButtons(options, view.Superwidget.YesGraphAPI);
+        shareBtnSection.append(shareBtns);
+        $(targetSelector).html(container);
+
+        // Add the contact importing buttons
+        var includeGoogle = options.settings.oauthServices.indexOf("google") !== -1,
+            includeOutlook = options.settings.oauthServices.indexOf("outlook") !== -1,
+            includeYahoo = options.settings.oauthServices.indexOf("yahoo") !== -1,
+            includeSlack = options.settings.oauthServices.indexOf("slack") !== -1,
+            contactImportingServices = {
+                "google": {
+                    id: "google",
+                    name: "Gmail",
+                    include: includeGoogle,
+                    authManagerOptions: {
+                        id: "google",
+                        name: "Gmail",
+                        baseAuthUrl: "https://accounts.google.com/o/oauth2/auth",
+                        authParams: {
+                            access_type: "offline",
+                            client_id: null,
+                            prompt: "consent", // Ensures that a refresh_token will be included
+                            redirect_uri: null,
+                            response_type: "code",
+                            scope: [
+                                "https://www.google.com/m8/feeds/",
+                                "https://www.googleapis.com/auth/userinfo.email"
+                            ].join(" "),
+                            state: window.location.href
+                        },
+                        popupSize: "width=550, height=550"
+                    }
+                },
+                "outlook": {
+                    id: "outlook",
+                    name: "Outlook",
+                    include: includeOutlook,
+                    authManagerOptions: {
+                        id: "outlook",
+                        name: "Outlook",
+                        baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                        authParams: {
+                            client_id: null,
+                            redirect_uri: null,
+                            response_type: "token",
+                            scope: "https://outlook.office.com/contacts.read",
+                            state: window.location.href
+                        },
+                        popupSize: "width=900, height=700"
+                    }
+                },
+                "hotmail": {
+                    id: "hotmail",
+                    name: "Hotmail",
+                    include: includeOutlook,
+                    authManagerOptions: {
+                        id: "outlook",
+                        name: "Hotmail",
+                        baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                        authParams: {
+                            client_id: null,
+                            redirect_uri: null,
+                            response_type: "token",
+                            scope: "https://outlook.office.com/contacts.read",
+                            state: window.location.href
+                        },
+                        popupSize: "width=900, height=700"
+                    }
+                },
+                "yahoo": {
+                    id: "yahoo",
+                    name: "Yahoo",
+                    include: includeYahoo,
+                    authManagerOptions: {
+                        id: "yahoo",
+                        name: "Yahoo",
+                        baseAuthUrl: "https://api.login.yahoo.com/oauth2/request_auth",
+                        authParams: {
+                            client_id: null,
+                            redirect_uri: null,
+                            response_type: "token",
+                            state: window.location.href
+                        },
+                        popupSize: "width=900, height=700"
+                    }
+                },
+                "slack": {
+                    id: "slack",
+                    name: "Slack",
+                    include: includeSlack,
+                    authManagerOptions: {
+                        id: "slack",
+                        name: "Slack",
+                        baseAuthUrl: "https://slack.com/oauth/authorize",
+                        authParams: {
+                            client_id: null,
+                            redirect_uri: null,
+                            scope: "users:read",
+                            state: window.location.href
+                        },
+                        popupSize: "width=900, height=700"
+                    }
+                }
+            },
+            contactImportSection = $("<div>", {
+                "class": "yes-contact-import-section"
+            }),
+            btnCount = 0 + Number(includeGoogle) + Number(includeYahoo) + (Number(includeOutlook) * 2),
+            btnText = "";
+        view.contactImportingServices = contactImportingServices;
+
+        // Create a button for each contact importing service, & instantiate an auth manager
+        var btn, service, serviceId;
+        for (serviceId in contactImportingServices) {
+            if (contactImportingServices.hasOwnProperty(serviceId)) {
+                service = contactImportingServices[serviceId];
+                btn = generateContactImportBtn(service);
+                contactImportSection.append(btn);
+                service.authManager = new AuthManager(service.authManagerOptions, options, view.Superwidget.YesGraphAPI);
             }
-            var $ = window.jQuery; // Required by Karma tests
+        }
 
-            var target;
-            var TESTMODE;
-            var OPTIONS;
-            // Sections of the widget UI
-            var container = $("<div>", {
-                "class": "yes-widget-container"
+        if (settings.contactImporting) { containerBody.append(contactImportSection); }
+
+        // Add the manual input form
+        var manualInputForm = $('<form>', {
+                "class": "yes-manual-input-form"
+            }),
+            manualInputField = $("<textarea>", {
+                "rows": 3,
+                "class": "yes-manual-input-field"
+            }).prop("placeholder", widgetCopy.manual_input_placeholder || "Enter emails here"),
+            manualInputSubmit = $('<button>', {
+                "text": widgetCopy.manualInputSendBtn || "Add Emails",
+                "class": "yes-default-btn yes-manual-input-submit",
+                "type": "button"
             });
-            var containerHeader = $("<div>", {
-                "class": "yes-header-1"
-            });
-            var containerBody = $("<div>");
-            var shareBtnSection = $("<div>", {
-                "class": "yes-share-btn-section"
-            });
-            var flashSection = $("<div>");
+        manualInputForm.append(manualInputField, manualInputSubmit);
+
+        if (settings.emailSending) { containerBody.append(manualInputForm); }
+
+
+        function generateContactImportBtn(service) {
+            var icon = $("<div>", {
+                    "class": "yes-contact-import-btn-icon"
+                }),
+                text = $("<span>", {
+                    "text": btnText + service.name,
+                    "class": "yes-contact-import-btn-text"
+                }),
+                innerWrapper = $("<div>").css("display", "table").append(icon, text),
+                outerWrapper = $("<div>").css({
+                    "display": "inline-block",
+                    "vertical-align": "middle"
+                }).append(innerWrapper),
+                btnClass = "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
+                btn = $("<button>", {
+                    "class": btnClass,
+                    "data-service": service.id,
+                    "title": service.name,
+                    "type": "button"
+                }).append(outerWrapper);
+
+            if (btnCount > 3) {
+                btn.addClass("yes-no-label"); // Only show the icon if there are more than 3 buttons
+            } else if (service.id === "slack") {
+                btn.addClass("yes-alt-icon"); // Use the monochrome icon
+            }
+            // TODO: add click event handlers to the bindEvents method
+            return btn;
+        }
+
+        return container;
+    }
+
+    function generateShareButtons(options, api) {
+        if (options.shareButtons.length === 0) { return false; }
+        var buttonsDiv = $("<div>"),
+            targ,
+            shareBtn,
+            shareBtnIcon,
+            shareBtnText,
+            inviteLink = api.inviteLink,
+            services = [{
+                "ID": "facebook",
+                "name": "Facebook",
+                "baseURL": "https://www.facebook.com/share.php",
+                "params": {
+                    u: encodeURI(inviteLink),
+                    title: options.widgetCopy.shareMessage
+                },
+                "colors": ["#3B5998", "#324b81"]
+            }, {
+                "ID": "twitter",
+                "name": "Twitter",
+                "baseURL": "https://twitter.com/intent/tweet",
+                "params": {
+                    text: options.widgetCopy.shareMessage + ' ' + inviteLink
+                },
+                "colors": ["#55ACEE", "#2E99EA"]
+            }, {
+                "ID": "linkedin",
+                "name": "LinkedIn",
+                "baseURL": "https://www.linkedin.com/shareArticle",
+                "params": {
+                    "mini": true,
+                    "url": inviteLink,
+                    "summary": options.widgetCopy.shareMessage
+                },
+                "colors": ["#0077B5", "#006399"]
+            }, {
+                "ID": "pinterest",
+                "name": "Pinterest",
+                "baseURL": "https://www.pinterest.com/pin/create/button",
+                "params": {
+                    "url": inviteLink
+                },
+                "colors": ["#BD081C", "#AB071A"]
+            }];
+
+        var wrapper;
+        services.forEach(function(service){
+            if (options.shareButtons.indexOf(service.ID) !== -1) {
+                shareBtnIcon = $("<span>", {
+                    "class": "yes-share-btn-icon"
+                }).css({
+                    "background-image": "url('" + PROTOCOL + "//cdn.yesgraph.com/" + service.ID + ".png')"
+                });
+
+                shareBtnText = $("<span>", {
+                    "text": service.name,
+                    "class": "yes-share-btn-text"
+                });
+
+                shareBtn = $("<span>", {
+                    "class": "yes-share-btn yes-share-btn-" + service.ID,
+                    "data-name": service.name,
+                    "data-url": service.baseURL + "?" + $.param(service.params),
+                    "data-color": service.colors[0],
+                    "data-hover-color": service.colors[1]
+                }).css({
+                    "background-color": service.colors[0]
+                });
+
+                shareBtn.hover(shareBtnHoverOnHandler, shareBtnHoverOffHandler);
+
+                shareBtn.append(shareBtnIcon, shareBtnText);
+
+                // Handle Pinterest slightly differently
+                if (service.ID === "pinterest") {
+                    wrapper = $("<a>", {
+                        "href": service.baseURL + "?" + $.param(service.params),
+                        "data-pin-do": "buttonBookmark",
+                        "data-pin-custom": true
+                    }).append(shareBtn);
+
+                    shareBtn.on("click", function () {
+                        // Do this on each click. Otherwise images added
+                        // asynchronously (e.g., by Intercom) will not
+                        // have the desired description when pinned.
+                        $("img").not("[data-pin-description]").each(function () {
+                            this.dataset.pinDescription = options.integrations.twitter.tweetMsg + " " + inviteLink;
+                        });
+                        api.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
+                        wrapper[0].click();
+                    });
+
+                    requireScript("pinUtils", PROTOCOL + "//assets.pinterest.com/js/pinit.js", function () { // jshint ignore:line
+                        buttonsDiv.append(wrapper.append(shareBtn));
+                    });
+
+                } else {
+                    shareBtn.on("click", function () {
+                        targ = $(this);
+                        open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
+                        api.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
+                    });
+                    buttonsDiv.append(shareBtn);
+                }
+            }
+        });
+
+        function shareBtnHoverOnHandler () {
+            var $this = $(this); // jshint ignore:line
+            $this.css("background-color", $this.data("hover-color"));
+        }
+        function shareBtnHoverOffHandler () {
+            var $this = $(this); // jshint ignore:line
+            $this.css("background-color", $this.data("color"));
+        }
+        return buttonsDiv;
+    }
+
+    function View(options) {
+        // Basic infraestructure
+        var self = this;
+        this.listeners = [];
+        this.addListener = function(listener) {
+            self.listeners.push(listener);
+        };
+
+        // Define methods for updating the view
+        this.loadCssIfNotFound = function() {
+            var stylesheets = document.styleSheets;
+            var link;
+            var i;
+            for (i = 0; i < stylesheets.length; i += 1) {
+                link = stylesheets[i].href || "";
+                if (link.match(/yesgraph-invites[\S]*.css\b/)) {
+                    return;
+                }
+            }
             var yesgraphCSS = $("<link>", {
                 "rel": "stylesheet",
                 "type": "text/css",
                 "charset": "utf-8",
-                "href": protocol + "//cdn.yesgraph.com/" + CSS_VERSION + "/yesgraph-invites.min.css"
+                "href": PROTOCOL + "//cdn.yesgraph.com/" + CSS_VERSION + "/yesgraph-invites.min.css"
             });
-            var poweredByYesgraph = $("<span>", {
-                "id": "powered-by-yesgraph",
-                "text": "Powered by ",
-                "style": "display: block !important; visibility: visible !important; font-size: 12px !important; font-style: italic !important;"
-            }).append($("<a>", {
-                "href": "https://www.yesgraph.com/demo?utm_source=superwidget&utm_medium=superwidget&utm_campaign=superwidget",
-                "text": "YesGraph",
-                "target": "_blank",
-                "style": "color: red !important; text-decoration: none !important;"
-            }));
 
-            // Build invite link section
-            var inviteLinkInput = $("<input>", {
-                "readonly": true,
-                "id": "yes-invite-link"
-            }).css({
-                "width": "100%",
-                "border": "1px solid #ccc",
-                "text-overflow": "ellipsis",
-                "padding": "5px 7px"
-            }).on("click", function () {
-                this.select();
-            });
-            var copyInviteLinkBtn = $("<span>", {
-                "id": "yes-invite-link-copy-btn",
-                "data-clipboard-target": "#yes-invite-link",
-                "text": "Copy"
-            }).css({
-                "display": "table-cell",
-                "border": "1px solid #ccc",
-                "border-left": "none",
-                "padding": "5px 7px",
-                "background-color": "#eee",
-                "cursor": "pointer"
-            });
-            var inviteLinkSection = $("<div>", {
-                "class": "yes-invite-link-section"
-            }).css({
-                "display": "table",
-                "width": "100%",
-                "font-size": "0.85em",
-                "margin": "5px 0"
-            }).on("click", function() {
-                YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_COPY_LINK, "#yes-invite-link-copy-btn", null, LIBRARY);
-            }).append(inviteLinkInput);
+            $("head").prepend(yesgraphCSS);
+        };
 
-            // If we haven't loaded the css already, add the YesGraph default styling
-            // to the top of the page, so that any custom styles can still override it
-            loadCssIfNotFound();
-            function loadCssIfNotFound() {
-                var stylesheets = document.styleSheets;
-                var link;
-                var i;
-                for (i = 0; i < stylesheets.length; i += 1) {
-                    link = stylesheets[i].href || "";
-                    if (link.match(/yesgraph-invites[\S]*.css\b/)) {
-                        return;
-                    }
-                }
-                $("head").prepend(yesgraphCSS);
+        this.loadClipboard = function() {
+            var d = $.Deferred();
+            if (window.Clipboard && typeof Clipboard === "function") {
+                d.resolve();
+            } else {
+                var clipboardCDN = "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js";
+                $.getScript(clipboardCDN)
+                    .done(d.resolve)
+                    .fail(d.reject);
+            }
+            return d.promise();
+        };
+
+        this.configureClipboard = function() {
+            // Enable copying with the copy button
+            var clipboardExists = false;
+            var clipboard;
+            try {
+                clipboard = new Clipboard('#yes-invite-link-copy-btn');
+                clipboardExists = true;
+                self.clipboard = clipboard;
+            } catch (e) {
+                self.notifyClipboardConfigFailed();
             }
 
-            // Module for "flashing" stateful information
-            // to the user (e.g., success, error, etc.)
-            var flash = (function () {
-                function flashMessage(msg, type, duration) {
-                    var flashDiv = $("<div>", {
-                        "class": "yes-flash yes-flash-" + type,
-                        "text": msg || ""
+            // Add the copy button to the UI
+            if (clipboardExists) {
+                var copyInviteLinkBtn = $("<span>", {
+                    "id": "yes-invite-link-copy-btn",
+                    "data-clipboard-target": "#yes-invite-link",
+                    "text": "Copy",
+                    "type": "button"
+                }).css({
+                    "display": "table-cell",
+                    "border": "1px solid #ccc",
+                    "border-left": "none",
+                    "padding": "5px 7px",
+                    "background-color": "#eee",
+                    "cursor": "pointer"
+                });
+                self.container.find(".yes-invite-link-section").append(copyInviteLinkBtn);
+            }
+        };
+
+        this.buildWidgetContainer = function(settings, options) {
+            // TODO: we could instantiate the WidgetContainer
+            // on pageload & attach it to YesGraphAPI.Superwidget,
+            // then update it when the options are available
+            console.debug("Building widget container");
+            self.widgetContainer = WidgetContainer(self, settings, options);
+        };
+
+        this.build = function(options) {
+            var api = self.Superwidget.YesGraphAPI;
+            self.options = options;
+            self.buildWidgetContainer(api.settings, options);
+            self.buildContactsModal(options);
+            self.updateInviteLink(api.inviteLink);
+            self.bindEvents(options);
+            self.buildMessageFactory();
+        };
+
+        this.superwidgetReady = function() {
+            var api = self.Superwidget.YesGraphAPI;
+            $(document).trigger(api.events.INSTALLED_SUPERWIDGET);
+        };
+
+        this.updateInviteLink = function(url) {
+            self.widgetContainer.find("#yes-invite-link").val(url);
+        };
+
+        this.buildContactsModal = function(options) {
+            var modal = ModalContainer(options);
+            var overlay = ModalOverlay(options);
+            modal.hide();
+            overlay.hide();
+            self.modalContainer = modal;
+            self.modalOverlay = overlay;
+            $("body").append(overlay, modal);
+        };
+
+        this.buildMessageFactory = function(options) {
+            var messageSection = self.widgetContainer.find(".yes-flash-message-section");
+            self.flashMessage = new MessageFactory(messageSection, options);
+        };
+
+        this.startAuthFlow = function(serviceId) {
+            var authManager = self.contactImportingServices[serviceId].authManager;
+            authManager.authPopup()
+                .done(function(data){
+                    self.notifyAuthSucceeded(serviceId, data);
+                })
+                .fail(function(err) {
+                    self.notifyAuthFailed(serviceId, err);
+                });
+        };
+
+        this.notifyAuthSucceeded = function(serviceId, data) {
+            var api = self.Superwidget.YesGraphAPI;
+            $(document).trigger(api.events.COMPLETED_OAUTH, [serviceId, null]);
+            self.listeners.forEach(function(listener) {
+                listener.authSucceeded(serviceId, data);
+            });
+        };
+
+        this.notifyAuthFailed = function(serviceId, err) {
+            var api = self.Superwidget.YesGraphAPI;
+            $(document).trigger(api.events.COMPLETED_OAUTH, [serviceId, err]);
+            self.listeners.forEach(function(listener) {
+                listener.authFailed(serviceId, err);
+            });
+        };
+
+        this.cleanModal = function() {
+            // Detach items that we might need to re-attach later
+            // Remove items that we won't re-use
+            var itemsToDetach = self.modalContainer.find(".yes-contact-container").children();
+            var itemsToRemove = self.modalContainer.find(".yes-contact-row").add(".yes-none-found-warning");
+            itemsToDetach.detach();
+            itemsToRemove.remove();
+        };
+
+        this.loading = function() {
+            console.debug("Loading...");
+            // TODO: add widgetCopy.contactsModalLoadingMessage to API side
+            var loadingMessage = self.options.widgetCopy.contactsModalLoadingMessage || "Loading...";
+            var api = self.Superwidget.YesGraphAPI;
+            if (api.settings.showContacts === false) { return; }
+            self.cleanModal();
+            self.modalOverlay.show();
+            self.modalContainer.find(".yes-modal-submit-btn").css("visibility", "hidden");
+            self.modalContainer.find(".yes-loading-icon").css("display", "block");
+            self.modalContainer.find(".yes-modal-title").text(loadingMessage);
+            self.modalContainer.show();
+            self.centerModal();
+        };
+
+        this.stopLoading = function() {
+            console.debug("stopLoading");
+            var modalTitleText = self.options.widgetCopy.contactsModalHeader || "Add Friends";
+            self.modalContainer.find(".yes-modal-submit-btn").css("visibility", "visible");
+            self.modalContainer.find(".yes-modal-title").text(modalTitleText);
+            self.modalContainer.find(".yes-loading-icon").css("display", "none");
+        };
+
+        this.closeModal = function() {
+            console.debug("closeModal");
+            self.modalOverlay.hide();
+            self.modalContainer.hide();
+        };
+
+        this.centerModal = function(evt) {
+            console.debug("centerModal");
+            try {
+                evt.preventDefault();
+            } catch(ignore) {}
+            var modal = $(".yes-modal"),
+                top = 20,
+                left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
+            // If the doctype is set to HTML, we can center the modal vertically
+            // based on the viewport size (rather than use the default 20px set above).
+            if (window.document.doctype && (window.document.doctype === "html")) {
+                top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
+            }
+            modal.css({
+                top: top + $(window).scrollTop(),
+                left: left + $(window).scrollLeft()
+            });
+        };
+
+        this.openModal = function() {
+            console.debug("openModal");
+            self.modalOverlay.show();
+            self.centerModal();
+            self.modalContainer.show();
+        };
+
+        this.noContactsFound = function() {
+            self.stopLoading();
+            self.modalContainer.find(".yes-modal-title").text("No contacts found!");
+            self.modalContainer.find(".yes-modal-submit-btn").css("visibility", "hidden");
+        };
+
+        this.loadContacts = function(contacts, noSuggestions) {
+            console.debug("Showing contacts");
+            // Wrapping and styling allows divs with unspecified
+            // heights to behave like scrollable tables
+            var totalList = $("<div>", {
+                "class": "yes-total-contact-list"
+            });
+            var innerWrapper = $("<div>", {
+                style: "height: 100%; position: relative; overflow-x: hidden;"
+            }).append(totalList);
+            var wrappedTotalList = $("<div>", {
+                style: "height: 100%; display: table-cell; width: 100%;"
+            }).append(innerWrapper);
+            var suggestedList = $("<div>", {
+                "class": "yes-suggested-contact-list"
+            });
+            var wrappedSuggestedList = $("<div>", {
+                style: "max-height: 180px; overflow-x: hidden;"
+            }).append(suggestedList);
+            var noContactsWarning = $("<p>", {
+                "text": "None found!",
+                "class": "yes-none-found-warning"
+            });
+            var contactContainer = $(".yes-modal .yes-contact-container");
+            var searchField = $("<input>", {
+                "type": "text",
+                "placeholder": "Search",
+                "class": "yes-search-field"
+            });
+            var selectAll = $("<input>", {
+                "type": "checkbox"
+            });
+            var selectAllLabel = $("<label>", {
+                "text": "Select All"
+            });
+            var selectAllForm = $("<form>", {
+                "class": "yes-select-all-form"
+            }).append(selectAll, selectAllLabel);
+
+            var suggestedHeader = $("<p>", {
+                "text": "Suggested",
+                "class": "yes-contact-list-header"
+            });
+            var totalHeader = $("<p>", {
+                "text": "All Contacts",
+                "class": "yes-contact-list-header"
+            });
+            var suggestedContactCount = 5;
+            noSuggestions = (contacts.length < suggestedContactCount) || noSuggestions;
+
+            if (contacts.length === 0) {
+                self.noContactsFound();
+                return;
+            }
+
+            // Suggested Contacts
+            if (!noSuggestions) {
+                var foundContacts = 0;
+                var i = 0;
+                var contact;
+
+                while (foundContacts < suggestedContactCount) {
+                    contact = contacts[i];
+                    if (!contact) break;
+                    // Only suggest the contact if it has a name and an email
+                    if (contact.name && contact.emails.length > 0) {
+                        self.addRow(suggestedList, contact, false);
+                        foundContacts++;
+                    }
+                    i++;
+                }
+                if (foundContacts === 0) {
+                    noSuggestions = true;
+                }
+
+                // Parse the suggested list for the displayed contacts
+                var now = new Date().toISOString();
+                var suggestedContacts = suggestedList.find(".yes-contact-row").map(function(){
+                    var row = $(this);
+                    return {
+                        name: row.find(".yes-contact-row-name span").text(),
+                        emails: [row.find(".yes-contact-row-email span").text()],
+                        seen_at: now
+                    };
+                }).get();
+                // TODO: post suggested seen!
+                self.notifySawSuggestions(suggestedContacts);
+            }
+
+            var sortedContacts = contacts.sort(self.compareContacts);
+            sortedContacts.forEach(function(contact) {
+                self.addRow(totalList, contact, true);
+            });
+
+            totalList.prepend(noContactsWarning.hide());
+
+            if (noSuggestions) {
+                contactContainer.append(searchField, selectAllForm, totalHeader, wrappedTotalList);
+            } else {
+                contactContainer.append(searchField,
+                    selectAllForm,
+                    suggestedHeader,
+                    wrappedSuggestedList,
+                    totalHeader,
+                    wrappedTotalList);
+            }
+            self.stopLoading();
+
+            // Autoselect suggested contacts
+            if (!noSuggestions) {
+                suggestedList.find("input[type='checkbox']").prop("checked", true);
+            }
+
+            // Uppercase "YesContains" is a case-insensitive
+            // version of jQuery "contains" used for doing
+            // case-insensitive searches
+            $.expr[':'].YesContains = function (a, i, m) {
+                return jQuery(a).text().toUpperCase()
+                    .indexOf(m[3].toUpperCase()) >= 0;
+            };
+
+            // Make the "Total" list searchable
+            searchField.on("input", function (evt) {
+                var matching_rows,
+                    searchString = evt.target.value;
+                totalList.find('.yes-contact-row').hide();
+                matching_rows = totalList.find('.yes-contact-row:YesContains("' + searchString + '")');
+                matching_rows.show();
+                if (matching_rows.length === 0) {
+                    noContactsWarning.show();
+                } else {
+                    noContactsWarning.hide();
+                }
+            });
+
+            self.updateModalSendBtn(options);
+            self.applyStyling();
+        };
+
+        this.compareContacts = function(a, b) {
+            // Sort contact objects alphabetically, prioritizing in this order:
+            // 1. contacts with names starting with letters
+            // 2. contacts with names starting with non-letters
+            // 3. contacts with only emails, starting with letters
+            // 4. contacts with only emails, starting with non-letters
+            var nameA = a.name || "", emailsA = a.emails || "";
+            var nameB = b.name || "", emailsB = b.emails || "";
+            var matchNumbers = /\b([0-9]*)/;
+            var matchText = /\b[0-9]*(.*)/;
+            var matchA, matchB;
+
+            if (nameA && nameB) {
+                matchA = matchNumbers.exec(nameA);
+                matchA = Number(matchA ? matchA[0] : undefined);
+                matchNumbers.lastIndex = 0;
+
+                matchB = matchNumbers.exec(nameB);
+                matchB = Number(matchB ? matchB[0] : undefined);
+                matchNumbers.lastIndex = 0;
+
+                if (matchA && !matchB) { return 1; }
+                if (matchB && !matchA) { return -1; }
+                if (matchA && matchB) {
+                    if (matchA < matchB) { return -1; }
+                    if (matchA > matchB) { return 1; }
+                    if (matchA === matchB) {
+                        // Sort the letters
+                        var textA = matchText.exec(nameA)[0];
+                        matchText.lastIndex = 0;
+                        var textB = matchText.exec(nameB)[0];
+                        matchText.lastIndex = 0;
+                        return textA <= textB ? -1 : 1;
+                    }
+                }
+                return nameA <= nameB ? -1 : 1;
+            } else if (!nameA && !nameB) {
+                if (!emailsA || !emailsB) { return 0; }
+                return emailsA[0] <= emailsB[0] ? -1 : 1;
+            }
+            return Boolean(b.name) - Boolean(a.name);
+        };
+
+
+        this.addRow = function(target, contact, allEmails) {
+
+            if ((!contact.emails) || contact.emails.length === 0) {
+                return;
+            }
+
+            var contactRow,
+                contactDetails,
+                contactEmail,
+                checkbox,
+                emailCount = allEmails ? contact.emails.length : 1,
+                suggestedList = $(".yes-suggested-contact-list"), // TODO: test this bubbling
+                suggestedEmails = $.map(suggestedList.find(".yes-contact-row-checkbox input"), function (elem) {
+                    return $(elem).data("email");
+                });
+
+            for (var i = 0; i < emailCount; i += 1) {
+                // Check if they're also in the suggested list
+                if (suggestedEmails.indexOf(contact.emails[i]) === -1) {
+                    contactEmail = $("<span>", {
+                        html: contact.emails[i]
                     });
-                    flashSection.append(flashDiv.hide());
-                    flashDiv.show(300);
+                    checkbox = $('<input>', {
+                        type: "checkbox"
+                    });
 
-                    setTimeout(function () {
-                        flashDiv.hide(300, function () {
-                            $(this).remove();
-                        });
-                    }, duration || 3500);
-                }
+                    contactRow = $('<div>', {
+                        "class": "yes-contact-row"
+                    });
+                    contactDetails = $("<div>", {
+                        "class": "yes-contact-details"
+                    });
 
-                function success(msg, duration) {
-                    msg = msg || "Success!";
-                    flashMessage(msg, "success", duration);
-                }
+                    contactRow.append($('<div>', {
+                        "class": "yes-contact-row-checkbox"
+                    }).append(checkbox), contactDetails);
 
-                function error(msg, duration) {
-                    msg = "Error: " + (msg || "Something went wrong.");
-                    flashMessage(msg, "error", duration);
-                }
-
-                return {
-                    success: success,
-                    error: error
-                };
-            }());
-
-            var contactsModal = (function () {
-                var modal = $("<div>", {
-                        "class": "yes-modal"
-                    }),
-                    overlay = $("<div>", {
-                        "class": "yes-modal-overlay"
-                    }),
-                    loader = $("<div>", {
-                        "class": "yes-loading-icon"
-                    }),
-                    isOpen = false,
-                    modalHeader = $("<div>", {
-                        "class": "yes-modal-header"
-                    }),
-                    modalBody = $("<div>", {
-                        "class": "yes-modal-body"
-                    }).append(loader),
-                    modalFooter = $("<div>", {
-                        "class": "yes-modal-footer"
-                    }),
-                    modalCloseBtn = $("<div>", {
-                        "html": "&times;",
-                        "class": "yes-modal-close-btn"
-                    }),
-                    contactContainer = $("<div>", {
-                        "class": "yes-contact-container"
-                    }),
-                    modalSendBtn = $("<input>", {
-                        "type": "submit",
-                        "value": "Add",
-                        "class": "yes-default-btn yes-modal-submit-btn"
-                    }),
-                    titleText,
-                    modalTitle = $("<p>", {
-                        "class": "yes-modal-title"
-                    }),
-                    searchField = $("<input>", {
-                        "type": "text",
-                        "placeholder": "Search",
-                        "class": "yes-search-field"
-                    }),
-                    suggestedHeader = $("<p>", {
-                        "text": "Suggested",
-                        "class": "yes-contact-list-header"
-                    }),
-                    suggestedList = $("<div>", {
-                        "class": "yes-suggested-contact-list"
-                    }),
-                    totalHeader = $("<p>", {
-                        "text": "All Contacts",
-                        "class": "yes-contact-list-header"
-                    }),
-                    totalList = $("<div>", {
-                        "class": "yes-total-contact-list"
-                    }),
-                    selectAll = $("<input>", {
-                        "type": "checkbox"
-                    }),
-                    selectAllForm = $("<form>", {
-                        "class": "yes-select-all-form"
-                    }).append(selectAll, $("<label>", {
-                        "text": "Select All"
+                    contactDetails.append($('<div>', {
+                        "class": "yes-contact-row-name"
                     }));
+                    contactDetails.append($('<div>', {
+                        "class": "yes-contact-row-email"
+                    }).append($("<div>").append(contactEmail)));
 
-                function init() {
-                    var widgetCopy = OPTIONS.widgetCopy || {};
-
-                    titleText = widgetCopy.contactsModalHeader || "Add Friends";
-                    modalTitle.text(titleText);
-                    modalHeader.append(modalTitle, modalCloseBtn);
-                    modalBody.append(contactContainer);
-                    modalFooter.append(modalSendBtn);
-                    modal.append(modalHeader, modalBody, modalFooter);
-                    $("body").append(overlay, modal);
-                    applyStyling();
-
-                    // Check that the viewport is set, so that the contacts
-                    // modal is properly centered on mobile devices
-                    if ($("meta[name='viewport']").length === 0) {
-                        $("head").prepend($("<meta>", {
-                            name: "viewport",
-                            content: "width=device-width, initial-scale=1.0"
+                    if (contact.name) {
+                        contactRow.find(".yes-contact-row-name").append($('<span>', {
+                            html: contact.name
                         }));
                     }
-                    $(window).on("resize", centerModal);
 
-                    modalCloseBtn.on("click", closeModal);
-                    overlay.on("click", closeModal);
-                    modalSendBtn.on("click", send);
-
-                    selectAll.on("click", function (evt) {
-                        modalBody.find("[type='checkbox']").prop("checked", $(evt.target).prop("checked"));
-                        updateSendBtn();
-                    });
-                    modal.hide();
-                    overlay.hide();
+                    checkbox.data("email", contact.emails[i]);
+                    checkbox.data("name", contact.name || undefined);
+                    checkbox.data("");
+                    target.append(contactRow);
                 }
+            }
+        };
 
-                function updateSendBtn() {
-                    // Updates the send button with a count of selected contacts
-                    var btnText = '',
-                        btnTextOptions = OPTIONS.widgetCopy.modalSendBtn || {},
-                        checked = modalBody.find('input[type="checkbox"]')
-                            .filter(":not(.yes-select-all-form *)")
-                            .filter(function () {
-                                return Boolean($(this).prop("checked"));
-                            });
+        this.toggleSelected = function(evt) {
+            var checkbox = $(evt.target).find("[type='checkbox']");
+            checkbox.prop("checked", !checkbox.prop("checked"));
+            self.updateModalSendBtn();
+        };
 
-                    if (checked.length === 0) {
-                        btnText = btnTextOptions.noneSelected || "No contacts selected";
-                    } else if (checked.length === 1) {
-                        btnText = btnTextOptions.oneSelected || "Send 1 Email";
-                    } else {
-                        btnText = btnTextOptions.manySelected || "Send {{ count }} Emails";
-                    }
-                    btnText = btnText.replace(/\{\{[\s]*count[\s]*\}\}/i, checked.length);
-                    modalSendBtn.val(btnText);
-                }
+        this.applyStyling = function() {
+            var selectAllForm = $(".yes-select-all-form");
+            selectAllForm.css({
+                "font-weight": "200"
+            });
+            selectAllForm.find("input[type='checkbox']").css({
+                "margin": "0 6px"
+            });
+            $(".yes-total-contact-list").css({
+                "position": "absolute",
+                "top": "0",
+                "bottom": "0",
+                "left": "0",
+                "right": "0"
+            });
+            $(".yes-contact-list-header").css({
+                "display": "table-row",
+                "font-size": "16px",
+                "font-weight": "bolder",
+                "height": "30px",
+                "line-height": "30px",
+                "margin": "0"
+            });
+        };
 
-                function toggleSelected(evt) {
-                    var checkbox = $(evt.target).find("[type='checkbox']");
-                    checkbox.prop("checked", !checkbox.prop("checked"));
-                    updateSendBtn();
-                }
+        this.updateModalSendBtn = function() {
+            // Updates the send button with a count of selected contacts
+            var options = self.options;
+            var btnText = '';
+            var btnTextOptions = options.widgetCopy.modalSendBtn || {};
+            var checked = self.modalContainer.find(".yes-modal-body")
+                .find('input[type="checkbox"]')
+                .filter(":not(.yes-select-all-form *)")
+                .filter(function () {
+                    return Boolean($(this).prop("checked"));
+                });
 
-                function addRow(target, contact, allEmails) {
+            if (checked.length === 0) {
+                btnText = btnTextOptions.noneSelected || "No contacts selected";
+            } else if (checked.length === 1) {
+                btnText = btnTextOptions.oneSelected || "Send 1 Email";
+            } else {
+                btnText = btnTextOptions.manySelected || "Send {{ count }} Emails";
+            }
+            btnText = btnText.replace(/\{\{[\s]*count[\s]*\}\}/i, checked.length);
+            $(".yes-modal-submit-btn").val(btnText);
+        };
 
-                    if (contact.emails && contact.emails.length !== 0) {
-                        var contactRow,
-                            contactDetails,
-                            contactEmail,
-                            checkbox,
-                            emailCount = allEmails ? contact.emails.length : 1,
-                            foundDuplicateRow,
-                            suggestedEmails = $.map(suggestedList.find(".yes-contact-row-checkbox input"), function (elem) {
-                                return $(elem).data("email");
-                            });
-
-                        for (var i = 0; i < emailCount; i += 1) {
-                            // Check if they're also in the suggested list
-                            if (suggestedEmails.indexOf(contact.emails[i]) === -1) {
-                                contactEmail = $("<span>", {
-                                    html: contact.emails[i]
-                                });
-                                checkbox = $('<input>', {
-                                    type: "checkbox"
-                                });
-
-                                contactRow = $('<div>', {
-                                    class: "yes-contact-row"
-                                });
-                                contactDetails = $("<div>", {
-                                    class: "yes-contact-details"
-                                });
-
-                                contactRow.append($('<div>', {
-                                    class: "yes-contact-row-checkbox"
-                                }).append(checkbox), contactDetails);
-
-                                contactDetails.append($('<div>', {
-                                    class: "yes-contact-row-name"
-                                }));
-                                contactDetails.append($('<div>', {
-                                    class: "yes-contact-row-email"
-                                }).append($("<div>").append(contactEmail)));
-
-                                if (contact.name) {
-                                    contactRow.find(".yes-contact-row-name").append($('<span>', {
-                                        html: contact.name
-                                    }));
-                                }
-
-                                checkbox.data("email", contact.emails[i]);
-                                checkbox.data("name", contact.name || undefined);
-                                checkbox.data("");
-                                contactRow.on("click", toggleSelected);
-
-                                target.append(contactRow);
-                            }
-                        }
+        this.emailSendingFailed = function(resp) {
+            console.debug("Email sending failed", resp);
+            var errors = resp.errors;
+            var api = self.Superwidget.YesGraphAPI;
+            if (errors) {
+                var msg, error, description;
+                // Show each message separately
+                for (error in errors) {
+                    if (errors.hasOwnProperty(error)) {
+                        description = errors[error];
+                        msg = error + ": " + description;
+                        self.flashMessage.error(msg);
+                        api.utils.error(msg);
                     }
                 }
-
-                function loadContacts(contacts, noSuggestions) {
-                    // Wrapping and styling allows divs with unspecified
-                    // heights to behave like scrollable tables
-                    var innerWrapper = $("<div>", {
-                        style: "height: 100%; position: relative; overflow-x: hidden;"
-                    }).append(totalList);
-                    var wrappedTotalList = $("<div>", {
-                        style: "height: 100%; display: table-cell; width: 100%;"
-                    }).append(innerWrapper);
-                    var wrappedSuggestedList = $("<div>", {
-                        style: "max-height: 180px; overflow-x: hidden;"
-                    }).append(suggestedList);
-                    var noContactsWarning = $("<p>", {
-                        "text": "None found!",
-                        "class": "yes-none-found-warning"
-                    });
-                    var suggestedContactCount = 5;
-                    noSuggestions = (contacts.length < suggestedContactCount) || noSuggestions;
-
-                    if (contacts.length === 0) {
-                        stopLoading();
-                        modalTitle.text("No contacts found!");
-                        modalSendBtn.css("visibility", "hidden");
-                        return;
-                    }
-
-                    // Suggested Contacts
-                    if (!noSuggestions) {
-                        var foundContacts = 0;
-                        var i = 0;
-                        var contact;
-
-                        while (foundContacts < suggestedContactCount) {
-                            contact = contacts[i];
-                            if (!contact) break;
-                            // Only suggest the contact if it has a name and an email
-                            if (contact.name && contact.emails.length > 0) {
-                                addRow(suggestedList, contact, false);
-                                foundContacts++;
-                            }
-                            i++;
-                        }
-                        if (foundContacts === 0) {
-                            noSuggestions = true;
-                        }
-
-                        // Parse the suggested list for the displayed contacts
-                        var now = new Date().toISOString();
-                        if (!noSuggestions) {
-                            var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
-                                var row = $(this);
-                                return {
-                                    name: row.find(".yes-contact-row-name span").text(),
-                                    emails: [row.find(".yes-contact-row-email span").text()],
-                                    seen_at: now
-                                };
-                            }).get();
-                            YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
-                            YesGraphAPI.AnalyticsManager.log(EVENTS.SUGGESTED_SEEN, null, null, LIBRARY);
-                        }
-                    }
-
-                    // Total Contacts (Alphabetical)
-
-                    function compareContacts(a, b) {
-                        // Sort contact objects alphabetically, prioritizing in this order:
-                        // 1. contacts with names starting with letters
-                        // 2. contacts with names starting with non-letters
-                        // 3. contacts with only emails, starting with letters
-                        // 4. contacts with only emails, starting with non-letters
-                        var nameA = a.name || "", emailsA = a.emails || "";
-                        var nameB = b.name || "", emailsB = b.emails || "";
-                        var matchNumbers = /\b([0-9]*)/;
-                        var matchText = /\b[0-9]*(.*)/;
-                        var matchA, matchB;
-
-                        if (nameA && nameB) {
-                            matchA = matchNumbers.exec(nameA);
-                            matchA = Number(matchA ? matchA[0] : undefined);
-                            matchNumbers.lastIndex = 0;
-
-                            matchB = matchNumbers.exec(nameB);
-                            matchB = Number(matchB ? matchB[0] : undefined);
-                            matchNumbers.lastIndex = 0;
-
-                            if (matchA && !matchB) { return 1; }
-                            if (matchB && !matchA) { return -1; }
-                            if (matchA && matchB) {
-                                if (matchA < matchB) { return -1; }
-                                if (matchA > matchB) { return 1; }
-                                if (matchA === matchB) {
-                                    // Sort the letters
-                                    var textA = matchText.exec(nameA)[0];
-                                    matchText.lastIndex = 0;
-                                    var textB = matchText.exec(nameB)[0];
-                                    matchText.lastIndex = 0;
-                                    return textA <= textB ? -1 : 1;
-                                }
-                            }
-                            return nameA <= nameB ? -1 : 1;
-                        } else if (!nameA && !nameB) {
-                            if (!emailsA || !emailsB) { return 0; }
-                            return emailsA[0] <= emailsB[0] ? -1 : 1;
-                        }
-                        return Boolean(b.name) - Boolean(a.name);
-                    }
-
-                    var sortedContacts = contacts.sort(compareContacts);
-                    sortedContacts.forEach(function(contact) {
-                        addRow(totalList, contact, true);
-                    });
-
-                    totalList.prepend(noContactsWarning.hide());
-                    if (noSuggestions) {
-                        contactContainer.append(searchField, selectAllForm, totalHeader, wrappedTotalList);
-                    } else {
-                        contactContainer.append(searchField,
-                            selectAllForm,
-                            suggestedHeader,
-                            wrappedSuggestedList,
-                            totalHeader,
-                            wrappedTotalList);
-                    }
-                    stopLoading();
-
-                    // Autoselect suggested contacts
-                    if (!noSuggestions) {
-                        suggestedList.find("input[type='checkbox']").prop("checked", true);
-                    }
-
-                    // Uppercase "YesContains" is a case-insensitive
-                    // version of jQuery "contains" used for doing
-                    // case-insensitive searches
-                    $.expr[':'].YesContains = function (a, i, m) {
-                        return jQuery(a).text().toUpperCase()
-                            .indexOf(m[3].toUpperCase()) >= 0;
-                    };
-
-                    // Make the "Total" list searchable
-                    searchField.on("input", function (evt) {
-                        var searchString = evt.target.value,
-                            matching_rows,
-                            list;
-
-                        totalList.find('.yes-contact-row').hide();
-                        matching_rows = totalList.find('.yes-contact-row:YesContains("' + searchString + '")');
-                        matching_rows.show();
-                        if (matching_rows.length === 0) {
-                            noContactsWarning.show();
-                        } else {
-                            noContactsWarning.hide();
-                        }
-                    });
-
-                    updateSendBtn();
-                    applyStyling();
-                }
-
-                function applyStyling() {
-
-                    selectAll.css({
-                        "margin": "0 6px"
-                    });
-
-                    selectAllForm.css({
-                        "font-weight": "200"
-                    });
-
-                    totalList.css({
-                        "position": "absolute",
-                        "top": "0",
-                        "bottom": "0",
-                        "left": "0",
-                        "right": "0"
-                    });
-
-                    $(".yes-contact-list-header").css({
-                        "display": "table-row",
-                        "font-size": "16px",
-                        "font-weight": "bolder",
-                        "height": "30px",
-                        "line-height": "30px",
-                        "margin": "0"
-                    });
-                }
-
-                function send(evt) {
-                    try {
-                        evt.preventDefault();
-                    } catch (ignore) {}
-
-                    modalSendBtn.prop("disabled", true);
-                    var suggested = YesGraphAPI.utils.getSelectedRecipients(suggestedList),
-                        alphabetical = YesGraphAPI.utils.getSelectedRecipients(totalList),
-                        recipients = suggested.concat(alphabetical),
-                        unique_recipients = [],
-                        emails = [];
-
-                    var i;
-                    var recip;
-                    recipients.forEach(function (recip, index, array) {
-                        if (emails.indexOf(recip.email) === -1) {
-                            emails.push(recip.email);
-                            unique_recipients.push(recip);
-                        }
-                    });
-
-                    YesGraphAPI.utils.sendEmailInvites(recipients)
-                        .done(function () {
-                            YesGraphAPI.AnalyticsManager.log(EVENTS.INVITES_SENT, ".yes-modal-submit-btn", null, LIBRARY);
-                        })
-                        .always(function () {
-                            modalSendBtn.prop("disabled", false);
-                            closeModal();
-                        });
-                }
-
-                function openModal(evt) {
-                    try {
-                        evt.preventDefault();
-                    } catch (ignore) {}
-                    modal.show();
-                    centerModal();
-                    overlay.show();
-                    isOpen = true;
-                }
-
-                function closeModal(evt) {
-                    try {
-                        evt.preventDefault();
-                    } catch (ignore) {}
-                    modal.hide();
-                    overlay.hide();
-                    isOpen = false;
-                }
-
-                function centerModal(evt) {
-                    try {
-                        evt.preventDefault();
-                    } catch (ignore) {}
-                    var top = 20,
-                        left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
-                    // If the doctype is set to HTML, we can center the modal vertically
-                    // based on the viewport size (rather than use the default 20px set above).
-                    if (window.document.doctype && (window.document.doctype === "html")) {
-                        top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
-                    }
-                    modal.css({
-                        top: top + $(window).scrollTop(),
-                        left: left + $(window).scrollLeft()
-                    });
-                }
-
-                function clean() {
-                    // Detach items that we might need to re-attach later
-                    // Remove items that we won't re-use
-                    var itemsToDetach = contactContainer.children(),
-                        itemsToRemove = $(".yes-contact-row").add(".yes-none-found-warning");
-                    itemsToDetach.detach();
-                    itemsToRemove.remove();
-                }
-
-                function loading() {
-                    overlay.show();
-                    clean();
-                    modalSendBtn.css("visibility", "hidden");
-                    modalTitle.text("Loading contacts...");
-                    loader.css("display", "block");
-                    modal.show();
-                    centerModal();
-                    isOpen = true;
-                }
-
-                function stopLoading() {
-                    modalSendBtn.css("visibility", "visible");
-                    modalTitle.text(titleText);
-                    loader.css("display", "none");
-                }
-
-                return {
-                    init: init,
-                    isOpen: function(){ return isOpen; },
-                    openModal: openModal,
-                    closeModal: closeModal,
-                    loadContacts: loadContacts,
-                    loading: loading,
-                    stopLoading: stopLoading,
-                    container: modal
-                };
-            }());
-
-            var inviteWidget = (function () {
-
-                function init() {
-                    var settings = YesGraphAPI.settings,
-                        targetSelector = settings.target || ".yesgraph-invites",
-                        JQUERY_VERSION = $.fn.jquery;
-                    TESTMODE = settings.testmode || false;
-
-                    var sections = [containerHeader, containerBody];
-                    if (settings.inviteLink) { sections.push(inviteLinkSection); }
-                    if (settings.shareBtns) { sections.push(shareBtnSection); }
-                    sections.push(flashSection);
-
-                    if (JQUERY_VERSION >= "1.8") {
-                        container.append(sections); // Appending an array is only possible in 1.8+
-                    } else {
-                        sections.forEach(function(section){
-                            container.append(section);
-                        });
-                    }
-
-                    if (OPTIONS.poweredByYesgraph) {
-                        container.append(poweredByYesgraph);
-                    }
-
-                    var widgetCopy = OPTIONS.widgetCopy || {};
-                    // Build container header
-                    if (widgetCopy.widgetHeadline) {
-                        var headline = $("<p>", {
-                            "class": "yes-header-1",
-                            "text": widgetCopy.widgetHeadline
-                        });
-                        containerHeader.append(headline);
-                    }
-
-                    YesGraphAPI.utils.loadClipboard()
-                        .done(YesGraphAPI.utils.configureClipboard);
-
-                    // Build share button section
-                    buildShareButtons(shareBtnSection);
-
-                    // Build container body
-                    var manualInputForm = $('<form>', {
-                            "class": "yes-manual-input-form"
-                        }),
-                        manualInputField = $("<textarea>", {
-                            "rows": 3,
-                            "class": "yes-manual-input-field"
-                        }).prop("placeholder", widgetCopy.manual_input_placeholder || "Enter emails here"),
-                        manualInputSubmit = $('<button>', {
-                            "text": widgetCopy.manualInputSendBtn || "Add Emails",
-                            "class": "yes-default-btn yes-manual-input-submit",
-                            "type": "button"
-                        }),
-                        includeGoogle = OPTIONS.settings.oauthServices.indexOf("google") !== -1,
-                        includeOutlook = OPTIONS.settings.oauthServices.indexOf("outlook") !== -1,
-                        includeYahoo = OPTIONS.settings.oauthServices.indexOf("yahoo") !== -1,
-                        includeSlack = OPTIONS.settings.oauthServices.indexOf("slack") !== -1,
-                        contactImportingServices = [
-                            {
-                                id: "google",
-                                name: "Gmail",
-                                include: includeGoogle,
-                                authManagerOptions: {
-                                    id: "google",
-                                    name: "Gmail",
-                                    baseAuthUrl: "https://accounts.google.com/o/oauth2/auth",
-                                    authParams: {
-                                        access_type: "offline",
-                                        client_id: null,
-                                        prompt: "consent", // Ensures that a refresh_token will be included
-                                        redirect_uri: null,
-                                        response_type: "code",
-                                        scope: [
-                                            "https://www.google.com/m8/feeds/",
-                                            "https://www.googleapis.com/auth/userinfo.email"
-                                        ].join(" "),
-                                        state: window.location.href
-                                    },
-                                    popupSize: "width=550, height=550"
-                                }
-                            },
-                            {
-                                id: "outlook",
-                                name: "Outlook",
-                                include: includeOutlook,
-                                authManagerOptions: {
-                                    id: "outlook",
-                                    name: "Outlook",
-                                    baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-                                    authParams: {
-                                        client_id: null,
-                                        redirect_uri: null,
-                                        response_type: "token",
-                                        scope: "https://outlook.office.com/contacts.read",
-                                        state: window.location.href
-                                    },
-                                    popupSize: "width=900, height=700"
-                                }
-                            },
-                            {
-                                id: "hotmail",
-                                name: "Hotmail",
-                                include: includeOutlook,
-                                authManagerOptions: {
-                                    id: "outlook",
-                                    name: "Hotmail",
-                                    baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-                                    authParams: {
-                                        client_id: null,
-                                        redirect_uri: null,
-                                        response_type: "token",
-                                        scope: "https://outlook.office.com/contacts.read",
-                                        state: window.location.href
-                                    },
-                                    popupSize: "width=900, height=700"
-                                }
-                            },
-                            {
-                                id: "yahoo",
-                                name: "Yahoo",
-                                include: includeYahoo,
-                                authManagerOptions: {
-                                    id: "yahoo",
-                                    name: "Yahoo",
-                                    baseAuthUrl: "https://api.login.yahoo.com/oauth2/request_auth",
-                                    authParams: {
-                                        client_id: null,
-                                        redirect_uri: null,
-                                        response_type: "token",
-                                        state: window.location.href
-                                    },
-                                    popupSize: "width=900, height=700"
-                                }
-                            },
-                            {
-                                id: "slack",
-                                name: "Slack",
-                                include: includeSlack,
-                                authManagerOptions: {
-                                    id: "slack",
-                                    name: "Slack",
-                                    baseAuthUrl: "https://slack.com/oauth/authorize",
-                                    authParams: {
-                                        client_id: null,
-                                        redirect_uri: null,
-                                        scope: "users:read",
-                                        state: window.location.href
-                                    },
-                                    popupSize: "width=900, height=700"
-                                }
-                            }
-                        ],
-                        contactImportSection = $("<div>", {
-                            "class": "yes-contact-import-section"
-                        }),
-                        btnCount = 0 + Number(includeGoogle) + Number(includeYahoo) + (Number(includeOutlook) * 2),
-                        btnText = "";
-
-                    manualInputForm.append(manualInputField, manualInputSubmit);
-
-                    if (settings.contactImporting) { containerBody.append(contactImportSection); }
-                    if (settings.emailSending) { containerBody.append(manualInputForm); }
-
-                    contactsModal.init();
-
-                    manualInputSubmit.on("click", function (evt) {
-                        evt.preventDefault();
-                        var recipients = YesGraphAPI.utils.getSelectedRecipients(manualInputField);
-                        YesGraphAPI.utils.sendEmailInvites(recipients).done(function() {
-                            YesGraphAPI.AnalyticsManager.log(EVENTS.INVITES_SENT, ".yes-manual-input-submit", null, LIBRARY);
-                        });
-                        manualInputField.val("");
-                    });
-
-                    // Set up the contact importing buttons
-                    if (OPTIONS.settings.oauthServices.length <= 1) {
-                        btnText = (OPTIONS.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
-                    }
-                    contactImportingServices.forEach(function(service){
-                        if (service.include === true) {
-                            // Create contact import button for each service
-                            var btn = generateContactImportBtn(service);
-                            contactImportSection.append(btn);
-
-                            // Define oauth behavior for each service
-                            service.authManager = new AuthManager(service.authManagerOptions);
-
-                            btn.on("click", function (evt) {
-                                // Attempt to auth the user & pull their contacts
-                                service.authManager.authFlow().done(function(contacts, noSuggestions) {
-                                    if (YesGraphAPI.settings.showContacts !== false) {
-                                        if (!contactsModal.isOpen()) { contactsModal.openModal(); }
-                                        contactsModal.loadContacts(contacts, noSuggestions);                                        
-                                    }
-                                }).fail(function (response) {
-                                    if (YesGraphAPI.settings.showContacts !== false && contactsModal.isOpen()) {
-                                        contactsModal.closeModal();
-                                    }
-                                    YesGraphAPI.utils.error(response.error);
-                                    flash.error(service.name + " Authorization Failed.");
-                                });
-                            });
-                        }
-                    });
-
-                    $(targetSelector).append(container);
-                    YesGraphAPI.Superwidget.isReady = true;
-                    $(document).trigger(YesGraphAPI.events.INSTALLED_SUPERWIDGET);
-                    if (YesGraphAPI.Raven) {
-                        YesGraphAPI.Raven.captureBreadcrumb({
-                            timestamp: new Date(),
-                            message: "Superwidget Is Ready"
-                        });
-                    }
-
-                    function generateContactImportBtn(service) {
-                        var icon = $("<div>", {
-                                "class": "yes-contact-import-btn-icon"
-                            }),
-                            text = $("<span>", {
-                                "text": btnText + service.name,
-                                "class": "yes-contact-import-btn-text"
-                            }),
-                            innerWrapper = $("<div>").css("display", "table").append(icon, text),
-                            outerWrapper = $("<div>").css({
-                                "display": "inline-block",
-                                "vertical-align": "middle"
-                            }).append(innerWrapper),
-                            btnClass = "yes-default-btn yes-contact-import-btn yes-contact-import-btn-" + service.id,
-                            btn = $("<button>", {
-                                "class": btnClass,
-                                "title": service.name,
-                                "type": "button"
-                            }).append(outerWrapper);
-
-                        if (btnCount > 3) {
-                            btn.addClass("yes-no-label"); // Only show the icon if there are more than 3 buttons
-                        } else if (service.id === "slack") {
-                            btn.addClass("yes-alt-icon"); // Use the monochrome icon
-                        }
-
-                        btn.on("click", function(){
-                            YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_CONTACT_IMPORT_BTN, ".yes-contact-import-btn-" + service.id, null, LIBRARY);
-                        });
-                        return btn;
-                    }
-                }
-
-                function getWidgetOptions() {
-                    var d = $.Deferred();
-                    var OPTIONS_ENDPOINT = '/apps/' + YesGraphAPI.app + '/js/get-options';
-                    // Retry failed request up to 3 times, waiting 1500ms between tries
-                    YesGraphAPI.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 1500).done(function (data) {
-                        OPTIONS = data;
-                        d.resolve(data);
-                    }).fail(function (error) {
-                        var errorMsg = ((!error.error) || (error.error === "error")) ? "Something went wrong" : error.error;
-                        YesGraphAPI.utils.error(errorMsg + ". Please see the YesGraph Superwidget Dashboard.", true);
-                        d.reject(data);
-                    });
-                    return d.promise();
-                }
-
-                function buildShareButtons(target) {
-                    if (OPTIONS.shareButtons.length === 0) { return false; }
-                    var buttonsDiv = $("<div>"),
-                        service,
-                        targ,
-                        shareBtn,
-                        shareBtnIcon,
-                        shareBtnText,
-                        inviteLink = YesGraphAPI.inviteLink,
-                        services = [{
-                            "ID": "facebook",
-                            "name": "Facebook",
-                            "baseURL": "https://www.facebook.com/share.php",
-                            "params": {
-                                u: encodeURI(inviteLink),
-                                title: OPTIONS.widgetCopy.shareMessage
-                            },
-                            "colors": ["#3B5998", "#324b81"]
-                        }, {
-                            "ID": "twitter",
-                            "name": "Twitter",
-                            "baseURL": "https://twitter.com/intent/tweet",
-                            "params": {
-                                text: OPTIONS.widgetCopy.shareMessage + ' ' + inviteLink
-                            },
-                            "colors": ["#55ACEE", "#2E99EA"]
-                        }, {
-                            "ID": "linkedin",
-                            "name": "LinkedIn",
-                            "baseURL": "https://www.linkedin.com/shareArticle",
-                            "params": {
-                                "mini": true,
-                                "url": inviteLink,
-                                "title": OPTIONS.appDisplayName,
-                                "summary": OPTIONS.widgetCopy.shareMessage
-                            },
-                            "colors": ["#0077B5", "#006399"]
-                        }, {
-                            "ID": "pinterest",
-                            "name": "Pinterest",
-                            "baseURL": "https://www.pinterest.com/pin/create/button",
-                            "params": {
-                                "url": inviteLink
-                            },
-                            "colors": ["#BD081C", "#AB071A"]
-                        }];
-
-                    var wrapper;
-                    services.forEach(function(service, index, array){
-                        if (OPTIONS.shareButtons.indexOf(service.ID) !== -1) {
-                            shareBtnIcon = $("<span>", {
-                                "class": "yes-share-btn-icon"
-                            });
-                            shareBtnText = $("<span>", {
-                                "text": service.name,
-                                "class": "yes-share-btn-text"
-                            });
-
-                            shareBtnIcon.css({
-                                "background-image": "url('" + protocol + "//cdn.yesgraph.com/" + service.ID + ".png')"
-                            });
-
-                            shareBtn = $("<span>", {
-                                "class": "yes-share-btn yes-share-btn-" + service.ID,
-                                "data-name": service.name,
-                                "data-url": service.baseURL + "?" + $.param(service.params),
-                                "data-color": service.colors[0],
-                                "data-hover-color": service.colors[1]
-                            });
-
-                            shareBtn.css({
-                                "background-color": service.colors[0]
-                            });
-
-                            shareBtn.hover(shareBtnHoverOnHandler, shareBtnHoverOffHandler);
-
-                            shareBtn.append(shareBtnIcon, shareBtnText);
-
-                            // Handle Pinterest slightly differently
-                            if (service.ID === "pinterest") {
-                                wrapper = $("<a>", {
-                                    "href": service.baseURL + "?" + $.param(service.params),
-                                    "data-pin-do": "buttonBookmark",
-                                    "data-pin-custom": true
-                                }).append(shareBtn);
-
-                                shareBtn.on("click", function () {
-                                    // Do this on each click. Otherwise images added
-                                    // asynchronously (e.g., by Intercom) will not
-                                    // have the desired description when pinned.
-                                    $("img").not("[data-pin-description]").each(function () {
-                                        this.dataset.pinDescription = OPTIONS.integrations.twitter.tweetMsg + " " + inviteLink;
-                                    });
-                                    YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
-                                    wrapper[0].click();
-                                });
-
-                                requireScript("pinUtils", protocol + "//assets.pinterest.com/js/pinit.js", function () { // jshint ignore:line
-                                    buttonsDiv.append(wrapper.append(shareBtn));
-                                });
-
-                            } else {
-                                shareBtn.on("click", function (evt) {
-                                    targ = $(this);
-                                    open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
-                                    YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
-                                });
-                                buttonsDiv.append(shareBtn);
-                            }
-                        }
-                    });
-
-                    function shareBtnHoverOnHandler () {
-                        var $this = $(this); // jshint ignore:line
-                        $this.css("background-color", $this.data("hover-color"));
-                    }
-                    function shareBtnHoverOffHandler () {
-                        var $this = $(this); // jshint ignore:line
-                        $this.css("background-color", $this.data("color"));
-                    }
-                    target.append(buttonsDiv);
-                }
-
-                return {
-                    init: function () {
-                        getWidgetOptions().done(init);
-                    }
-                };
-            }());
-
-            function AuthManager (service) {
-                var self = this;
-                this.service = service;
-
-                this.authFlow = function () {
-                    var d = $.Deferred();
-                    var addrbookSource;
-                    self.authPopup().done(function(authData){
-                        // show the loading spinner while we're fetching contacts
-                        if (YesGraphAPI.settings.showContacts !== false) {
-                            contactsModal.loading();
-                        }
-                        $(document).trigger(YesGraphAPI.events.COMPLETED_OAUTH, [self.service.id, null]);
-                        self.fetchContacts(authData).done(function(response){
-                            // Trigger DOM event "imported.yesgraph.contacts"
-                            if (response.data.source === "gmail") {
-                                response.data.source = "google";
-                            }
-                            var contacts = response.data.ranked_contacts;
-                            $(document).trigger(YesGraphAPI.events.IMPORTED_CONTACTS, [response.data.source, contacts, response.meta]);
-                            var noSuggestions = Boolean(response.meta.exception_matching_email_domain);
-                            d.resolve(contacts, noSuggestions);
-
-                        }).fail(function(err){
-                            contactsModal.stopLoading();
-                            contactsModal.closeModal();
-                            d.reject(err);
-                        });
-                    }).fail(function(err) {
-                        $(document).trigger(YesGraphAPI.events.COMPLETED_OAUTH, [self.service.id, err]);
-                        d.reject(err);
-                    });
-                    return d.promise();
-                };
-
-                this.fetchContacts = function(authData) {
-                    var d = $.Deferred();
-                    YesGraphAPI.hitAPI("/oauth", "GET", {
-                        "service": self.service.id,
-                        "token_data": JSON.stringify(authData),
-                        "settings": JSON.stringify(YesGraphAPI.settings)
-                    }).done(function(response){
-                        if (response.error) {
-                            d.reject(response);
-                        } else {
-                            d.resolve(response);
-                        }
-                    }).fail(d.reject);
-                    return d.promise();
-                };
-
-                this.authPopup = function () {
-                    var d = $.Deferred();
-                    var getUrlParam = YesGraphAPI.utils.getUrlParam;
-                    var msg, authCode, accessToken, errorMsg, responseUrl;
-                    var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
-                    var oauthInfo = self.getOAuthInfo(self.service);
-                    var popup = open(oauthInfo.url, "_blank", service.popupSize);
-                    var popupTimer = setInterval(function() {
-                        if (typeof popup !== "object" || popup.closed === true) {
-                            d.reject({ error: defaultAuthErrorMessage });
-                            clearInterval(popupTimer);
-                            return;
-                        }
-                        try {
-                            // If the flow has finished, resolve with the token or reject with the error
-                            if (YesGraphAPI.utils.matchTargetUrl(popup.location, oauthInfo.redirect)) {
-                                responseUrl = popup.document.URL;
-                                errorMsg = getUrlParam(responseUrl, "error_description") || getUrlParam(responseUrl, "error");
-                                authCode = getUrlParam(responseUrl, "code");
-                                accessToken = getUrlParam(responseUrl, "access_token") || getUrlParam(responseUrl, "token");
-                                if (errorMsg) {
-                                    d.reject({ error: errorMsg });
-                                } else if (authCode) {
-                                    d.resolve({
-                                        auth_code: authCode,
-                                        token_type: "code"
-                                    });
-                                } else if (accessToken) {
-                                    d.resolve({
-                                        access_token: accessToken,
-                                        token_type: "access_token"
-                                    });
-                                } else {
-                                    d.reject({ error: defaultAuthErrorMessage }); // This should never happen
-                                }
-                                clearInterval(popupTimer);
-                                if (popup) {
-                                    popup.close();
-                                }
-                            }
-                        } catch (e) {
-                            /* This timer is checking periodically to see if the user has finished the auth flow.
-                             * If the auth flow is still in progress, the check itsef will throw an error, because
-                             * the auth page is on a different domain. We should catch and ignore those errors.
-                             * 
-                             * This `catch` block should decide whether to ignore the error or not.
-                             */
-                            var okErrorMessages = /(Cannot read property\w*|undefined is not an object \(evaluating \w*\)|Permission denied\w*)/, // jshint ignore:line
-                                canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
-                            if (!canIgnoreError) {
-                                msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
-                                d.reject({
-                                    error: msg
-                                });
-                                YesGraphAPI.utils.error(msg, false);
-                                if (YesGraphAPI.Raven) {
-                                    YesGraphAPI.Raven.captureException(e);
-                                }
-                                clearInterval(popupTimer);
-                                if (popup) {
-                                    popup.close();
-                                }
-                            }
-                        }
-                    }, 500);
-                    return d.promise();
-                };
-
-                this.getOAuthInfo = function (settings) {
-                    var redirect, localHostnames = ["localhost", "lvh.me"];
-                    if (localHostnames.indexOf(window.location.hostname) !== -1 || OPTIONS.integrations[settings.id].usingDefaultCredentials) {
-                        redirect = window.location.origin;
-                    } else {
-                        redirect = OPTIONS.integrations[settings.id].redirectUrl;
-                    }
-                    if (settings.authParams.client_id === null) {
-                        settings.authParams.client_id = OPTIONS.integrations[settings.id].clientId;
-                    }
-                    if (settings.authParams.client_secret === null) {
-                        settings.authParams.client_secret = OPTIONS.integrations[settings.id].clientSecret;
-                    }
-                    if (settings.authParams.redirect_uri === null) {
-                        settings.authParams.redirect_uri = OPTIONS.integrations[settings.id].redirectUrl;
-                    }
-                    var fullUrl = settings.baseAuthUrl + "?" + $.param(settings.authParams);
-                    return {
-                        url: fullUrl,
-                        redirect: redirect
-                    };
-                };
+            } else {
+                self.flashMessage.error(resp.error);
+                api.utils.error(resp.error);
+            }
+        };
+
+        // Define methods for notifying the controller
+        this.notifyClipboardConfigFailed = function() {
+            self.listeners.forEach(function(listener){
+                listener.clipboardConfigFailed();
+            });
+        };
+
+        this.notifyInviteLinkCopied = function() {
+            self.listeners.forEach(function(listener) {
+                listener.inviteLinkCopied();
+            });
+        };
+
+        this.notifyContactImportBtnClicked = function(service) {
+            self.listeners.forEach(function(listener) {
+                listener.contactImportBtnClicked(service);
+            });
+        };
+
+        this.notifySocialShareBtnClicked = function(service) {
+            self.listeners.forEach(function(listener) {
+                listener.socialShareBtnClicked(service);
+            });
+        };
+
+        this.notifySendBtnClicked = function(btnSelector, recipients) {
+            self.listeners.forEach(function(listener) {
+                listener.sendBtnClicked(btnSelector, recipients);
+            });
+        };
+
+        this.notifySawSuggestions = function(suggestedContacts) {
+            self.listeners.forEach(function(listener){
+                listener.sawSuggestions(suggestedContacts);
+            });
+        };
+
+        // Bind DOM events to the right notifications
+        this.bindEvents = function() {
+            console.debug("Calling bindEvents");
+            var options = self.options;
+            var api = self.Superwidget.YesGraphAPI;
+
+            // Contact importing buttons
+            self.widgetContainer
+                .find(".yes-contact-import-btn")
+                .on("click", function() {
+                    var serviceId = $(this).data("service");
+                    self.notifyContactImportBtnClicked(serviceId);
+                });
+
+            // Manual input submit button
+            self.widgetContainer
+                .find(".yes-manual-input-submit")
+                .on("click", function (evt) {
+                    evt.preventDefault();
+                    var manualInputField = self.widgetContainer.find(".yes-manual-input-field");
+                    var recipients = api.utils.getSelectedRecipients(manualInputField);
+                    self.notifySendBtnClicked(".yes-manual-input-submit", recipients);
+                    manualInputField.val("");
+                });
+
+            self.modalContainer
+                .find(".yes-modal-submit-btn")
+                .on("click", function (evt) {
+                    evt.preventDefault();
+                    var recipients = api.utils.getSelectedRecipients(self.modalContainer);
+                    self.notifySendBtnClicked(".yes-modal-submit-btn", recipients);
+                    self.closeModal();
+                });
+
+            // Invite link copy button
+            self.widgetContainer
+                .find(".yes-invite-link-section")
+                .on("click", self.notifyInviteLinkCopied);
+
+            if (self.clipboard) {
+                self.clipboard.on('success', function (e) {
+                    var originalCopy = e.trigger.textContent;
+                    e.trigger.textContent = "Copied!";
+                    window.setTimeout(function () {
+                        e.trigger.textContent = originalCopy;
+                    }, 3000);
+                });
+                self.clipboard.on('error', function () {
+                    var manualCopyCommand = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
+                    self.notifyClipboardCopyFailed(manualCopyCommand);
+                });
             }
 
-            // Helper functions
-            function waitForAPIConfig() {
-                var d = $.Deferred();
-                var timer = setInterval(function () {
-                    if (YesGraphAPI.isReady) {
-                        clearInterval(timer);
-                        inviteLinkInput.val(YesGraphAPI.inviteLink);
-                        YesGraphAPI.isTestMode = isTestMode;
-                        if (YesGraphAPI.Raven) {
-                            YesGraphAPI.Raven.setTagsContext({
-                                superwidget_version: VERSION,
-                                css_version: CSS_VERSION
-                            });
-                        }
-                        // Add custom superwidget events
-                        YesGraphAPI.events = $.extend(YesGraphAPI.events, {
-                            SET_RECIPIENTS: "set.yesgraph.recipients",
-                            IMPORTED_CONTACTS: "imported.yesgraph.contacts",
-                            INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget",
-                            COMPLETED_OAUTH: "completed.yesgraph.oauth"
-                        });
-                        d.resolve();
-                    }
-                }, 100);
-                return d.promise();
-            }
+            $(window).on("resize", function(){
+                if (self.modal) {
+                    self.centerModal();
+                }
+            });
 
-            YesGraphAPI.utils.matchTargetUrl = function(loc, targetUrl) {
+            // "Select All" checkbox
+            $(document).on("click", ".yes-select-all-form [type='checkbox']", function(evt) {
+                var checkboxes = self.modalContainer.find(".yes-modal-body [type='checkbox']");
+                checkboxes.prop("checked", $(evt.target).prop("checked"));
+            });
+
+            // Contact checkboxes
+            $(document).on("click", ".yes-contact-row", function(evt) {
+                self.toggleSelected(evt, options);
+            });
+
+            // Modal close button
+            self.modalContainer.find(".yes-modal-close-btn").on("click", self.closeModal);
+
+            // Modal overlay
+            self.modalOverlay.on("click", self.closeModal);
+        };
+    }
+
+    function AuthManager (service, options, api) {
+        var self = this;
+        this.service = service;
+        this.options = options;
+
+        this.authPopup = function () {
+            var d = $.Deferred();
+            var getUrlParam = api.utils.getUrlParam;
+            var msg, authCode, accessToken, errorMsg, responseUrl;
+            var defaultAuthErrorMessage = self.service.name + " Authorization Failed";
+            var oauthInfo = self.getOAuthInfo(self.service);
+            var popup = open(oauthInfo.url, "_blank", service.popupSize);
+            var popupTimer = setInterval(function() {
+                if (typeof popup !== "object" || popup.closed === true) {
+                    d.reject({ error: defaultAuthErrorMessage });
+                    clearInterval(popupTimer);
+                    return;
+                }
+                try {
+                    // If the flow has finished, resolve with the token or reject with the error
+                    if (api.utils.matchTargetUrl(popup.location, oauthInfo.redirect)) {
+                        responseUrl = popup.document.URL;
+                        errorMsg = getUrlParam(responseUrl, "error_description") || getUrlParam(responseUrl, "error");
+                        authCode = getUrlParam(responseUrl, "code");
+                        accessToken = getUrlParam(responseUrl, "access_token") || getUrlParam(responseUrl, "token");
+                        if (errorMsg) {
+                            d.reject({ error: errorMsg });
+                        } else if (authCode) {
+                            d.resolve({
+                                auth_code: authCode,
+                                token_type: "code"
+                            });
+                        } else if (accessToken) {
+                            d.resolve({
+                                access_token: accessToken,
+                                token_type: "access_token"
+                            });
+                        } else {
+                            d.reject({ error: defaultAuthErrorMessage }); // This should never happen
+                        }
+                        clearInterval(popupTimer);
+                        if (popup) {
+                            popup.close();
+                        }
+                    }
+                } catch (e) {
+                    // Check the error message, then either keep waiting or reject with the error
+                    var okErrorMessages = /(Cannot read property 'URL' of undefined|undefined is not an object \(evaluating '\w*.document.URL'\)|Permission denied to access property "\w*"|Permission denied)/, // jshint ignore:line
+                        canIgnoreError = (e.code === 18 || okErrorMessages.test(e.message));
+                    if (!canIgnoreError) {
+                        msg = canIgnoreError ? defaultAuthErrorMessage : e.message;
+                        d.reject({
+                            error: msg
+                        });
+                        api.utils.error(msg, false);
+                        clearInterval(popupTimer);
+                        if (popup) {
+                            popup.close();
+                        }
+                    }
+                }
+            }, 500);
+            return d.promise();
+        };
+
+        this.getOAuthInfo = function (settings) {
+            var redirect, localHostnames = ["localhost", "lvh.me"];
+            if (localHostnames.indexOf(window.location.hostname) !== -1 || self.options.integrations[settings.id].usingDefaultCredentials) {
+                redirect = window.location.origin;
+            } else {
+                redirect = self.options.integrations[settings.id].redirectUrl;
+            }
+            if (settings.authParams.client_id === null) {
+                settings.authParams.client_id = self.options.integrations[settings.id].clientId;
+            }
+            if (settings.authParams.redirect_uri === null) {
+                settings.authParams.redirect_uri = self.options.integrations[settings.id].redirectUrl;
+            }
+            var fullUrl = settings.baseAuthUrl + "?" + $.param(settings.authParams);
+            return {
+                url: fullUrl,
+                redirect: redirect
+            };
+        };
+    }
+
+    function Model() {
+        // Basic infraestructure
+        var self = this;
+        var TESTMODE = false;
+
+        this.listeners = [];
+        this.addListener = function(listener) {
+            self.listeners.push(listener);
+        };
+
+        // Define methods for updating the model
+        this.isTestMode = function(bool) {
+            if (typeof bool === "boolean") {
+                TESTMODE = bool;
+            }
+            return TESTMODE;
+        };
+
+        this.waitForAPIConfig = function() {
+            var api = self.Superwidget.YesGraphAPI;
+            var timer = setInterval(function () {
+                if (api.isReady) {
+                    clearInterval(timer);
+                    api.isTestMode = self.isTestMode;
+                    if (api.Raven) {
+                        api.Raven.setTagsContext({
+                            superwidget_version: VERSION,
+                            css_version: CSS_VERSION
+                        });
+                    }
+                    // Add custom superwidget events
+                    api.events = $.extend(api.events, {
+                        SET_RECIPIENTS: "set.yesgraph.recipients",
+                        IMPORTED_CONTACTS: "imported.yesgraph.contacts",
+                        CONTACT_IMPORT_FAILED: "import_failed.yesgraph.contacts",
+                        INSTALLED_SUPERWIDGET: "installed.yesgraph.superwidget",
+                        COMPLETED_OAUTH: "completed.yesgraph.oauth"
+                    });
+                    self.notifyApiConfigReady(api);
+                }
+            }, 100);
+        };
+        this.getWidgetOptions = function() {
+            var api = self.Superwidget.YesGraphAPI;
+            var OPTIONS_ENDPOINT = '/apps/' + api.app + '/js/get-options';
+            // Retry failed request up to 3 times, waiting 1500ms between tries
+            api.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 1500)
+                .done(self.notifyGetWidgetOptionsSucceeded)
+                .fail(self.notifyGetWidgetOptionsFailed);
+        };
+
+        this.sendEmailInvites = function(recipients) {
+            var api = self.Superwidget.YesGraphAPI;
+            api.hitAPI("/send-email-invites", "POST", {
+                recipients: recipients,
+                test: TESTMODE || undefined,
+                invite_link: api.inviteLink
+
+            }).done(function (resp) {
+                if (!resp.emails) {
+                    self.notifyEmailSendingFailed(resp);
+                } else {
+                    self.notifyInvitesSent(resp);
+                }
+            }).fail(function (resp) {
+                self.notifyEmailSendingFailed(resp);
+            });
+        };
+
+        this.sawSuggestions = function(suggestedContacts) {
+            self.Superwidget.YesGraphAPI.postSuggestedSeen({ entries: suggestedContacts });
+        };
+
+        this.invitesSent = function(entries) {
+            self.Superwidget.YesGraphAPI.postInvitesSent({ entries: entries });
+        };
+
+        // Define methods for notifying the controller
+        this.notifyApiConfigReady = function(api) {
+            self.listeners.forEach(function(listener) {
+                listener.apiConfigReady(api);
+            });
+        };
+
+        this.notifyGetWidgetOptionsSucceeded = function(options) {
+            self.listeners.forEach(function(listener) {
+                listener.widgetOptionsReady(options);
+            });
+        };
+
+        this.notifyFetchContactsFailed = function(resp) {
+            self.listeners.forEach(function(listener) {
+                listener.fetchContactsFailed(resp);
+            });
+        };
+
+        this.notifyFetchContactsSucceeded = function(resp) {
+            self.listeners.forEach(function(listener) {
+                listener.fetchContactsSucceeded(resp);
+            });
+        };
+
+        this.notifyEmailSendingFailed = function(errorData) {
+            self.listeners.forEach(function(listener){
+                listener.emailSendingFailed(errorData);
+            });
+        };
+
+        this.notifyInvitesSent = function(resp) {
+            self.listeners.forEach(function(listener){
+                listener.invitesSent(resp);
+            });
+        };
+
+        this.fetchContacts = function(serviceId, authData) {
+            console.debug("Fetching contacts");
+            self.Superwidget.YesGraphAPI.hitAPI("/oauth", "GET", {
+                "service": serviceId,
+                "token_data": JSON.stringify(authData)
+            }).done(function(resp){
+                if (resp.error) {
+                    self.notifyFetchContactsFailed(resp);
+                } else {
+                    self.notifyFetchContactsSucceeded(resp);
+                }
+            }).fail(function(resp){
+                self.notifyFetchContactsFailed(resp);
+            });
+        };
+    }
+
+    function ViewListener(listener) {
+        return $.extend({
+            // establish sane defaults for each required listener method
+            clipboardConfigFailed: function() {},
+            inviteLinkCopied: function() {},
+            contactImportBtnClicked: function() {},
+            socialShareBtnClicked: function() {},
+            sendBtnClicked: function() {},
+            authComplete: function() {},
+            authFailed: function() {},
+            sawSuggestions: function() {}
+        }, listener);
+    }
+
+    function ModelListener(listener) {
+        return $.extend({
+            // define the defaults for each necessary listener method
+            apiConfigReady: function() {},
+            widgetOptionsReady: function() {},
+            fetchContactsSucceeded: function() {},
+            fetchContactsFailed: function() {},
+            sendEmailInvites: function() {},
+            emailSendingFailed: function() {},
+            invitesSent: function() {}
+        }, listener);
+    }
+
+    function Controller(model, view) {
+        var self = this;
+        var utils = {
+            matchTargetUrl: function(loc, targetUrl) {
                 // The location should be considered a match if
                 // (1) it includes the exact target url, or
                 // (2) it matches the origin of the current page, and a hash is present
@@ -1230,13 +1387,18 @@
                 if (loc.href.indexOf(targetUrl) !== -1) return true;
                 if (loc.origin == window.location.origin && loc.hash) return true;
                 return false;
-            };
+            },
+            getUrlParam: function (url, name) {
+                name = name.replace(new RegExp("/[[]/"), "\[").replace(new RegExp("/[]]/"), "\]");
+                var regexS = "[\?&#]" + name + "=([^&#]*)";
+                var regex = new RegExp(regexS);
+                var results = regex.exec(url);
+                return results == null ? null : results[1];
+            },
+            getSelectedRecipients: function (elem) {
+                var recipient,
+                    recipients = [];
 
-            YesGraphAPI.utils.getSelectedRecipients = function(elem) {
-                var recipients = [],
-                    recipient,
-                    emails,
-                    email;
                 if (elem.is("textarea")) {
                     var text = elem.val();
                     var regex = /([^<>\s,.;]*@[^<>\s,.;]*\.[^<>\s,.;]*)/gi;
@@ -1273,175 +1435,174 @@
                     });
                     return recipients;
                 }
-            };
-
-            YesGraphAPI.utils.sendEmailInvites = function(recipients) {
-                var d = $.Deferred();
-                var msg;
-                if (!recipients || recipients.length < 1) {
-                    msg = "No valid recipients specified.";
-                    flash.error(msg);
-                    d.reject({
-                        error: msg
-                    }); // invalid user input
-
-                } else {
-                    // Event only fires if there are valid recipients
-                    $(document).trigger(YesGraphAPI.events.SET_RECIPIENTS, [recipients]);
-
-                    // Only send the emails if emailSending was not set to `false`
-                    if (YesGraphAPI.settings.emailSending) {
-
-                        if (YesGraphAPI.utils.validateSettings(OPTIONS.settings || {})) {
-                            YesGraphAPI.hitAPI("/send-email-invites", "POST", {
-                                recipients: recipients,
-                                test: TESTMODE || undefined,
-                                invite_link: YesGraphAPI.inviteLink
-
-                            }).done(function (resp) {
-                                if (!resp.emails) {
-                                    d.reject(resp);
-                                    flash.error(resp);
-                                    YesGraphAPI.utils.error(resp);
-                                } else {
-                                    if (TESTMODE) {
-                                        flash.success("Testmode: emails not sent.");
-                                    } else {
-                                        var invites = {
-                                            entries: []
-                                        };
-                                        resp.sent.forEach(function(inviteData){
-                                            invites.entries.push({
-                                                "invitee_name": inviteData[0] || undefined,
-                                                "email": inviteData[1],
-                                                "sent_at": new Date().toISOString()
-                                            });
-                                        });
-                                        YesGraphAPI.postInvitesSent(invites);
-                                    }
-                                    d.resolve();
-                                }
-
-                            }).fail(function (data) {
-                                if (data.errors) {
-                                    var error, description;
-                                    for (error in data.errors) {
-                                        if (data.errors.hasOwnProperty(error)) {
-                                            description = data.errors[error];
-                                            YesGraphAPI.utils.error(error + ": " + description);
-                                        }
-                                    }
-                                } else {
-                                    YesGraphAPI.utils.error(data.error, false);
-                                }
-                                d.reject(data);
-                            });
-
-                        } else {
-                            d.reject();  // invalid settings
-                        }
-                    } else {
-                        d.resolve();  // email sending turned off
-                    }
-
-                    d.done(function () {
-                        msg = "You've added " + recipients.length;
-                        msg += recipients.length === 1 ? " friend!" : " friends!";
-                        flash.success(msg);
-                    }).fail(function () {
-                        flash.error("Email sending failed");
-                    });
-                }
-                return d.promise();
-            };
-
-            YesGraphAPI.utils.getUrlParam = function (url, name) {
-                name = name.replace(new RegExp("/[[]/"), "\[").replace(new RegExp("/[]]/"), "\]");
-                var regexS = "[\?&#]" + name + "=([^&#]*)";
-                var regex = new RegExp(regexS);
-                var results = regex.exec(url);
-                return results == null ? null : results[1]; // jshint ignore:line
-            };
-
-            function isValidEmail(email) {
-                var re = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+.[A-Z]{2,4}/igm;
-                return re.test(email);
-            }
-
-            function isTestMode(bool) {
-                if (typeof bool === "boolean") {
-                    TESTMODE = bool;
-                }
-                return TESTMODE;
-            }
-
-            YesGraphAPI.utils.validateSettings = function (settings) {
-                var settingsAreValid, settingsErrors;
+            },
+            validateSettings: function () {
+                // TODO: figure out how this validation should work.
+                // The key constraint is what messages we need to show the developer
+                // (or the user). Note that settingsErrors is just the first of
+                // potentially many settings errors.
+                //
+                // settingsAreValid - BOOL
+                // settingsErrors - STRING
+                var settings = self.Superwidget.options.settings,
+                    settingsAreValid, msg;
                 if (settings.hasValidEmailSettings !== undefined) {
                     settingsAreValid = settings.hasValidEmailSettings[0];
-                    settingsErrors = settings.hasValidEmailSettings[1];
+                    msg = settings.hasValidEmailSettings[1];
                 } else {
                     settingsAreValid = settings.hasEmailTemplate && settings.hasSendGridApiKey;
                 }
-                if (!settingsAreValid) {
-                    flash.error(settingsErrors);
-                }
-                return settingsAreValid;
-            };
+                return [Boolean(settingsAreValid), msg];
+            }
+        };
 
-            YesGraphAPI.utils.loadClipboard = function () {
-                var d = $.Deferred();
-                if (window.Clipboard && typeof Clipboard === "function") {
-                    d.resolve();
-                } else {
-                    var clipboardCDN = "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js";
-                    $.getScript(clipboardCDN)
-                        .done(d.resolve)
-                        .fail(d.reject);
-                }
-                return d.promise();
-            };
+        var modelListener = ModelListener({
 
-            YesGraphAPI.utils.configureClipboard = function () {
-                // Enable copying with the copy button
-                var clipboardExists = false;
-                var clipboard;
-                try {
-                    clipboard = new Clipboard('#yes-invite-link-copy-btn');
-                    clipboardExists = true;
-                } catch (e) {
-                    if (console) {
-                        YesGraphAPI.utils.error("Clipboard could not be configured.");
-                    }
+            apiConfigReady: function(api) {
+                var options = options || {};
+                self.YesGraphAPI = api;
+                api.utils = $.extend(utils, api.utils || {});
+                model.getWidgetOptions();
+            },
+
+            widgetOptionsReady: function(options) {
+                view.build(options);
+                self.Superwidget = $.extend(self.Superwidget, {
+                    isReady: true,
+                    container: view.widgetContainer,
+                    modal: view.contactsModal,
+                    options: options
+                });
+                view.superwidgetReady();
+            },
+
+            fetchContactsSucceeded: function(resp) {
+                // TODO: move this DOM event to the view
+                console.debug("Fetch contacts succeeded");
+                $(document).trigger(self.YesGraphAPI.events.IMPORTED_CONTACTS,
+                                    [resp.data.source, resp.data.ranked_contacts, resp.meta]);
+                var noSuggestions = Boolean(resp.meta.exception_matching_email_domain);
+                view.loadContacts(resp.data.ranked_contacts, noSuggestions);
+                view.openModal();
+            },
+
+            fetchContactsFailed: function(resp) {
+                // TODO: move this DOM event to the view
+                console.debug("Fetch Contacts Failed!", resp);
+                $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
+                view.stopLoading();
+                view.closeModal();
+            },
+
+            emailSendingFailed: function(errorData) {
+                view.emailSendingFailed(errorData);
+            },
+
+            invitesSent: function(resp) {
+                var api = model.Superwidget.YesGraphAPI;
+                var msg;
+                if (api.isTestMode()) {
+                    msg = "Testmode: emails not sent.";
+                    api.utils.error(msg);
+                    view.flashMessage.success(msg);
+                    return;
                 }
 
-                // Add the copy button to the UI
-                if (clipboardExists) {
-                    inviteLinkSection.append(copyInviteLinkBtn);
-                    clipboard.on('success', function (e) {
-                        var originalCopy = e.trigger.textContent;
-                        e.trigger.textContent = "Copied!";
-                        setTimeout(function () {
-                            e.trigger.textContent = originalCopy;
-                        }, 3000);
+                // Tell the model to hit the /invites-sent endpoint
+                var entries = [];
+                resp.sent.forEach(function(invitee) {
+                    entries.push({
+                        invitee_name: invitee[0] || undefined,
+                        email: invitee[1],
+                        sent_at: new Date().toISOString()
                     });
-                    clipboard.on('error', function (e) {
-                        var command = (navigator.userAgent.indexOf('Mac OS') !== -1) ? "Cmd + C" : "Ctrl + C";
-                        flash.error("Clipboard access denied. Press " + command + " to copy.", 8000);
-                    });                    
+                });
+                model.invitesSent(entries);
+
+                msg = "You've added " + resp.sent.length;
+                msg += resp.sent.length === 1 ? " friend!" : " friends!";
+                view.flashMessage.success(msg);
+            }
+
+        });
+
+        var viewListener = ViewListener({
+            contactImportBtnClicked: function(serviceId) {
+                view.startAuthFlow(serviceId);
+            },
+            authFailed: function() {
+                // TODO: View should log failed message to developer & to user
+            },
+            authSucceeded: function(serviceId, authData) {
+                view.loading();
+                model.fetchContacts(serviceId, authData);
+            },
+            sendBtnClicked: function(btnSelector, recipients) {
+                console.debug("Send button clicked!", btnSelector);
+                // Validate recipients
+                if (!recipients || recipients.length < 1) {
+                    view.emailSendingFailed({
+                        error: "No valid recipients specified."
+                    });
+                    return;
                 }
-            };
 
-            // Initialize Superwidget config
-            YesGraphAPI.Superwidget = {
-                isReady: false,
-                container: container,
-                modal: contactsModal
-            };
+                // Validate settings
+                var validationResult = self.YesGraphAPI.utils.validateSettings();
+                var hasValidSettings = validationResult[0];
+                if (!hasValidSettings) {
+                    var errorMsg = validationResult[1];
+                    view.emailSendingFailed({
+                        error: errorMsg
+                    });
+                    return;
+                }
 
-            // Main functionality
-            waitForAPIConfig().then(inviteWidget.init);
+                // Send the email invites
+                $(document).trigger(self.YesGraphAPI.events.SET_RECIPIENTS, [recipients]);
+                if (self.YesGraphAPI.settings.emailSending) {
+                    model.sendEmailInvites(recipients);
+                }
+            },
+            sawSuggestions: function(suggestedContacts) {
+                model.sawSuggestions(suggestedContacts);
+            }
+        });
 
-        }); // requireScript YesGraphAPI
+        model.addListener(modelListener);
+        view.addListener(viewListener);
+        view.loadCssIfNotFound();
     }
+
+    function Superwidget() {
+        var self = this;
+
+        this.isReady = false;
+
+        this.init = function(options, model, view) {
+            // TODO: maybe hide some of this.
+            self.model = model || new Model();
+            self.view = view || new View(options);
+            self.controller = new Controller(self.model, self.view, options);
+
+            self.model.Superwidget = self;
+            self.view.Superwidget = self;
+            self.controller.Superwidget = self;
+
+            self.model.waitForAPIConfig();
+            self.isReady = true;
+        };
+    }
+
+    // TODO: update yesgraph.js with this method
+    window.YesGraphAPI.mount = window.YesGraphAPI.mount || function(superwidget) {
+        this.Superwidget = superwidget;
+        this.Superwidget.YesGraphAPI = this;
+        return this;
+    };
+
+    var superwidget = new Superwidget();
+    window.YesGraphAPI.mount(superwidget);
+    window.YesGraphAPI.Superwidget.init();
+
 }());
