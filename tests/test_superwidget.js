@@ -16,6 +16,7 @@ describe('testSuperwidgetUI', function() {
         function finishPrep(){
             widget = window.YesGraphAPI.Superwidget;
             window.YesGraphAPI.isTestMode(true);
+            window.YesGraphAPI.Raven = undefined; // don't log sentry errors
             done();
         }
     });
@@ -52,7 +53,7 @@ describe('testSuperwidgetUI', function() {
             // Clipboard has been loaded already, so
             // check that we don't reload the script
             expect(window.Clipboard).toBeDefined();
-            window.YesGraphAPI.utils.loadClipboard();
+            widget.view.loadClipboard();
             expect($.getScript).not.toHaveBeenCalled();
 
             // Remove Clipboard, and then check that
@@ -60,7 +61,7 @@ describe('testSuperwidgetUI', function() {
             window.Clipboard = undefined;
             expect(window.Clipboard).not.toBeDefined();
 
-            window.YesGraphAPI.utils.loadClipboard();
+            widget.view.loadClipboard();
             expect($.getScript).toHaveBeenCalled();
             expect(window.Clipboard).toBeDefined();
         });
@@ -76,11 +77,11 @@ describe('testSuperwidgetUI', function() {
 
             // Because window.Clipboard is defined,
             // loadClipboard() won't reload the script
-            window.YesGraphAPI.utils.loadClipboard();
+            widget.view.loadClipboard();
 
             // Because window.Clipboard is not a valid constructor,
             // configureClipboard() should fail gracefully
-            expect(window.YesGraphAPI.utils.configureClipboard).not.toThrow();
+            expect(widget.view.configureClipboard).not.toThrow();
 
             // Cleanup
             window.Clipboard = originalClipboard;
@@ -385,8 +386,11 @@ describe('testSuperwidgetUI', function() {
                 return d.promise();
             });
 
+            var invitesSentAnalyticsEvent
             spyOn(YesGraphAPI.AnalyticsManager, "log").and.callFake(function(evt){
-                expect(evt).toEqual("Invite(s) Sent");
+                if (evt === "Invite(s) Sent") {
+                    invitesSentAnalyticsEvent = evt;
+                }
             });
 
             // Send invites from the manual input
@@ -394,12 +398,16 @@ describe('testSuperwidgetUI', function() {
             widget.container.find(".yes-manual-input-submit").click();
             expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
             expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+            expect(invitesSentAnalyticsEvent).toBeDefined();
+
+            invitesSentAnalyticsEvent = undefined;
 
             // Send invites from the contacts modal
             widget.modal.container.find("[type='checkbox']").prop("checked", true);
             widget.modal.container.find(".yes-modal-submit-btn").click();
             expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
             expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+            expect(invitesSentAnalyticsEvent).toBeDefined();
         });
 
     });

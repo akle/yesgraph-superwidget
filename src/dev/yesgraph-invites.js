@@ -1,7 +1,11 @@
-/*
-- Load scripts somehow
-- Superwidget could be instantiated via constructor
-*/
+/*!
+ * YesGraph Superwidget dev/__SUPERWIDGET_VERSION__
+ *
+ * https://www.yesgraph.com
+ * https://docs.yesgraph.com/docs/superwidget
+ * 
+ * Date: __BUILD_DATE__
+ */
 
 (function(){
     "use strict";
@@ -76,52 +80,52 @@
         };
     }
 
-    function ModalContainer() {
-        // Modal Header
-        var modalTitle = $("<p>", {
-            "class": "yes-modal-title"
-        });
-        var modalCloseBtn = $("<div>", {
-            "html": "&times;",
-            "class": "yes-modal-close-btn"
-        });
-        var modalHeader = $("<div>", {
-            "class": "yes-modal-header"
-        }).append(modalTitle, modalCloseBtn);
+    // function ModalContainer() {
+    //     // Modal Header
+    //     var modalTitle = $("<p>", {
+    //         "class": "yes-modal-title"
+    //     });
+    //     var modalCloseBtn = $("<div>", {
+    //         "html": "&times;",
+    //         "class": "yes-modal-close-btn"
+    //     });
+    //     var modalHeader = $("<div>", {
+    //         "class": "yes-modal-header"
+    //     }).append(modalTitle, modalCloseBtn);
 
-        // Modal Body
-        var loader = $("<div>", {
-            "class": "yes-loading-icon"
-        });
-        var contactContainer = $("<div>", {
-            "class": "yes-contact-container"
-        });
-        var modalBody = $("<div>", {
-            "class": "yes-modal-body"
-        }).append(loader, contactContainer);
+    //     // Modal Body
+    //     var loader = $("<div>", {
+    //         "class": "yes-loading-icon"
+    //     });
+    //     var contactContainer = $("<div>", {
+    //         "class": "yes-contact-container"
+    //     });
+    //     var modalBody = $("<div>", {
+    //         "class": "yes-modal-body"
+    //     }).append(loader, contactContainer);
 
-        // Modal Footer
-        var modalSendBtn = $("<input>", {
-            "type": "submit",
-            "value": "Add",
-            "class": "yes-default-btn yes-modal-submit-btn"
-        });
-        var modalFooter = $("<div>", {
-            "class": "yes-modal-footer"
-        }).append(modalSendBtn);
+    //     // Modal Footer
+    //     var modalSendBtn = $("<input>", {
+    //         "type": "submit",
+    //         "value": "Add",
+    //         "class": "yes-default-btn yes-modal-submit-btn"
+    //     });
+    //     var modalFooter = $("<div>", {
+    //         "class": "yes-modal-footer"
+    //     }).append(modalSendBtn);
 
-        var modal = $("<div>", {
-            "class": "yes-modal"
-        }).append(modalHeader, modalBody, modalFooter);
+    //     var modal = $("<div>", {
+    //         "class": "yes-modal"
+    //     }).append(modalHeader, modalBody, modalFooter);
 
-        return modal;
-    }
+    //     return modal;
+    // }
 
-    function ModalOverlay() {
-        return  $("<div>", {
-            "class": "yes-modal-overlay"
-        });
-    }
+    // function ModalOverlay() {
+    //     return  $("<div>", {
+    //         "class": "yes-modal-overlay"
+    //     });
+    // }
 
     function WidgetContainer(view, settings, options) {
         var targetSelector = options.target || ".yesgraph-invites";
@@ -489,12 +493,14 @@
         return buttonsDiv;
     }
 
-    function View(options) {
+    function View() {
         // Basic infraestructure
         var self = this;
         this.listeners = [];
         this.addListener = function(listener) {
+            listener = listener || new ViewListener();
             self.listeners.push(listener);
+            return listener;
         };
 
         // Define methods for updating the view
@@ -566,8 +572,11 @@
             // TODO: we could instantiate the WidgetContainer
             // on pageload & attach it to YesGraphAPI.Superwidget,
             // then update it when the options are available
-            console.debug("Building widget container");
-            self.widgetContainer = WidgetContainer(self, settings, options);
+            self.container = WidgetContainer(self, settings, options);
+        };
+
+        this.buildContactsModal = function(options) {
+            self.modal = new Modal(options);
         };
 
         this.build = function(options) {
@@ -582,25 +591,16 @@
 
         this.superwidgetReady = function() {
             var api = self.Superwidget.YesGraphAPI;
+            self.Superwidget.isReady = true;
             $(document).trigger(api.events.INSTALLED_SUPERWIDGET);
         };
 
         this.updateInviteLink = function(url) {
-            self.widgetContainer.find("#yes-invite-link").val(url);
-        };
-
-        this.buildContactsModal = function(options) {
-            var modal = ModalContainer(options);
-            var overlay = ModalOverlay(options);
-            modal.hide();
-            overlay.hide();
-            self.modalContainer = modal;
-            self.modalOverlay = overlay;
-            $("body").append(overlay, modal);
+            self.container.find("#yes-invite-link").val(url);
         };
 
         this.buildMessageFactory = function(options) {
-            var messageSection = self.widgetContainer.find(".yes-flash-message-section");
+            var messageSection = self.container.find(".yes-flash-message-section");
             self.flashMessage = new MessageFactory(messageSection, options);
         };
 
@@ -631,213 +631,668 @@
             });
         };
 
+        // this.modal = function(){
+        //     // Private
+        //     var modalIsOpen = false;
+
+        //     function centerModal(evt) {
+        //         try {
+        //             evt.preventDefault();
+        //         } catch(ignore) {}
+        //         var modal = $(".yes-modal"),
+        //             top = 20,
+        //             left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
+        //         // If the doctype is set to HTML, we can center the modal vertically
+        //         // based on the viewport size (rather than use the default 20px set above).
+        //         if (window.document.doctype && (window.document.doctype === "html")) {
+        //             top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
+        //         }
+        //         modal.css({
+        //             top: top + $(window).scrollTop(),
+        //             left: left + $(window).scrollLeft()
+        //         });
+        //     }
+
+        //     function closeModal() {
+        //         self.modalOverlay.hide();
+        //         self.modal.container.hide();
+        //         modalIsOpen = false;
+        //     }
+
+        //     function openModal() {
+        //         self.modalOverlay.show();
+        //         centerModal();
+        //         self.modal.container.show();
+        //         modalIsOpen = true;
+        //     }
+
+        //     function loading() {
+        //         // TODO: add widgetCopy.contactsModalLoadingMessage to API side
+        //         var loadingMessage = self.options.widgetCopy.contactsModalLoadingMessage || "Loading...";
+        //         var api = self.Superwidget.YesGraphAPI;
+        //         if (api.settings.showContacts === false) { return; }
+        //         self.cleanModal();
+        //         openModal();
+        //         self.modal.container.find(".yes-modal-submit-btn").css("visibility", "hidden");
+        //         self.modal.container.find(".yes-loading-icon").css("display", "block");
+        //         self.modal.container.find(".yes-modal-title").text(loadingMessage);
+        //         centerModal();
+        //     }
+
+        //     function stopLoading() {
+        //         var modalTitleText = self.options.widgetCopy.contactsModalHeader || "Add Friends";
+        //         self.modal.container.find(".yes-modal-submit-btn").css("visibility", "visible");
+        //         self.modal.container.find(".yes-modal-title").text(modalTitleText);
+        //         self.modal.container.find(".yes-loading-icon").css("display", "none");
+        //     }
+
+        //     function noContactsFound() {
+        //         stopLoading();
+        //         self.modal.container.find(".yes-modal-title").text("No contacts found!");
+        //         self.modal.container.find(".yes-modal-submit-btn").css("visibility", "hidden");
+        //     }
+
+        //     function loadContacts(contacts, noSuggestions) {
+        //         // Wrapping and styling allows divs with unspecified
+        //         // heights to behave like scrollable tables
+        //         var totalList = $("<div>", {
+        //             "class": "yes-total-contact-list"
+        //         });
+        //         var innerWrapper = $("<div>", {
+        //             style: "height: 100%; position: relative; overflow-x: hidden;"
+        //         }).append(totalList);
+        //         var wrappedTotalList = $("<div>", {
+        //             style: "height: 100%; display: table-cell; width: 100%;"
+        //         }).append(innerWrapper);
+        //         var suggestedList = $("<div>", {
+        //             "class": "yes-suggested-contact-list"
+        //         });
+        //         var wrappedSuggestedList = $("<div>", {
+        //             style: "max-height: 180px; overflow-x: hidden;"
+        //         }).append(suggestedList);
+        //         var noContactsWarning = $("<p>", {
+        //             "text": "None found!",
+        //             "class": "yes-none-found-warning"
+        //         });
+        //         var contactContainer = $(".yes-modal .yes-contact-container");
+        //         var searchField = $("<input>", {
+        //             "type": "text",
+        //             "placeholder": "Search",
+        //             "class": "yes-search-field"
+        //         });
+        //         var selectAll = $("<input>", {
+        //             "type": "checkbox"
+        //         });
+        //         var selectAllLabel = $("<label>", {
+        //             "text": "Select All"
+        //         });
+        //         var selectAllForm = $("<form>", {
+        //             "class": "yes-select-all-form"
+        //         }).append(selectAll, selectAllLabel);
+
+        //         var suggestedHeader = $("<p>", {
+        //             "text": "Suggested",
+        //             "class": "yes-contact-list-header"
+        //         });
+        //         var totalHeader = $("<p>", {
+        //             "text": "All Contacts",
+        //             "class": "yes-contact-list-header"
+        //         });
+        //         var suggestedContactCount = 5;
+        //         noSuggestions = (contacts.length < suggestedContactCount) || noSuggestions;
+
+        //         if (contacts.length === 0) {
+        //             noContactsFound();
+        //             return;
+        //         }
+
+        //         // Suggested Contacts
+        //         if (!noSuggestions) {
+        //             var foundContacts = 0;
+        //             var i = 0;
+        //             var contact;
+
+        //             while (foundContacts < suggestedContactCount) {
+        //                 contact = contacts[i];
+        //                 if (!contact) break;
+        //                 // Only suggest the contact if it has a name and an email
+        //                 if (contact.name && contact.emails.length > 0) {
+        //                     self.addRow(suggestedList, contact, false);
+        //                     foundContacts++;
+        //                 }
+        //                 i++;
+        //             }
+        //             if (foundContacts === 0) {
+        //                 noSuggestions = true;
+        //             }
+
+        //             // Parse the suggested list for the displayed contacts
+        //             var now = new Date().toISOString();
+        //             var suggestedContacts = suggestedList.find(".yes-contact-row").map(function(){
+        //                 var row = $(this);
+        //                 return {
+        //                     name: row.find(".yes-contact-row-name span").text(),
+        //                     emails: [row.find(".yes-contact-row-email span").text()],
+        //                     seen_at: now
+        //                 };
+        //             }).get();
+        //             // TODO: post suggested seen!
+        //             self.notifySawSuggestions(suggestedContacts);
+        //         }
+
+        //         var sortedContacts = contacts.sort(self.compareContacts);
+        //         sortedContacts.forEach(function(contact) {
+        //             self.addRow(totalList, contact, true);
+        //         });
+
+        //         totalList.prepend(noContactsWarning.hide());
+
+        //         if (noSuggestions) {
+        //             contactContainer.append(searchField, selectAllForm, totalHeader, wrappedTotalList);
+        //         } else {
+        //             contactContainer.append(searchField,
+        //                 selectAllForm,
+        //                 suggestedHeader,
+        //                 wrappedSuggestedList,
+        //                 totalHeader,
+        //                 wrappedTotalList);
+        //         }
+        //         stopLoading();
+
+        //         // Autoselect suggested contacts
+        //         if (!noSuggestions) {
+        //             suggestedList.find("input[type='checkbox']").prop("checked", true);
+        //         }
+
+        //         // Uppercase "YesContains" is a case-insensitive
+        //         // version of jQuery "contains" used for doing
+        //         // case-insensitive searches
+        //         $.expr[':'].YesContains = function (a, i, m) {
+        //             return jQuery(a).text().toUpperCase()
+        //                 .indexOf(m[3].toUpperCase()) >= 0;
+        //         };
+
+        //         // Make the "Total" list searchable
+        //         searchField.on("input", function (evt) {
+        //             var matching_rows,
+        //                 searchString = evt.target.value;
+        //             totalList.find('.yes-contact-row').hide();
+        //             matching_rows = totalList.find('.yes-contact-row:YesContains("' + searchString + '")');
+        //             matching_rows.show();
+        //             if (matching_rows.length === 0) {
+        //                 noContactsWarning.show();
+        //             } else {
+        //                 noContactsWarning.hide();
+        //             }
+        //         });
+
+        //         self.updateModalSendBtn(options);
+        //         self.applyStyling();
+        //     }
+
+        //     // Check that the viewport is set, so that the contacts
+        //     // modal is properly centered on mobile devices
+        //     if ($("meta[name='viewport']").length === 0) {
+        //         $("head").prepend($("<meta>", {
+        //             name: "viewport",
+        //             content: "width=device-width, initial-scale=1.0"
+        //         }));
+        //     }
+
+        //     // Expose public methods
+        //     return {
+        //         closeModal: closeModal,
+        //         centerModal: centerModal,
+        //         openModal: openModal,
+        //         isOpen: function(){ return modalIsOpen; },
+        //         loadContacts:loadContacts,
+        //         loading: loading,
+        //         stopLoading: stopLoading,
+        //     };
+        // }();
+
+        function Modal(options) {
+            // Make sure this gets called as a Constructor with the `new` keyword
+            if (!(this instanceof Modal)) throw new Error("Constructor called as a function");
+            var widgetCopy = options.widgetCopy || {},
+                isOpen = false,
+                modal = $("<div>", {
+                    "class": "yes-modal"
+                }),
+                overlay = $("<div>", {
+                    "class": "yes-modal-overlay"
+                }),
+                loader = $("<div>", {
+                    "class": "yes-loading-icon"
+                }),
+                modalHeader = $("<div>", {
+                    "class": "yes-modal-header"
+                }),
+                modalBody = $("<div>", {
+                    "class": "yes-modal-body"
+                }).append(loader),
+                modalFooter = $("<div>", {
+                    "class": "yes-modal-footer"
+                }),
+                modalCloseBtn = $("<div>", {
+                    "html": "&times;",
+                    "class": "yes-modal-close-btn"
+                }),
+                contactContainer = $("<div>", {
+                    "class": "yes-contact-container"
+                }),
+                modalSendBtn = $("<input>", {
+                    "type": "submit",
+                    "value": "Add",
+                    "class": "yes-default-btn yes-modal-submit-btn"
+                }),
+                titleText,
+                modalTitle = $("<p>", {
+                    "class": "yes-modal-title"
+                }),
+                searchField = $("<input>", {
+                    "type": "text",
+                    "placeholder": "Search",
+                    "class": "yes-search-field"
+                }),
+                suggestedHeader = $("<p>", {
+                    "text": "Suggested",
+                    "class": "yes-contact-list-header"
+                }),
+                suggestedList = $("<div>", {
+                    "class": "yes-suggested-contact-list"
+                }),
+                totalHeader = $("<p>", {
+                    "text": "All Contacts",
+                    "class": "yes-contact-list-header"
+                }),
+                totalList = $("<div>", {
+                    "class": "yes-total-contact-list"
+                }),
+                selectAll = $("<input>", {
+                    "type": "checkbox"
+                }),
+                selectAllForm = $("<form>", {
+                    "class": "yes-select-all-form"
+                }).append(selectAll, $("<label>", {
+                    "text": "Select All"
+                }));
+
+            this.isOpen = function(){ return isOpen; };
+            this.openModal = openModal;
+            this.closeModal = closeModal;
+            this.centerModal = centerModal;
+            this.loadContacts = loadContacts;
+            this.loading = loading;
+            this.stopLoading = stopLoading;
+            this.container = modal;
+            this.overlay = overlay;
+            closeModal();
+            $("body").append(overlay, modal); // TODO: where should this code live?
+
+            titleText = widgetCopy.contactsModalHeader || "Add Friends";
+            modalTitle.text(titleText);
+            modalHeader.append(modalTitle, modalCloseBtn);
+            modalBody.append(contactContainer);
+            modalFooter.append(modalSendBtn);
+            modal.append(modalHeader, modalBody, modalFooter);
+            $("body").append(overlay, modal);
+            applyModalStyling();
+
+            // Check that the viewport is set, so that the contacts
+            // modal is properly centered on mobile devices
+            if ($("meta[name='viewport']").length === 0) {
+                $("head").prepend($("<meta>", {
+                    name: "viewport",
+                    content: "width=device-width, initial-scale=1.0"
+                }));
+            }
+
+            selectAll.on("click", function (evt) {
+                modalBody.find("[type='checkbox']").prop("checked", $(evt.target).prop("checked"));
+                updateSendBtn();
+            });
+            modal.hide();
+            overlay.hide();
+
+            function updateSendBtn() {
+                // Updates the send button with a count of selected contacts
+                var btnText = '',
+                    btnTextOptions = widgetCopy.modalSendBtn || {},
+                    checked = modalBody.find('input[type="checkbox"]')
+                        .filter(":not(.yes-select-all-form *)")
+                        .filter(function () {
+                            return Boolean($(this).prop("checked"));
+                        });
+
+                if (checked.length === 0) {
+                    btnText = btnTextOptions.noneSelected || "No contacts selected";
+                } else if (checked.length === 1) {
+                    btnText = btnTextOptions.oneSelected || "Send 1 Email";
+                } else {
+                    btnText = btnTextOptions.manySelected || "Send {{ count }} Emails";
+                }
+                btnText = btnText.replace(/\{\{[\s]*count[\s]*\}\}/i, checked.length);
+                modalSendBtn.val(btnText);
+            }
+
+            function toggleSelected(evt) {
+                var checkbox = $(evt.target).find("[type='checkbox']");
+                checkbox.prop("checked", !checkbox.prop("checked"));
+                updateSendBtn();
+            }
+
+            function addRow(target, contact, allEmails) {
+                if ((!contact.emails) || contact.emails.length === 0) return;
+
+                var contactRow,
+                    contactDetails,
+                    contactEmail,
+                    checkbox,
+                    emailCount = allEmails ? contact.emails.length : 1,
+                    suggestedEmails = $.map(suggestedList.find(".yes-contact-row-checkbox input"), function (elem) {
+                        return $(elem).data("email");
+                    });
+
+                for (var i = 0; i < emailCount; i += 1) {
+                    // Check if they're also in the suggested list
+                    if (suggestedEmails.indexOf(contact.emails[i]) === -1) {
+                        contactEmail = $("<span>", {
+                            html: contact.emails[i]
+                        });
+                        checkbox = $('<input>', {
+                            type: "checkbox"
+                        });
+
+                        contactRow = $('<div>', {
+                            class: "yes-contact-row"
+                        });
+                        contactDetails = $("<div>", {
+                            class: "yes-contact-details"
+                        });
+
+                        contactRow.append($('<div>', {
+                            class: "yes-contact-row-checkbox"
+                        }).append(checkbox), contactDetails);
+
+                        contactDetails.append($('<div>', {
+                            class: "yes-contact-row-name"
+                        }));
+                        contactDetails.append($('<div>', {
+                            class: "yes-contact-row-email"
+                        }).append($("<div>").append(contactEmail)));
+
+                        if (contact.name) {
+                            contactRow.find(".yes-contact-row-name").append($('<span>', {
+                                html: contact.name
+                            }));
+                        }
+
+                        checkbox.data("email", contact.emails[i]);
+                        checkbox.data("name", contact.name || undefined);
+                        checkbox.data("");
+                        contactRow.on("click", toggleSelected);
+
+                        target.append(contactRow);
+                    }
+                }
+            }
+
+            function loadContacts(contacts, noSuggestions) {
+                // Wrapping and styling allows divs with unspecified
+                // heights to behave like scrollable tables
+                var innerWrapper = $("<div>", {
+                    style: "height: 100%; position: relative; overflow-x: hidden;"
+                }).append(totalList);
+                var wrappedTotalList = $("<div>", {
+                    style: "height: 100%; display: table-cell; width: 100%;"
+                }).append(innerWrapper);
+                var wrappedSuggestedList = $("<div>", {
+                    style: "max-height: 180px; overflow-x: hidden;"
+                }).append(suggestedList);
+                var noContactsWarning = $("<p>", {
+                    "text": "None found!",
+                    "class": "yes-none-found-warning"
+                });
+                var suggestedContactCount = 5;
+                noSuggestions = (contacts.length < suggestedContactCount) || noSuggestions;
+
+                if (contacts.length === 0) {
+                    stopLoading();
+                    modalTitle.text("No contacts found!");
+                    modalSendBtn.css("visibility", "hidden");
+                    return;
+                }
+
+                // Suggested Contacts
+                if (!noSuggestions) {
+                    var foundContacts = 0;
+                    var i = 0;
+                    var contact;
+
+                    while (foundContacts < suggestedContactCount) {
+                        contact = contacts[i];
+                        if (!contact) break;
+                        // Only suggest the contact if it has a name and an email
+                        if (contact.name && contact.emails.length > 0) {
+                            addRow(suggestedList, contact, false);
+                            foundContacts++;
+                        }
+                        i++;
+                    }
+                    if (foundContacts === 0) {
+                        noSuggestions = true;
+                    }
+
+                    // Parse the suggested list for the displayed contacts
+                    var now = new Date().toISOString();
+                    if (!noSuggestions) {
+                        var seenContacts = suggestedList.find(".yes-contact-row").map(function(){
+                            var row = $(this);
+                            return {
+                                name: row.find(".yes-contact-row-name span").text(),
+                                emails: [row.find(".yes-contact-row-email span").text()],
+                                seen_at: now
+                            };
+                        }).get();
+                        self.Superwidget.YesGraphAPI.postSuggestedSeen({ entries: seenContacts });
+                        self.Superwidget.YesGraphAPI.AnalyticsManager.log(EVENTS.SUGGESTED_SEEN, null, null, LIBRARY);
+                    }
+                }
+
+                // Total Contacts (Alphabetical)
+
+                function compareContacts(a, b) {
+                    // Sort contact objects alphabetically, prioritizing in this order:
+                    // 1. contacts with names starting with letters
+                    // 2. contacts with names starting with non-letters
+                    // 3. contacts with only emails, starting with letters
+                    // 4. contacts with only emails, starting with non-letters
+                    var nameA = a.name || "", emailsA = a.emails || "";
+                    var nameB = b.name || "", emailsB = b.emails || "";
+                    var matchNumbers = /\b([0-9]*)/;
+                    var matchText = /\b[0-9]*(.*)/;
+                    var matchA, matchB;
+
+                    if (nameA && nameB) {
+                        matchA = matchNumbers.exec(nameA);
+                        matchA = Number(matchA ? matchA[0] : undefined);
+                        matchNumbers.lastIndex = 0;
+
+                        matchB = matchNumbers.exec(nameB);
+                        matchB = Number(matchB ? matchB[0] : undefined);
+                        matchNumbers.lastIndex = 0;
+
+                        if (matchA && !matchB) { return 1; }
+                        if (matchB && !matchA) { return -1; }
+                        if (matchA && matchB) {
+                            if (matchA < matchB) { return -1; }
+                            if (matchA > matchB) { return 1; }
+                            if (matchA === matchB) {
+                                // Sort the letters
+                                var textA = matchText.exec(nameA)[0];
+                                matchText.lastIndex = 0;
+                                var textB = matchText.exec(nameB)[0];
+                                matchText.lastIndex = 0;
+                                return textA <= textB ? -1 : 1;
+                            }
+                        }
+                        return nameA <= nameB ? -1 : 1;
+                    } else if (!nameA && !nameB) {
+                        if (!emailsA || !emailsB) { return 0; }
+                        return emailsA[0] <= emailsB[0] ? -1 : 1;
+                    }
+                    return Boolean(b.name) - Boolean(a.name);
+                }
+
+                var sortedContacts = contacts.sort(compareContacts);
+                sortedContacts.forEach(function(contact) {
+                    addRow(totalList, contact, true);
+                });
+
+                totalList.prepend(noContactsWarning.hide());
+                if (noSuggestions) {
+                    contactContainer.append(searchField, selectAllForm, totalHeader, wrappedTotalList);
+                } else {
+                    contactContainer.append(searchField,
+                        selectAllForm,
+                        suggestedHeader,
+                        wrappedSuggestedList,
+                        totalHeader,
+                        wrappedTotalList);
+                }
+                stopLoading();
+
+                // Autoselect suggested contacts
+                if (!noSuggestions) {
+                    suggestedList.find("input[type='checkbox']").prop("checked", true);
+                }
+
+                // Uppercase "YesContains" is a case-insensitive
+                // version of jQuery "contains" used for doing
+                // case-insensitive searches
+                $.expr[':'].YesContains = function (a, i, m) {
+                    return jQuery(a).text().toUpperCase()
+                        .indexOf(m[3].toUpperCase()) >= 0;
+                };
+
+                // Make the "Total" list searchable
+                searchField.on("input", function (evt) {
+                    var matching_rows,
+                        searchString = evt.target.value;
+
+                    totalList.find('.yes-contact-row').hide();
+                    matching_rows = totalList.find('.yes-contact-row:YesContains("' + searchString + '")');
+                    matching_rows.show();
+                    if (matching_rows.length === 0) {
+                        noContactsWarning.show();
+                    } else {
+                        noContactsWarning.hide();
+                    }
+                });
+
+                updateSendBtn();
+                applyModalStyling();
+            }
+
+            function applyModalStyling() {
+
+                selectAll.css({
+                    "margin": "0 6px"
+                });
+
+                selectAllForm.css({
+                    "font-weight": "200"
+                });
+
+                totalList.css({
+                    "position": "absolute",
+                    "top": "0",
+                    "bottom": "0",
+                    "left": "0",
+                    "right": "0"
+                });
+
+                $(".yes-contact-list-header").css({
+                    "display": "table-row",
+                    "font-size": "16px",
+                    "font-weight": "bolder",
+                    "height": "30px",
+                    "line-height": "30px",
+                    "margin": "0"
+                });
+            }
+
+            function openModal(evt) {
+                try {
+                    evt.preventDefault();
+                } catch (ignore) {}
+                modal.show();
+                centerModal();
+                overlay.show();
+                isOpen = true;
+            }
+
+            function closeModal(evt) {
+                try {
+                    evt.preventDefault();
+                } catch (ignore) {}
+                modal.hide();
+                overlay.hide();
+                isOpen = false;
+            }
+
+            function centerModal(evt) {
+                try {
+                    evt.preventDefault();
+                } catch (ignore) {}
+                var top = 20,
+                    left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
+                // If the doctype is set to HTML, we can center the modal vertically
+                // based on the viewport size (rather than use the default 20px set above).
+                if (window.document.doctype && (window.document.doctype === "html")) {
+                    top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
+                }
+                modal.css({
+                    top: top + $(window).scrollTop(),
+                    left: left + $(window).scrollLeft()
+                });
+            }
+
+            function clean() {
+                // Detach items that we might need to re-attach later
+                // Remove items that we won't re-use
+                var itemsToDetach = contactContainer.children(),
+                    itemsToRemove = $(".yes-contact-row").add(".yes-none-found-warning");
+                itemsToDetach.detach();
+                itemsToRemove.remove();
+            }
+
+            function loading() {
+                overlay.show();
+                clean();
+                modalSendBtn.css("visibility", "hidden");
+                modalTitle.text("Loading contacts...");
+                loader.css("display", "block");
+                modal.show();
+                centerModal();
+                isOpen = true;
+            }
+
+            function stopLoading() {
+                modalSendBtn.css("visibility", "visible");
+                modalTitle.text(titleText);
+                loader.css("display", "none");
+            }
+        }
+
         this.cleanModal = function() {
             // Detach items that we might need to re-attach later
             // Remove items that we won't re-use
-            var itemsToDetach = self.modalContainer.find(".yes-contact-container").children();
-            var itemsToRemove = self.modalContainer.find(".yes-contact-row").add(".yes-none-found-warning");
+            var itemsToDetach = self.modal.container.find(".yes-contact-container").children();
+            var itemsToRemove = self.modal.container.find(".yes-contact-row").add(".yes-none-found-warning");
             itemsToDetach.detach();
             itemsToRemove.remove();
-        };
-
-        this.loading = function() {
-            console.debug("Loading...");
-            // TODO: add widgetCopy.contactsModalLoadingMessage to API side
-            var loadingMessage = self.options.widgetCopy.contactsModalLoadingMessage || "Loading...";
-            var api = self.Superwidget.YesGraphAPI;
-            if (api.settings.showContacts === false) { return; }
-            self.cleanModal();
-            self.modalOverlay.show();
-            self.modalContainer.find(".yes-modal-submit-btn").css("visibility", "hidden");
-            self.modalContainer.find(".yes-loading-icon").css("display", "block");
-            self.modalContainer.find(".yes-modal-title").text(loadingMessage);
-            self.modalContainer.show();
-            self.centerModal();
-        };
-
-        this.stopLoading = function() {
-            console.debug("stopLoading");
-            var modalTitleText = self.options.widgetCopy.contactsModalHeader || "Add Friends";
-            self.modalContainer.find(".yes-modal-submit-btn").css("visibility", "visible");
-            self.modalContainer.find(".yes-modal-title").text(modalTitleText);
-            self.modalContainer.find(".yes-loading-icon").css("display", "none");
-        };
-
-        this.closeModal = function() {
-            console.debug("closeModal");
-            self.modalOverlay.hide();
-            self.modalContainer.hide();
-        };
-
-        this.centerModal = function(evt) {
-            console.debug("centerModal");
-            try {
-                evt.preventDefault();
-            } catch(ignore) {}
-            var modal = $(".yes-modal"),
-                top = 20,
-                left = Math.max($(window).width() - modal.outerWidth(), 0) / 2;
-            // If the doctype is set to HTML, we can center the modal vertically
-            // based on the viewport size (rather than use the default 20px set above).
-            if (window.document.doctype && (window.document.doctype === "html")) {
-                top = Math.max($(window).height() - modal.outerHeight(), 0) / 2;
-            }
-            modal.css({
-                top: top + $(window).scrollTop(),
-                left: left + $(window).scrollLeft()
-            });
-        };
-
-        this.openModal = function() {
-            console.debug("openModal");
-            self.modalOverlay.show();
-            self.centerModal();
-            self.modalContainer.show();
-        };
-
-        this.noContactsFound = function() {
-            self.stopLoading();
-            self.modalContainer.find(".yes-modal-title").text("No contacts found!");
-            self.modalContainer.find(".yes-modal-submit-btn").css("visibility", "hidden");
-        };
-
-        this.loadContacts = function(contacts, noSuggestions) {
-            console.debug("Showing contacts");
-            // Wrapping and styling allows divs with unspecified
-            // heights to behave like scrollable tables
-            var totalList = $("<div>", {
-                "class": "yes-total-contact-list"
-            });
-            var innerWrapper = $("<div>", {
-                style: "height: 100%; position: relative; overflow-x: hidden;"
-            }).append(totalList);
-            var wrappedTotalList = $("<div>", {
-                style: "height: 100%; display: table-cell; width: 100%;"
-            }).append(innerWrapper);
-            var suggestedList = $("<div>", {
-                "class": "yes-suggested-contact-list"
-            });
-            var wrappedSuggestedList = $("<div>", {
-                style: "max-height: 180px; overflow-x: hidden;"
-            }).append(suggestedList);
-            var noContactsWarning = $("<p>", {
-                "text": "None found!",
-                "class": "yes-none-found-warning"
-            });
-            var contactContainer = $(".yes-modal .yes-contact-container");
-            var searchField = $("<input>", {
-                "type": "text",
-                "placeholder": "Search",
-                "class": "yes-search-field"
-            });
-            var selectAll = $("<input>", {
-                "type": "checkbox"
-            });
-            var selectAllLabel = $("<label>", {
-                "text": "Select All"
-            });
-            var selectAllForm = $("<form>", {
-                "class": "yes-select-all-form"
-            }).append(selectAll, selectAllLabel);
-
-            var suggestedHeader = $("<p>", {
-                "text": "Suggested",
-                "class": "yes-contact-list-header"
-            });
-            var totalHeader = $("<p>", {
-                "text": "All Contacts",
-                "class": "yes-contact-list-header"
-            });
-            var suggestedContactCount = 5;
-            noSuggestions = (contacts.length < suggestedContactCount) || noSuggestions;
-
-            if (contacts.length === 0) {
-                self.noContactsFound();
-                return;
-            }
-
-            // Suggested Contacts
-            if (!noSuggestions) {
-                var foundContacts = 0;
-                var i = 0;
-                var contact;
-
-                while (foundContacts < suggestedContactCount) {
-                    contact = contacts[i];
-                    if (!contact) break;
-                    // Only suggest the contact if it has a name and an email
-                    if (contact.name && contact.emails.length > 0) {
-                        self.addRow(suggestedList, contact, false);
-                        foundContacts++;
-                    }
-                    i++;
-                }
-                if (foundContacts === 0) {
-                    noSuggestions = true;
-                }
-
-                // Parse the suggested list for the displayed contacts
-                var now = new Date().toISOString();
-                var suggestedContacts = suggestedList.find(".yes-contact-row").map(function(){
-                    var row = $(this);
-                    return {
-                        name: row.find(".yes-contact-row-name span").text(),
-                        emails: [row.find(".yes-contact-row-email span").text()],
-                        seen_at: now
-                    };
-                }).get();
-                // TODO: post suggested seen!
-                self.notifySawSuggestions(suggestedContacts);
-            }
-
-            var sortedContacts = contacts.sort(self.compareContacts);
-            sortedContacts.forEach(function(contact) {
-                self.addRow(totalList, contact, true);
-            });
-
-            totalList.prepend(noContactsWarning.hide());
-
-            if (noSuggestions) {
-                contactContainer.append(searchField, selectAllForm, totalHeader, wrappedTotalList);
-            } else {
-                contactContainer.append(searchField,
-                    selectAllForm,
-                    suggestedHeader,
-                    wrappedSuggestedList,
-                    totalHeader,
-                    wrappedTotalList);
-            }
-            self.stopLoading();
-
-            // Autoselect suggested contacts
-            if (!noSuggestions) {
-                suggestedList.find("input[type='checkbox']").prop("checked", true);
-            }
-
-            // Uppercase "YesContains" is a case-insensitive
-            // version of jQuery "contains" used for doing
-            // case-insensitive searches
-            $.expr[':'].YesContains = function (a, i, m) {
-                return jQuery(a).text().toUpperCase()
-                    .indexOf(m[3].toUpperCase()) >= 0;
-            };
-
-            // Make the "Total" list searchable
-            searchField.on("input", function (evt) {
-                var matching_rows,
-                    searchString = evt.target.value;
-                totalList.find('.yes-contact-row').hide();
-                matching_rows = totalList.find('.yes-contact-row:YesContains("' + searchString + '")');
-                matching_rows.show();
-                if (matching_rows.length === 0) {
-                    noContactsWarning.show();
-                } else {
-                    noContactsWarning.hide();
-                }
-            });
-
-            self.updateModalSendBtn(options);
-            self.applyStyling();
         };
 
         this.compareContacts = function(a, b) {
@@ -978,7 +1433,7 @@
             var options = self.options;
             var btnText = '';
             var btnTextOptions = options.widgetCopy.modalSendBtn || {};
-            var checked = self.modalContainer.find(".yes-modal-body")
+            var checked = self.modal.container.find(".yes-modal-body")
                 .find('input[type="checkbox"]')
                 .filter(":not(.yes-select-all-form *)")
                 .filter(function () {
@@ -997,7 +1452,6 @@
         };
 
         this.emailSendingFailed = function(resp) {
-            console.debug("Email sending failed", resp);
             var errors = resp.errors;
             var api = self.Superwidget.YesGraphAPI;
             if (errors) {
@@ -1056,12 +1510,11 @@
 
         // Bind DOM events to the right notifications
         this.bindEvents = function() {
-            console.debug("Calling bindEvents");
             var options = self.options;
             var api = self.Superwidget.YesGraphAPI;
 
             // Contact importing buttons
-            self.widgetContainer
+            self.container
                 .find(".yes-contact-import-btn")
                 .on("click", function() {
                     var serviceId = $(this).data("service");
@@ -1069,27 +1522,18 @@
                 });
 
             // Manual input submit button
-            self.widgetContainer
+            self.container
                 .find(".yes-manual-input-submit")
                 .on("click", function (evt) {
                     evt.preventDefault();
-                    var manualInputField = self.widgetContainer.find(".yes-manual-input-field");
+                    var manualInputField = self.container.find(".yes-manual-input-field");
                     var recipients = api.utils.getSelectedRecipients(manualInputField);
                     self.notifySendBtnClicked(".yes-manual-input-submit", recipients);
                     manualInputField.val("");
                 });
 
-            self.modalContainer
-                .find(".yes-modal-submit-btn")
-                .on("click", function (evt) {
-                    evt.preventDefault();
-                    var recipients = api.utils.getSelectedRecipients(self.modalContainer);
-                    self.notifySendBtnClicked(".yes-modal-submit-btn", recipients);
-                    self.closeModal();
-                });
-
             // Invite link copy button
-            self.widgetContainer
+            self.container
                 .find(".yes-invite-link-section")
                 .on("click", self.notifyInviteLinkCopied);
 
@@ -1108,14 +1552,12 @@
             }
 
             $(window).on("resize", function(){
-                if (self.modal) {
-                    self.centerModal();
-                }
+                if (self.modal) self.modal.centerModal();
             });
 
             // "Select All" checkbox
             $(document).on("click", ".yes-select-all-form [type='checkbox']", function(evt) {
-                var checkboxes = self.modalContainer.find(".yes-modal-body [type='checkbox']");
+                var checkboxes = self.modal.container.find(".yes-modal-body [type='checkbox']");
                 checkboxes.prop("checked", $(evt.target).prop("checked"));
             });
 
@@ -1124,11 +1566,34 @@
                 self.toggleSelected(evt, options);
             });
 
+            // Modal send button
+            self.modal.container.find(".yes-modal-submit-btn").on("click", function(evt){
+                evt.preventDefault();
+
+                // Parse unique recipients
+                var suggestedList = self.modal.container.find(".yes-suggested-contact-list");
+                var totalList = self.modal.container.find(".yes-total-contact-list");
+                var suggested = api.utils.getSelectedRecipients(suggestedList);
+                var alphabetical = api.utils.getSelectedRecipients(totalList);
+                var recipients = suggested.concat(alphabetical);
+                var emails = [], uniqueRecipients = [];
+                recipients.forEach(function (recip) {
+                    if (emails.indexOf(recip.email) === -1) {
+                        emails.push(recip.email);
+                        uniqueRecipients.push(recip);
+                    }
+                });
+
+                // Pass recipients to the controller
+                self.notifySendBtnClicked(".yes-modal-submit-btn", uniqueRecipients);
+                self.modal.closeModal();
+            });
+
             // Modal close button
-            self.modalContainer.find(".yes-modal-close-btn").on("click", self.closeModal);
+            self.modal.container.find(".yes-modal-close-btn").on("click", self.modal.closeModal);
 
             // Modal overlay
-            self.modalOverlay.on("click", self.closeModal);
+            self.modal.overlay.on("click", self.modal.closeModal);
         };
     }
 
@@ -1280,6 +1745,17 @@
                 if (!resp.emails) {
                     self.notifyEmailSendingFailed(resp);
                 } else {
+                    // Hit the /invites-sent endpoint
+                    var invited = [];
+                    resp.sent.forEach(function(invitee) {
+                        invited.push({
+                            invitee_name: invitee[0] || undefined,
+                            email: invitee[1],
+                            sent_at: new Date().toISOString()
+                        });
+                    });
+                    api.postInvitesSent({ entries: invited });
+                    api.AnalyticsManager.log(EVENTS.INVITES_SENT, ".yes-modal-submit-btn", null, LIBRARY);
                     self.notifyInvitesSent(resp);
                 }
             }).fail(function (resp) {
@@ -1289,10 +1765,6 @@
 
         this.sawSuggestions = function(suggestedContacts) {
             self.Superwidget.YesGraphAPI.postSuggestedSeen({ entries: suggestedContacts });
-        };
-
-        this.invitesSent = function(entries) {
-            self.Superwidget.YesGraphAPI.postInvitesSent({ entries: entries });
         };
 
         // Define methods for notifying the controller
@@ -1333,7 +1805,6 @@
         };
 
         this.fetchContacts = function(serviceId, authData) {
-            console.debug("Fetching contacts");
             self.Superwidget.YesGraphAPI.hitAPI("/oauth", "GET", {
                 "service": serviceId,
                 "token_data": JSON.stringify(authData)
@@ -1359,6 +1830,7 @@
             sendBtnClicked: function() {},
             authComplete: function() {},
             authFailed: function() {},
+            apiConfigReady: function() {},
             sawSuggestions: function() {}
         }, listener);
     }
@@ -1461,37 +1933,33 @@
             apiConfigReady: function(api) {
                 var options = options || {};
                 self.YesGraphAPI = api;
-                api.utils = $.extend(utils, api.utils || {});
+                api.utils = $.extend(true, {}, utils, api.utils); // overwrite bad utils
                 model.getWidgetOptions();
             },
 
             widgetOptionsReady: function(options) {
                 view.build(options);
-                self.Superwidget = $.extend(self.Superwidget, {
-                    isReady: true,
-                    container: view.widgetContainer,
-                    modal: view.contactsModal,
-                    options: options
-                });
+                self.Superwidget.container = view.container;
+                self.Superwidget.modal = view.modal;
+                self.Superwidget.options = options;
+                console.log("widgetOptionsReady");
                 view.superwidgetReady();
             },
 
             fetchContactsSucceeded: function(resp) {
                 // TODO: move this DOM event to the view
-                console.debug("Fetch contacts succeeded");
                 $(document).trigger(self.YesGraphAPI.events.IMPORTED_CONTACTS,
                                     [resp.data.source, resp.data.ranked_contacts, resp.meta]);
                 var noSuggestions = Boolean(resp.meta.exception_matching_email_domain);
-                view.loadContacts(resp.data.ranked_contacts, noSuggestions);
-                view.openModal();
+                view.modal.loadContacts(resp.data.ranked_contacts, noSuggestions);
+                view.modal.openModal();
             },
 
             fetchContactsFailed: function(resp) {
                 // TODO: move this DOM event to the view
-                console.debug("Fetch Contacts Failed!", resp);
                 $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
-                view.stopLoading();
-                view.closeModal();
+                view.modal.stopLoading();
+                view.modal.closeModal();
             },
 
             emailSendingFailed: function(errorData) {
@@ -1499,26 +1967,13 @@
             },
 
             invitesSent: function(resp) {
-                var api = model.Superwidget.YesGraphAPI;
                 var msg;
-                if (api.isTestMode()) {
+                if (self.YesGraphAPI.isTestMode()) {
                     msg = "Testmode: emails not sent.";
-                    api.utils.error(msg);
+                    self.YesGraphAPI.utils.error(msg, undefined, undefined, "info");
                     view.flashMessage.success(msg);
                     return;
                 }
-
-                // Tell the model to hit the /invites-sent endpoint
-                var entries = [];
-                resp.sent.forEach(function(invitee) {
-                    entries.push({
-                        invitee_name: invitee[0] || undefined,
-                        email: invitee[1],
-                        sent_at: new Date().toISOString()
-                    });
-                });
-                model.invitesSent(entries);
-
                 msg = "You've added " + resp.sent.length;
                 msg += resp.sent.length === 1 ? " friend!" : " friends!";
                 view.flashMessage.success(msg);
@@ -1534,11 +1989,10 @@
                 // TODO: View should log failed message to developer & to user
             },
             authSucceeded: function(serviceId, authData) {
-                view.loading();
+                view.modal.loading();
                 model.fetchContacts(serviceId, authData);
             },
             sendBtnClicked: function(btnSelector, recipients) {
-                console.debug("Send button clicked!", btnSelector);
                 // Validate recipients
                 if (!recipients || recipients.length < 1) {
                     view.emailSendingFailed({
@@ -1580,29 +2034,26 @@
         this.isReady = false;
 
         this.init = function(options, model, view) {
+            if (!self.YesGraphAPI) { // This should never happen
+                throw new Error("YesGraph Error: Unmounted Superwidget. " +
+                                "Use YesGraphAPI.mount(superwidget) before calling superwidget.init()");
+            }
             // TODO: maybe hide some of this.
-            self.model = model || new Model();
+            self.model = model || self.model || new Model();
             self.view = view || new View(options);
-            self.controller = new Controller(self.model, self.view, options);
+            self.controller = self.controller || new Controller(self.model, self.view, options);
 
             self.model.Superwidget = self;
             self.view.Superwidget = self;
             self.controller.Superwidget = self;
+            self.modal = self.view.modal; // shortcut for operating the view modal
 
             self.model.waitForAPIConfig();
-            self.isReady = true;
         };
     }
 
-    // TODO: update yesgraph.js with this method
-    window.YesGraphAPI.mount = window.YesGraphAPI.mount || function(superwidget) {
-        this.Superwidget = superwidget;
-        this.Superwidget.YesGraphAPI = this;
-        return this;
-    };
-
     var superwidget = new Superwidget();
-    window.YesGraphAPI.mount(superwidget);
-    window.YesGraphAPI.Superwidget.init();
+    YesGraphAPI.mount(superwidget); // jshint ignore:line
+    YesGraphAPI.Superwidget.init(); // jshint ignore:line
 
 }());
