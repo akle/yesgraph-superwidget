@@ -20,7 +20,6 @@
     var SUGGESTED_SEEN_ENDPOINT = '/suggested-seen';
     var INVITES_SENT_ENDPOINT = '/invites-sent';
     var INVITES_ACCEPTED_ENDPOINT = '/invites-accepted';
-    var ANALYTICS_ENDPOINT = '/analytics/sdk';
     var EVENTS = {
         LOAD_JS_SDK: "Loaded Javascript SDK",
         LOAD_DEFAULT_PARAMS: "Loaded Default CURRENT_USER Params",
@@ -67,7 +66,7 @@
         console.warn ? console.warn(msg) : console.log(msg); // jshint ignore:line
     }
 
-    requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function(jQuery){
+    requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", function(){
         YesGraphAPI.install();
     });
 
@@ -376,7 +375,7 @@
                 // Retry failed request up to 3 times, waiting 1500ms between tries
                 return self.hitAPI(CLIENT_TOKEN_ENDPOINT, "POST", data, self.utils.storeClientToken, 3, 1500).fail(function(error) {
                     var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Token Request Failed" : error.error;
-                    self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true);
+                    self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true, true);
                 });
             },
             error: function (msg, fail, noLog, level) {
@@ -455,6 +454,12 @@
                 // as we would with regular jQuery ajax calls
                 return tryAjax().promise();
             }
+        };
+
+        this.mount = function(superwidget) {
+            self.Superwidget = superwidget;
+            self.Superwidget.YesGraphAPI = self;
+            return self;
         };
     }
 
