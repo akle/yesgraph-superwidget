@@ -36,7 +36,7 @@ module.exports = {
             files: src.root + "/**/yesgraph-invites.less"
         },
         lint: {
-            files: src.root + "/**/yesgraph?(-invites).js",
+            files: src.dev + "/**/yesgraph?(-invites).js",
             reportFile: root + "/jshint-report.txt",
             options: { // http://jshint.com/docs/options/
                 esversion: 5,
