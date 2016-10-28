@@ -95,9 +95,11 @@
                     s = d.getElementsByTagName(t)[0];
                 g.src = script;
                 s.parentNode.insertBefore(g, s);
-                g.onload = function() {
-                    func(window[globalVar]);
-                };
+                if (func) {
+                    g.onload = function() {
+                        func(window[globalVar]);
+                    };
+                }
             }(document, 'script'));
         }
     }

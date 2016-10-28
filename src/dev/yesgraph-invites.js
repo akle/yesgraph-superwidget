@@ -9,10 +9,10 @@
 
 (function(){
     "use strict";
-    // TODO: replace versions with variables
-    var VERSION = "dev";
-    var SDK_VERSION = "dev"; // jshint ignore:line
-    var CSS_VERSION = "dev";
+
+    var VERSION = "dev/__SUPERWIDGET_VERSION__";
+    var SDK_VERSION = "dev/__SDK_VERSION__"; // jshint ignore:line
+    var CSS_VERSION = "dev/__CSS_VERSION__";
     var LIBRARY = {
         name: "yesgraph-invites.js",
         version: VERSION
@@ -44,9 +44,11 @@
                 var s = d.getElementsByTagName(t)[0];
                 g.src = script;
                 s.parentNode.insertBefore(g, s);
-                g.onload = function () {
-                    func(window[globalVar]);
-                };
+                if (typeof func === "function") {
+                    g.onload = function () {
+                        func(window[globalVar]);
+                    };
+                }
             }(document, 'script'));
         }
     }
@@ -79,53 +81,6 @@
             self.message(msg, "error", duration);
         };
     }
-
-    // function ModalContainer() {
-    //     // Modal Header
-    //     var modalTitle = $("<p>", {
-    //         "class": "yes-modal-title"
-    //     });
-    //     var modalCloseBtn = $("<div>", {
-    //         "html": "&times;",
-    //         "class": "yes-modal-close-btn"
-    //     });
-    //     var modalHeader = $("<div>", {
-    //         "class": "yes-modal-header"
-    //     }).append(modalTitle, modalCloseBtn);
-
-    //     // Modal Body
-    //     var loader = $("<div>", {
-    //         "class": "yes-loading-icon"
-    //     });
-    //     var contactContainer = $("<div>", {
-    //         "class": "yes-contact-container"
-    //     });
-    //     var modalBody = $("<div>", {
-    //         "class": "yes-modal-body"
-    //     }).append(loader, contactContainer);
-
-    //     // Modal Footer
-    //     var modalSendBtn = $("<input>", {
-    //         "type": "submit",
-    //         "value": "Add",
-    //         "class": "yes-default-btn yes-modal-submit-btn"
-    //     });
-    //     var modalFooter = $("<div>", {
-    //         "class": "yes-modal-footer"
-    //     }).append(modalSendBtn);
-
-    //     var modal = $("<div>", {
-    //         "class": "yes-modal"
-    //     }).append(modalHeader, modalBody, modalFooter);
-
-    //     return modal;
-    // }
-
-    // function ModalOverlay() {
-    //     return  $("<div>", {
-    //         "class": "yes-modal-overlay"
-    //     });
-    // }
 
     function WidgetContainer(view, settings, options) {
         var targetSelector = options.target || ".yesgraph-invites";
@@ -368,7 +323,6 @@
             } else if (service.id === "slack") {
                 btn.addClass("yes-alt-icon"); // Use the monochrome icon
             }
-            // TODO: add click event handlers to the bindEvents method
             return btn;
         }
 
@@ -420,76 +374,42 @@
                 "colors": ["#BD081C", "#AB071A"]
             }];
 
-        var wrapper;
+        var elemType, btnProps, btnCss;
         services.forEach(function(service){
-            if (options.shareButtons.indexOf(service.ID) !== -1) {
-                shareBtnIcon = $("<span>", {
-                    "class": "yes-share-btn-icon"
-                }).css({
-                    "background-image": "url('" + PROTOCOL + "//cdn.yesgraph.com/" + service.ID + ".png')"
+            if (options.shareButtons.indexOf(service.ID) === -1) return; 
+
+            shareBtnIcon = $("<span>", {
+                "class": "yes-share-btn-icon"
+            });
+            shareBtnText = $("<span>", {
+                "text": service.name,
+                "class": "yes-share-btn-text"
+            });
+            btnProps = {
+                "class": "yes-share-btn yes-share-btn-" + service.ID,
+                "data-id": service.ID,
+                "data-url": service.baseURL + "?" + $.param(service.params),
+                "data-color": service.colors[0],
+                "data-hover-color": service.colors[1]
+            };
+            if (service.ID !== "pinterest") {
+                elemType = "<span>"
+            } else {
+                // Handle Pinterest differently, because the interface is an overlay
+                // on the current window (not a separate popup, like the other services)
+                elemType = "<a>";
+                btnProps["href"] = service.baseURL + "?" + $.param(service.params);
+                btnProps["data-pin-do"] = "buttonBookmark";
+                btnProps["data-pin-custom"] = true;
+                $("img").not("[data-pin-description]").each(function () {
+                    this.dataset.pinDescription = options.widgetCopy.shareMessage + " " + inviteLink;
                 });
-
-                shareBtnText = $("<span>", {
-                    "text": service.name,
-                    "class": "yes-share-btn-text"
-                });
-
-                shareBtn = $("<span>", {
-                    "class": "yes-share-btn yes-share-btn-" + service.ID,
-                    "data-name": service.name,
-                    "data-url": service.baseURL + "?" + $.param(service.params),
-                    "data-color": service.colors[0],
-                    "data-hover-color": service.colors[1]
-                }).css({
-                    "background-color": service.colors[0]
-                });
-
-                shareBtn.hover(shareBtnHoverOnHandler, shareBtnHoverOffHandler);
-
-                shareBtn.append(shareBtnIcon, shareBtnText);
-
-                // Handle Pinterest slightly differently
-                if (service.ID === "pinterest") {
-                    wrapper = $("<a>", {
-                        "href": service.baseURL + "?" + $.param(service.params),
-                        "data-pin-do": "buttonBookmark",
-                        "data-pin-custom": true
-                    }).append(shareBtn);
-
-                    shareBtn.on("click", function () {
-                        // Do this on each click. Otherwise images added
-                        // asynchronously (e.g., by Intercom) will not
-                        // have the desired description when pinned.
-                        $("img").not("[data-pin-description]").each(function () {
-                            this.dataset.pinDescription = options.integrations.twitter.tweetMsg + " " + inviteLink;
-                        });
-                        api.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
-                        wrapper[0].click();
-                    });
-
-                    requireScript("pinUtils", PROTOCOL + "//assets.pinterest.com/js/pinit.js", function () { // jshint ignore:line
-                        buttonsDiv.append(wrapper.append(shareBtn));
-                    });
-
-                } else {
-                    shareBtn.on("click", function () {
-                        targ = $(this);
-                        open(targ.data("url"), "Share on " + targ.data("name"), 'width=550, height=550');
-                        api.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + service.ID, null, LIBRARY);
-                    });
-                    buttonsDiv.append(shareBtn);
-                }
+                requireScript("pinUtils", PROTOCOL + "//assets.pinterest.com/js/pinit.js");
             }
+            shareBtn = $(elemType, btnProps);
+            shareBtn.append(shareBtnIcon, shareBtnText);
+            buttonsDiv.append(shareBtn);
         });
-
-        function shareBtnHoverOnHandler () {
-            var $this = $(this); // jshint ignore:line
-            $this.css("background-color", $this.data("hover-color"));
-        }
-        function shareBtnHoverOffHandler () {
-            var $this = $(this); // jshint ignore:line
-            $this.css("background-color", $this.data("color"));
-        }
         return buttonsDiv;
     }
 
@@ -569,9 +489,6 @@
         };
 
         this.buildWidgetContainer = function(settings, options) {
-            // TODO: we could instantiate the WidgetContainer
-            // on pageload & attach it to YesGraphAPI.Superwidget,
-            // then update it when the options are available
             self.container = WidgetContainer(self, settings, options);
         };
 
@@ -1471,6 +1388,13 @@
             }
         };
 
+        this.openSocialShareWindow = function(serviceId) {
+            if (serviceId === "pinterest") return; // Pinterest will open automatically
+            var api = self.Superwidget.YesGraphAPI;
+            var targ = self.container.find(".yes-share-btn-" + serviceId);
+            open(targ.data("url"), "_blank", 'width=550, height=550');
+        };
+
         // Define methods for notifying the controller
         this.notifyClipboardConfigFailed = function() {
             self.listeners.forEach(function(listener){
@@ -1490,9 +1414,9 @@
             });
         };
 
-        this.notifySocialShareBtnClicked = function(service) {
+        this.notifySocialShareBtnClicked = function(serviceId) {
             self.listeners.forEach(function(listener) {
-                listener.socialShareBtnClicked(service);
+                listener.socialShareBtnClicked(serviceId);
             });
         };
 
@@ -1530,6 +1454,14 @@
                     var recipients = api.utils.getSelectedRecipients(manualInputField);
                     self.notifySendBtnClicked(".yes-manual-input-submit", recipients);
                     manualInputField.val("");
+                });
+
+            // Social media sharing buttons
+            self.container
+                .find(".yes-share-btn")
+                .on("click", function(){
+                    var serviceId = $(this).data("id");
+                    self.notifySocialShareBtnClicked(serviceId);
                 });
 
             // Invite link copy button
@@ -1942,7 +1874,6 @@
                 self.Superwidget.container = view.container;
                 self.Superwidget.modal = view.modal;
                 self.Superwidget.options = options;
-                console.log("widgetOptionsReady");
                 view.superwidgetReady();
             },
 
@@ -2020,6 +1951,10 @@
             },
             sawSuggestions: function(suggestedContacts) {
                 model.sawSuggestions(suggestedContacts);
+            },
+            socialShareBtnClicked: function(serviceId) {
+                view.openSocialShareWindow(serviceId);
+                model.Superwidget.YesGraphAPI.AnalyticsManager.log(EVENTS.CLICK_SOCIAL_MEDIA_BTN, ".yes-share-btn-" + serviceId, null, LIBRARY);
             }
         });
 
