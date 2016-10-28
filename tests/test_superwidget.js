@@ -5,6 +5,7 @@ describe('testSuperwidgetUI', function() {
     jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
     jasmine.getFixtures().load('fixtures.html.js');   // load a template
     var widget;
+    var win;
 
     beforeEach(function (done) {
         // Wait for the Superwidget to be ready
@@ -17,6 +18,7 @@ describe('testSuperwidgetUI', function() {
             widget = window.YesGraphAPI.Superwidget;
             window.YesGraphAPI.isTestMode(true);
             window.YesGraphAPI.Raven = undefined; // don't log sentry errors
+            win = window;
             done();
         }
     });
@@ -105,6 +107,31 @@ describe('testSuperwidgetUI', function() {
         });
         it('Should load share button section', function() {
             expect(widget.container.find(".yes-share-btn-section").length).toEqual(1);
+        });
+
+        it('Facebook share button should open a popup', function() {
+            var spy = spyOn(window, "open");
+            widget.container.find(".yes-share-btn-facebook").click();
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it('Twitter share button should open a popup', function() {
+            var spy = spyOn(window, "open");
+            widget.container.find(".yes-share-btn-twitter").click();
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it('LinkedIn share button should open a popup', function() {
+            var spy = spyOn(window, "open");
+            widget.container.find(".yes-share-btn-linkedin").click();
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it("Pinterest share button should NOT open a popup", function() {
+            // We shouldn't open a new window for Pinterest
+            var spy = spyOn(window, "open");
+            widget.container.find(".yes-share-btn-pinterest").click();
+            expect(spy).not.toHaveBeenCalled();
         });
     });
 
