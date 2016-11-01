@@ -7,7 +7,7 @@
  * Date: __BUILD_DATE__
  */
 
-(function(){
+(function($){
     "use strict";
 
     var VERSION = "dev/__SUPERWIDGET_VERSION__";
@@ -540,6 +540,15 @@
             });
         };
 
+        this.fetchContactsSucceeded = function(addrbookSource, rankedContacts, responseMeta) {
+            var imported_contacts_evt = self.Superwidget.YesGraphAPI.events.IMPORTED_CONTACTS;
+            $(document).trigger(imported_contacts_evt, [addrbookSource, rankedContacts, responseMeta]);
+        };
+
+        this.fetchContactsFailed = function(resp) {
+            $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
+        };
+
         function Modal(options) {
             // Constructor for the contacts modal, which generates the HTML,
             // and exposes methods for opening, closing, & updating the modal
@@ -1038,7 +1047,7 @@
                 contactEmail,
                 checkbox,
                 emailCount = allEmails ? contact.emails.length : 1,
-                suggestedList = $(".yes-suggested-contact-list"), // TODO: test this bubbling
+                suggestedList = $(".yes-suggested-contact-list"),
                 suggestedEmails = $.map(suggestedList.find(".yes-contact-row-checkbox input"), function (elem) {
                     return $(elem).data("email");
                 });
@@ -1139,12 +1148,12 @@
             $(".yes-modal-submit-btn").val(btnText);
         };
 
-        this.emailSendingFailed = function(resp) {
-            var errors = resp.errors;
+        this.emailSendingFailed = function(data) {
+            var errors = data.errors;
             var api = self.Superwidget.YesGraphAPI;
             if (errors) {
-                var msg, error, description;
                 // Show each message separately
+                var msg, error, description;
                 for (error in errors) {
                     if (errors.hasOwnProperty(error)) {
                         description = errors[error];
@@ -1154,8 +1163,8 @@
                     }
                 }
             } else {
-                self.flashMessage.error(resp.error);
-                api.utils.error(resp.error);
+                self.flashMessage.error(data.error);
+                api.utils.error(data.error);
             }
         };
 
@@ -1428,6 +1437,14 @@
             }, 100);
         };
         this.getWidgetOptions = function() {
+            // If the Superwidget already has options set, use those.
+            var existingOptions = self.Superwidget.options;
+            if (existingOptions) {
+                self.notifyGetWidgetOptionsSucceeded(existingOptions);
+                return;
+            }
+
+            // If no options have been set yet, get them from the API
             var api = self.Superwidget.YesGraphAPI;
             var OPTIONS_ENDPOINT = '/apps/' + api.app + '/js/get-options';
             // Retry failed request up to 3 times, waiting 1500ms between tries
@@ -1625,22 +1642,10 @@
                 }
             },
             validateSettings: function () {
-                // TODO: figure out how this validation should work.
-                // The key constraint is what messages we need to show the developer
-                // (or the user). Note that settingsErrors is just the first of
-                // potentially many settings errors.
-                //
-                // settingsAreValid - BOOL
-                // settingsErrors - STRING
                 var settings = self.Superwidget.options.settings,
-                    settingsAreValid, msg;
-                if (settings.hasValidEmailSettings !== undefined) {
-                    settingsAreValid = settings.hasValidEmailSettings[0];
+                    settingsAreValid = Boolean(settings.hasValidEmailSettings[0]),
                     msg = settings.hasValidEmailSettings[1];
-                } else {
-                    settingsAreValid = settings.hasEmailTemplate && settings.hasSendGridApiKey;
-                }
-                return [Boolean(settingsAreValid), msg];
+                return [settingsAreValid, msg];
             }
         };
 
@@ -1662,17 +1667,14 @@
             },
 
             fetchContactsSucceeded: function(resp) {
-                // TODO: move this DOM event to the view
-                $(document).trigger(self.YesGraphAPI.events.IMPORTED_CONTACTS,
-                                    [resp.data.source, resp.data.ranked_contacts, resp.meta]);
                 var noSuggestions = Boolean(resp.meta.exception_matching_email_domain);
+                view.fetchContactsSucceeded(resp.data.source, resp.data.ranked_contacts, resp.meta);
                 view.modal.loadContacts(resp.data.ranked_contacts, noSuggestions);
                 view.modal.openModal();
             },
 
             fetchContactsFailed: function(resp) {
-                // TODO: move this DOM event to the view
-                $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
+                view.fetchContactsFailed(resp);
                 view.modal.stopLoading();
                 view.modal.closeModal();
             },
@@ -1753,14 +1755,15 @@
         this.isReady = false;
 
         this.init = function(options, model, view) {
-            if (!self.YesGraphAPI) { // This should never happen
+            if (!self.YesGraphAPI) {
+                // This state should never occur, but this is a sane default behavior
                 throw new Error("YesGraph Error: Unmounted Superwidget. " +
                                 "Use YesGraphAPI.mount(superwidget) before calling superwidget.init()");
             }
-            // TODO: maybe hide some of this.
+            self.options = options || undefined;
             self.model = model || self.model || new Model();
-            self.view = view || new View(options);
-            self.controller = self.controller || new Controller(self.model, self.view, options);
+            self.view = view || new View();
+            self.controller = self.controller || new Controller(self.model, self.view);
 
             self.model.Superwidget = self;
             self.view.Superwidget = self;
@@ -1770,10 +1773,11 @@
             self.model.waitForAPIConfig();
         };
     }
-    var sdkCdn = PROTOCOL + "//cdn.yesgraph.com/" + SDK_VERSION + "/yesgraph.min.js";
-    requireScript("YesGraphAPI", sdkCdn, function(YesGraphAPI){
+    // Once the SDK script has been loaded, initialize the Superwidget
+    var SDK_URL = PROTOCOL + "//cdn.yesgraph.com/" + SDK_VERSION + "/yesgraph.min.js";
+    requireScript("YesGraphAPI", SDK_URL, function(YesGraphAPI){
         var superwidget = new Superwidget();
-        YesGraphAPI.mount(superwidget); // jshint ignore:line
-        YesGraphAPI.Superwidget.init(); // jshint ignore:line
+        YesGraphAPI.mount(superwidget);
+        YesGraphAPI.Superwidget.init();
     });
-}());
+}(jQuery));

@@ -217,6 +217,7 @@
                 clientTokenDeferred = jQuery.Deferred();
 
             self.AnalyticsManager = new AnalyticsManager(self);
+            self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
 
             waitForOptions(options).done(function(userData){
                 // Configure Sentry/Raven for error logging
@@ -230,10 +231,7 @@
                             ravenDeferred.resolve(); // Fail gracefully no matter what
                         });
                 }
-                self.utils.getOrFetchClientToken(userData).done(function(){
-                    clientTokenDeferred.resolve();
-                    self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
-                });
+                self.utils.getOrFetchClientToken(userData).done(clientTokenDeferred.resolve);
             });
 
             // If the client token fails, log that to Sentry
