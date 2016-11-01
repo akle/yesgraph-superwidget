@@ -391,7 +391,9 @@
                         level: level,
                     });
                 }
-                self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG, msg);
+                if (["error", "warning"].indexOf(level) !== -1) {
+                    self.AnalyticsManager.log(EVENTS.SAW_ERROR_MSG, msg);
+                }
                 if (fail) {
                     e.noLog = Boolean(noLog); // Optionally don't log to Sentry
                     throw e;

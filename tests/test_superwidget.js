@@ -5,7 +5,6 @@ describe('testSuperwidgetUI', function() {
     jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
     jasmine.getFixtures().load('fixtures.html.js');   // load a template
     var widget;
-    var win;
 
     beforeEach(function (done) {
         // Wait for the Superwidget to be ready
@@ -18,7 +17,6 @@ describe('testSuperwidgetUI', function() {
             widget = window.YesGraphAPI.Superwidget;
             window.YesGraphAPI.isTestMode(true);
             window.YesGraphAPI.Raven = undefined; // don't log sentry errors
-            win = window;
             done();
         }
     });
