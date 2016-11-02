@@ -12,21 +12,32 @@
       data-name="Some Name" data-foo="bar">
 </span>
 
-<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="dist/dev/yesgraph.js"></script>
 <script src="dist/dev/yesgraph-invites.js"></script>
 <script>
-var contacts = getContacts();
-$(document).on("installed.yesgraph.superwidget", function() {
-    YesGraphAPI.Superwidget.modal.loadContacts(contacts);
-    YesGraphAPI.Superwidget.modal.openModal();
+$(document).on("installed.yesgraph.sdk", function(evt) {
+    console.debug("SDK is ready");
 });
-
-function getContacts(){
-    return [{"name":"Ivan Kirigin","emails":["ivan.kirigin@gmail.com"]},{"name":"Christopher Logan","emails":["debatabase1@gmail.com"]},{"name":"Rob Goehrke","emails":["robgoehrke@gmail.com"]},{"name":"Leah Rajaratnam","emails":["lmrajaratnam@gmail.com"]},{"name":"Mom","emails":["alycejlee@gmail.com"]},{"name":"Abel Gonzalez","emails":["abeljgonzalez90@gmail.com"]},{"name":"Abigail Braden","emails":["abigail.braden@yale.edu"]},{"name":"Abraham Killanin","emails":["abraham.killanin@yale.edu"]},{"name":"Aily Zhang","emails":["aily.zhang92@gmail.com"]},{"name":"Aily Zhang","emails":["aily.zhang@yale.edu"]},{"name":"Akua Agyen","emails":["akua.agyen@gmail.com"]},{"name":"Aleena Glinski","emails":["mindsweeperaleena@gmail.com"]},{"name":"Aleena Glinski","emails":["aleenaglinski@gmail.com"]},{"name":"Alexis Lighten","emails":["alexis.lighten@gmail.com"]},{"name":"Alexis Lighten","emails":["alexis.lighten@yale.edu"]},{"name":"Alyce Lee","emails":["LeeA@trinityfinancial.com"]},{"name":"Amalia Skilton","emails":["amalia.skilton@yale.edu"]},{"name":"Amanda Bruneau","emails":["Amanda.Bruneau@revolutionprep.com"]},{"name":"Angie Chang","emails":["angiechang@gmail.com"]},{"name":"Angie Chang","emails":["a@hackbrightacademy.com"]},{"name":"Anthea Wong","emails":["anthea.wong@yale.edu"]},{"name":"Asia Brown","emails":["asia.brown@yale.edu"]},{"name":"Audrey Odonkor","emails":["audrey.odonkor@yale.edu"]},{"name":"Ben Boult","emails":["ben.j.boult@gmail.com"]},{"name":"Ben Singleton","emails":["benjamin.singleton@yale.edu"]},{"name":"Brad Iappini","emails":["brad.iappini@outsourcetechnology.com"]},{"name":"Brad Iappini","emails":["iappinib@trinityfinancial.com"]},{"name":"Brandon Sherrod","emails":["brandon.sherrod@yale.edu"]},{"name":"Breath of Life","emails":["bcaypraise@panlists.yale.edu"]},{"name":"Brendan Kolb","emails":["martianmallow75@gmail.com"]},{"name":"Brendan Kolb","emails":["brendan.kolb@yale.edu"]},{"name":"Camille Fonseca","emails":["camille.fonseca@yale.edu"]},{"name":"Camille Lawhead","emails":["camille.lawhead@gmail.com"]},{"name":"Carmen Thunem","emails":["thunem.carmen@gmail.com"]},{"name":"Carmen Thunem","emails":["carmen.thunem@yale.edu"]},{"name":"Carolyn Forrester","emails":["cwforrester@gmail.com"]},{"name":"Carolyn Lee","emails":["carolyn_lee@ivyinsiders.com"]},{"name":"Carolyn Lee","emails":["carolynjonesconway@gmail.com", "carolyn.lee@yale.edu"]},{"name":"Catherine Shaw","emails":["catherine.shaw@yale.edu"]},{"name":"Charles Iappini (CharlieI@cici.net)","emails":["CharlieI@cici.net"]},{"name":"Charmaine Williams","emails":["cmwilliams@marriagefundamentals.com"]},{"name":"Chris Matthews","emails":["chris.matthews@christian-union.org"]},{"name":"Chris Tokita","emails":["christopher.tokita@gmail.com"]},{"name":"Chris Tokita","emails":["christopher.tokita@yale.edu"]},{"name":"Christopher Logan","emails":["christopher.logan@yale.edu"]},{"name":"Claire Daviss","emails":["claire.daviss@yale.edu"]},{"name":"Consulate Brazil in Boston - VISA","emails":["visa@consulatebrazil.org"]},{"name":"Conway, Eric","emails":["econway@ea.com"]},{"name":"Craig Fehrman","emails":["craig.fehrman@gmail.com"]},{"name":"Cristen Lee (cristenjlee@gmail.com)","emails":["cristenjlee@gmail.com"]},{"name":"Dad","emails":["plee@trinityfinancial.com"]},{"name":"Darin Swanson","emails":["dswanson@newrelic.com"]},{"name":"David Handsman","emails":["david.handsman@yale.edu"]},{"name":"Davynn Brown","emails":["davynnbrown@yahoo.com"]},{"name":"Davynn Brown","emails":["davynn.brown@yale.edu"]},{"name":"Delaina Price","emails":["delaina.price@yale.edu"]},{"name":"Denise St. Jean","emails":["denise.st.jean@yale.edu"]},{"name":"Dexter B. Upshaw Jr.","emails":["dexter@distinctionunlimited.com"]},{"name":"Dexter Upshaw","emails":["dexter.upshaw@gmail.com"]},{"name":"Diego Bernal","emails":["diego2shae@hotmail.com"]},{"name":"Donna Cowan & Barry Nelson","emails":["dscowan_2000@yahoo.com"]},{"name":"Donna Cowan & Barry Nelson","emails":["donna.cowan@newstep.com"]},{"name":"Elaina Plott","emails":["elainaplott@gmail.com"]},{"name":"Elaina.plott@yale.edu","emails":["elaina.plott@yale.edu"]},{"name":"Elena Lucas","emails":["elena@utilityapi.com"]},{"name":"Ellen Bengtson","emails":["ellen.bengtson@gmail.com"]},{"name":"Emily Murphy","emails":["emily.murphy@yale.edu"]},{"name":"EmilyAnderberg","emails":["eianderberg@gmail.com"]},{"name":"EmilyAnderberg","emails":["emily.anderberg@yale.edu"]},{"name":"Emmani Rawlins","emails":["nzingharawlins@gmail.com"]},{"name":"Eno Inyangete","emails":["eno.inyangete@yale.edu"]},{"name":"Erin Kelly","emails":["erin.kelly@yale.edu"]},{"name":"Eva Erlich","emails":["ErlichE@trinityfinancial.com"]},{"name":"Excited User","emails":["excited@catpics.org"]},{"name":"Florian Koenigsberger","emails":["florian.kberger@gmail.com"]},{"name":"Florian Koenigsberger","emails":["florian.koenigsberger@yale.edu"]},{"name":"Franco Abaroa","emails":["franco.abaroa@mixpanel.com"]},{"name":"Gareth Imparato","emails":["gareth.imparato@gmail.com"]},{"name":"Gideon Mausner","emails":["gideon.mausner@gmail.com"]},{"name":"Gleason, Angela","emails":["angela.gleason@yale.edu"]},{"name":"Glick, Jason","emails":["jason.glick@clinics.yale.edu"]},{"name":"Grace Jiras","emails":["gjiras@yelp.com"]},{"name":"Grandma Coleman","emails":["grandmacoleman@icloud.compa"]},{"name":"Grandma Coleman","emails":["almahc524@aol.com"]},{"name":"Greta Tattelman Parnes","emails":["greta.parnes@yale.edu"]},{"name":"Gutierrez, Virginia","emails":["virginia.gutierrez@yale.edu"]},{"name":"Hackbright Instructors","emails":["instructors@hackbrightacademy.com"]},{"name":"Hakeem Harrison","emails":["stabb20@gmail.com"]},{"name":"Hakeem Harrison","emails":["william.harrison@yale.edu"]},{"name":"Hallub Meyer","emails":["hallub@gmail.com"]},{"name":"Hayley Roe","emails":["hroe@google.com"]},{"name":"Hugh Flick","emails":["hugh.flick@yale.edu"]},{"name":"I'noli Hall","emails":["inoli.hall@gmail.com"]},{"name":"I'noli Hall","emails":["inoli.hall@aya.yale.edu"]},{"name":"Ian Miller","emails":["ian.miller@yale.edu"]},{"name":"Ivan Kirigin","emails":["ivan@yesgraph.com"]},{"name":"Ivy Insiders","emails":["central@ivyinsiders.com"]},{"name":"James Doss-Gollin","emails":["james.dossgollin@gmail.com"]},{"name":"Jamie Coleman","emails":["jamescoleman1988@gmail.com"]},{"name":"Jamie Cooper","emails":["jamie.cooper@yale.edu"]}];
-}
+$(document).on("installed.yesgraph.superwidget", function(evt) {
+    console.debug("Superwidget is ready");
+});
+$(document).on("imported.yesgraph.contacts", function(evt, src, contacts, meta){
+    // Do something with the contacts
+    console.debug("Loaded " + meta.total_count + " " + src.type + " contacts for " + src.email);
+});
+$(document).on("set.yesgraph.recipients", function(evt, recipients){
+    // Do something with the recipients
+    console.debug("Added " + recipients.length + " recipients.");
+});
+$(document).on("completed.yesgraph.oauth", function(evt, service, err){
+    if (err) {
+        console.debug(service, "oauth failed", err);
+    } else {
+        console.debug(service, "oauth succeeded");
+    }
+});
 </script>
-
 </div>
 </body>
 </html>

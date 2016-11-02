@@ -943,7 +943,7 @@
                 top: top + $(window).scrollTop(),
                 left: left + $(window).scrollLeft()
             });
-        }
+        };
 
         this.cleanModal = function() {
             // Detach items that we might need to re-attach later
