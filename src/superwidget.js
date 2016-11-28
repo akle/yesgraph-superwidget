@@ -1,5 +1,5 @@
 /*!
- * YesGraph Superwidget dev/__SUPERWIDGET_VERSION__
+ * YesGraph Superwidget __SUPERWIDGET_VERSION__
  *
  * https://www.yesgraph.com
  * https://docs.yesgraph.com/docs/superwidget
@@ -18,9 +18,9 @@ import AnalyticsManager from "./modules/analytics.js";
 import { YesGraphAPI } from "./modules/yesgraph.js";
 import { PROTOCOL } from "./modules/consts.js";
 
-var VERSION = "dev/__SUPERWIDGET_VERSION__";
-var SDK_VERSION = "dev/__SDK_VERSION__"; // jshint ignore:line
-var CSS_VERSION = "dev/__CSS_VERSION__";
+var VERSION = "__SUPERWIDGET_VERSION__";
+var SDK_VERSION = "__SDK_VERSION__";
+var CSS_VERSION = "__CSS_VERSION__";
 var LIBRARY = {
     name: "yesgraph-invites.js",
     version: VERSION
