@@ -61,7 +61,7 @@ module.exports = {
         },
         watch: {
             files: {
-                js: src.dev + "/yesgraph?(-invites).js",
+                js: src.dev + "/**/*.js",
                 less: src.dev + "/yesgraph-invites.less"
             }
         },
