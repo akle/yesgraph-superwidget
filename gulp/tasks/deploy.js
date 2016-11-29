@@ -7,7 +7,6 @@ var filter = require("gulp-filter");
 var gulp = require("gulp");
 var if_ = require("gulp-if");
 var lazypipe = require("lazypipe");
-var prompt = require("gulp-prompt");
 var rename = require("gulp-rename");
 var release = require("gulp-github-release");
 var debug = require("gulp-debug");

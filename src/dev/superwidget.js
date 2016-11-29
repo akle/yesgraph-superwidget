@@ -1,20 +1,7 @@
-/*!
- * YesGraph Superwidget dev/__SUPERWIDGET_VERSION__
- *
- * https://www.yesgraph.com
- * https://docs.yesgraph.com/docs/superwidget
- * 
- * Date: __BUILD_DATE__
- */
-
-"use strict";
-
 import YesGraphAPI from "./sdk.js";
 import Model from "./modules/model.js";
 import View from "./modules/view.js";
 import Controller from "./modules/controller.js";
-import { requireScript } from "./modules/utils.js";
-import { PROTOCOL, SDK_VERSION } from "./modules/consts.js";
 
 function Superwidget() {
     var self = this;
@@ -43,11 +30,7 @@ function Superwidget() {
     };
 }
 
-// Once the SDK script has been loaded, initialize the Superwidget
-var SDK_URL = PROTOCOL + "//cdn.yesgraph.com/" + SDK_VERSION + "/yesgraph.min.js";
-requireScript("YesGraphAPI", SDK_URL, function(YesGraphAPI) {
-    console.log("It worked!")
-    var superwidget = new Superwidget();
-    YesGraphAPI.mount(superwidget);
-    YesGraphAPI.Superwidget.init();
-});
+// Initialize the Superwidget
+var superwidget = new Superwidget();
+YesGraphAPI.mount(superwidget);
+YesGraphAPI.Superwidget.init();

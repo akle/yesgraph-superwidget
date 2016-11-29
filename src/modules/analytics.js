@@ -1,4 +1,4 @@
-import { SDK_VERSION, EVENTS } from "./consts.js"
+import { SDK_VERSION } from "./consts.js";
 
 export default function AnalyticsManager(YesGraphAPI) {
     var self = this;

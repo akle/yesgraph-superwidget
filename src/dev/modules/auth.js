@@ -1,4 +1,3 @@
-
 export default function AuthManager (service, options, api) {
     var self = this;
     this.service = service;
