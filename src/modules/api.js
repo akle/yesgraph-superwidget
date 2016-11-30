@@ -1,6 +1,6 @@
 import AnalyticsManager from "./analytics.js";
-import { SDK_VERSION, EVENTS, YESGRAPH_API_URL, RUNNING_LOCALLY, PUBLIC_RAVEN_DSN } from "./consts.js"
-import { waitForYesGraphTarget } from "./utils.js"
+import { SDK_VERSION, EVENTS, YESGRAPH_API_URL, RUNNING_LOCALLY, PUBLIC_RAVEN_DSN } from "./consts.js";
+import { waitForYesGraphTarget } from "./utils.js";
 
 var settings = {
     app: null,
@@ -38,7 +38,7 @@ export default function YesGraphAPIConstructor() {
             data: data,
             contentType: "application/json; charset=UTF-8",
             headers: {
-                "Authorization": "ClientToken " + YesGraphAPI.clientToken
+                "Authorization": "ClientToken " + self.clientToken
             }
         };
 
@@ -274,7 +274,7 @@ export default function YesGraphAPIConstructor() {
         },
         getOrFetchClientToken: function (userData) {
             var data = {
-                appName: YesGraphAPI.app
+                appName: self.app
             };
             data.userData = userData || undefined;
             self.clientToken = self.utils.readCookie('yg-client-token');

@@ -130,6 +130,7 @@ export default function Model() {
     };
 
     this.fetchContacts = function(serviceId, authData) {
+        if (serviceId === "hotmail") { serviceId = "outlook"; }
         self.Superwidget.YesGraphAPI.hitAPI("/oauth", "GET", {
             "service": serviceId,
             "token_data": JSON.stringify(authData)

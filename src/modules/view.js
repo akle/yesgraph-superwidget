@@ -1,5 +1,3 @@
-"use strict";
-
 import AuthManager from "./auth.js";
 import MessageManager from "./messages.js";
 import { requireScript } from "./utils.js";
@@ -10,7 +8,7 @@ export default function View() {
     var self = this;
     this.listeners = [];
     this.addListener = function(listener) {
-        listener = listener || generateViewListener();
+        listener = listener || new generateViewListener();
         self.listeners.push(listener);
         return listener;
     };
@@ -953,7 +951,7 @@ function WidgetContainerFactory(view, settings, options) {
                 name: "Hotmail",
                 include: includeOutlook,
                 authManagerOptions: {
-                    id: "outlook",
+                    id: "outlook", // Hotmail is just Outlook in disguise
                     name: "Hotmail",
                     baseAuthUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
                     authParams: {

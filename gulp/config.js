@@ -7,8 +7,8 @@ var dest = {
     dev: "./dist/dev",
     root: "./dist"
 };
-var __SDK_VERSION__ = "v0.2.0";
-var __SUPERWIDGET_VERSION__ = "v1.2.1";
+var __SDK_VERSION__ = "v0.3.0";
+var __SUPERWIDGET_VERSION__ = "v1.3.0";
 var __CSS_VERSION__ = "v0.0.6";
 
 module.exports = {
@@ -133,7 +133,7 @@ module.exports = {
             ],
         },
         update: {
-            files: src.dev + "/*.@(js|less)"
+            files: src.dev + "/**/*.@(js|less)"
         },
         deploy: {
             files: dest.root + "/**/yesgraph?(-invites)?(.min).@(js|css)?(.map)"
