@@ -1,9 +1,10 @@
 "use strict";
 var gulp = require("gulp");
+var gutil = require('gulp-util');
 var config = require("../config");
 
-gulp.task("_js", ["version"], function(){
-	return gulp.start("minify:js");
+gulp.task("_js", ["minify:js"], function(){
+	return gulp.start("version");
 });
 
 gulp.task("watch", function(){

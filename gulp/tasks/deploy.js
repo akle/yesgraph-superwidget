@@ -1,13 +1,12 @@
 "use strict";
 var argv = require("yargs").argv;
 var aws = require("gulp-awspublish");
-var clone = require("gulp-clone")
+var clone = require("gulp-clone");
 var cloudfront = require('gulp-cloudfront-invalidate');
 var filter = require("gulp-filter");
 var gulp = require("gulp");
 var if_ = require("gulp-if");
 var lazypipe = require("lazypipe");
-var prompt = require("gulp-prompt");
 var rename = require("gulp-rename");
 var release = require("gulp-github-release");
 var debug = require("gulp-debug");

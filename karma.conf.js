@@ -23,8 +23,8 @@ module.exports = function(config) {
       'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
       'tests/fixtures.html',
       'tests/*.js',
-      'src/dev/yesgraph-invites.js',
-      'src/dev/yesgraph.js',
+      'dist/dev/yesgraph-invites.js',
+      // 'dist/dev/yesgraph-invites.css',
       //'tests/*.js', 
       //'tests/*.html', 
     // Source and spec files
@@ -94,8 +94,8 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    // browsers: ['Chrome'],
-    browsers: ['Chrome', 'Firefox', 'Safari'],
+    browsers: ['Chrome'],
+    // browsers: ['Chrome', 'Firefox', 'Safari'],
     // browsers: ['PhantomJS', 'Chrome'],
     // browsers: ['PhantomJS'],
 
