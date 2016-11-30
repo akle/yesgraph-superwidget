@@ -54,6 +54,9 @@ gulp.task("version", function() {
         '*/\n\n'
     ].join("\n");
 
+    // Log file names to stdout as they're processed
+    streams.pipe(debug({ title: "version"}));
+
     // Loop through the necessary files creating a stream for each one
     // based on how it should be processed, then merge all the streams together.
     config.tasks.version.files.forEach(function(file) {
@@ -72,12 +75,12 @@ gulp.task("version", function() {
         // Version the source code files & store them in the dist/ folder
         } else {
             stream_ = gulp.src(file.path, {base: config.dest.root})
-                .pipe(debug({ title: "version"}))
                 .pipe(banner(header, {
                     info: headerInfo[file.type],
                     currentDate: new Date(),
                     version: file.versionPrefix + versions[file.type]
                 }))
+                .pipe(replace(/__(\w*)_VERSION__/g, fileVersionReplacer))
                 .pipe(gulp.dest(config.dest.root));
         }
         streams.add(stream_);
@@ -85,6 +88,10 @@ gulp.task("version", function() {
 
     return streams;
 });
+
+function fileVersionReplacer(match, target) {
+    return versions[target.toLowerCase()]
+}
 
 function configVersionReplacer(match, target) {
     var version = versions[target.toLowerCase()]

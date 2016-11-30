@@ -23,6 +23,9 @@ gulp.task("minify", ["minify:js", "minify:css"]);
 gulp.task("minify:js", function(){
     var streams = merge(), stream_, bundler, cloneSink;
 
+    // Log file names to stdout as they're processed
+    streams.pipe(debug({title: "minify:js"}));
+
     // Loop through dev & prod versions of the SDK
     // and the Superwidget, bundling & renaming each one
     config.tasks.minify.js.forEach(function(file){
@@ -41,7 +44,6 @@ gulp.task("minify:js", function(){
         stream_ = bundler.bundle()
             .pipe(sourceStream(file.output))
             .pipe(buffer())
-            .pipe(debug({title: "minify:js"}))
             .pipe(cloneSink)
             .pipe(sourcemaps.init({ loadMaps: true }))
             .pipe(uglify({ preserveComments: 'license' }))
