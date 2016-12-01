@@ -150,21 +150,21 @@ export default function Controller(model, view) {
                 return;
             }
 
-            // Validate settings
-            var validationResult = self.YesGraphAPI.utils.validateSettings();
-            var hasValidSettings = validationResult[0];
-            if (!hasValidSettings) {
-                var errorMsg = validationResult[1];
-                view.emailSendingFailed({
-                    error: errorMsg
-                });
-                return;
-            }
-
-            // Send the email invites
             $(document).trigger(self.YesGraphAPI.events.SET_RECIPIENTS, [recipients]);
+
+            // Only send the emails if emailSending was not set to `false`
             if (self.YesGraphAPI.settings.emailSending) {
-                model.sendEmailInvites(recipients);
+                // Validate settings
+                var validationResult = self.YesGraphAPI.utils.validateSettings();
+                var hasValidSettings = validationResult[0];
+                if (hasValidSettings) {
+                    model.sendEmailInvites(recipients);
+                } else {
+                    var errorMsg = validationResult[1];
+                    view.emailSendingFailed({
+                        error: errorMsg
+                    });
+                }                
             }
         },
         sawSuggestions: function(suggestedContacts) {
