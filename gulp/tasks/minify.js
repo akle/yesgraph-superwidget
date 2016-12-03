@@ -31,17 +31,18 @@ gulp.task("minify:js", function(){
     config.tasks.minify.js.forEach(function(file){
         // Bundle the modules into a single file,
         // and convert it all from ES6 > ES5
-        bundler = browserify({
-            entries: file.input,
-            debug: true,
-        }).transform(babelify, { presets: ['es2015'] });
 
         // We use cloneSink here to create a copy of the files, then minify
         // only the copies (so that an unminified version is preserved).
         cloneSink = clone.sink();
 
         // Create a pipe to bundle & minify the code
-        stream_ = bundler.bundle()
+        stream_ = browserify({
+                entries: file.input,
+                debug: true,
+            })
+            .transform(babelify, { presets: ['es2015'] })
+            .bundle()
             .pipe(sourceStream(file.output))
             .pipe(buffer())
             .pipe(cloneSink)
