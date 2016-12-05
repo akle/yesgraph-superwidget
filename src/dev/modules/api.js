@@ -1,6 +1,7 @@
+import logFailedClientTokenRequest from "./errors.js";
+import waitForOptions, { parseOptions } from "./options.js";
 import AnalyticsManager from "./analytics.js";
 import { SDK_VERSION, EVENTS, YESGRAPH_API_URL, RUNNING_LOCALLY, PUBLIC_RAVEN_DSN } from "./consts.js";
-import { waitForYesGraphTarget } from "./utils.js";
 
 var settings = {
     app: null,
@@ -25,6 +26,8 @@ export default function YesGraphAPIConstructor() {
     };
 
     var self = this;
+    var optionsDeferred;
+
     this.hitAPI = function (endpoint, method, data, done, maxTries, interval) {
         var d = jQuery.Deferred();
         if (typeof method !== "string") {
@@ -33,12 +36,14 @@ export default function YesGraphAPIConstructor() {
         } else if (method.toUpperCase() !== "GET") {
             data = JSON.stringify(data || {});
         }
+
+        var auth = self.clientKey ? "Bearer " + self.clientKey : "ClientToken " + self.clientToken;
         var ajaxSettings = {
             url: YESGRAPH_API_URL + endpoint,
             data: data,
             contentType: "application/json; charset=UTF-8",
             headers: {
-                "Authorization": "ClientToken " + self.clientToken
+                "Authorization": auth
             }
         };
 
@@ -123,51 +128,72 @@ export default function YesGraphAPIConstructor() {
         return self;
     };
 
-    this.install = function(options) {
-        var ravenDeferred = jQuery.Deferred(),
-            clientTokenDeferred = jQuery.Deferred();
+    this.setOptions = function(options) {
+        if (!optionsDeferred || optionsDeferred.state() != "pending") {
+            optionsDeferred = jQuery.Deferred();
+        }
+        optionsDeferred.resolve(parseOptions(options));
+    };
 
+    this.install = function() {
+        var ravenDeferred = jQuery.Deferred();
+        var authDeferred = jQuery.Deferred();
+        if (!optionsDeferred || optionsDeferred.state() != "pending") {
+            optionsDeferred = jQuery.Deferred();
+        }
         self.AnalyticsManager = new AnalyticsManager(self);
         self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
 
-        waitForOptions(options).done(function(userData){
+        waitForOptions(optionsDeferred).done(options => {
+            // Save parsed options
+            self.app = options.auth.app;
+            self.clientKey = options.auth.clientKey;
+            self.settings = options.settings;
+            self.user = options.user;
+
+            if (options.warnings.loadedDefaultParams) {
+                self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
+            }
+
             // Configure Sentry/Raven for error logging
             if (self.settings.nolog) {
                 ravenDeferred.resolve();
             } else {
                 self.utils.loadRaven()
-                    .fail(function(){
-                        self.AnalyticsManager.log(EVENTS.RAVEN_FAILED);
-                    }).always(function() {
-                        ravenDeferred.resolve(); // Fail gracefully no matter what
-                    });
+                    .fail(() => self.AnalyticsManager.log(EVENTS.RAVEN_FAILED))
+                    .always(ravenDeferred.resolve); // Fail gracefully no matter what
             }
-            self.utils.getOrFetchClientToken(userData).done(clientTokenDeferred.resolve);
+
+            // Get a clientToken if no clientKey was provided
+            if (self.clientKey) {
+                authDeferred.resolve();
+            } else {
+                self.utils.getOrFetchClientToken(options.userData).done(authDeferred.resolve);                
+            }
         });
 
         // If the client token fails, log that to Sentry
-        if (self.Raven) {
-            clientTokenDeferred.fail(function(clientTokenResponse){
-                ravenDeferred.done(function(){
-                    self.Raven.captureBreadcrumb({
-                        timestamp: new Date(),
-                        message: "Client Token Request Failed",
-                        level: "error",
-                        data: clientTokenResponse
-                    });
-                    self.Raven.captureException(new Error("Client Token Request Failed"));
-                });
-            });
-        }
+        authDeferred.fail(clientTokenResponse => {
+            if (ravenDeferred.state() === "pending") {
+                ravenDeferred.done(() => logFailedClientTokenRequest(self.Raven, clientTokenResponse));
+            } else {
+                logFailedClientTokenRequest(self.Raven, clientTokenResponse);
+            }
+        });
 
-        jQuery.when(ravenDeferred, clientTokenDeferred).done(function(){
+        jQuery.when(ravenDeferred, authDeferred).done(function(){
             if (self.Raven) {
-                self.Raven.setTagsContext({
+                let context = {
                     sdk_version: self.SDK_VERSION,
-                    app: self.app,
-                    client_token: self.clientToken,
                     jquery_version: jQuery.fn.jquery
-                });
+                };
+                if (self.clientKey) {
+                    context.client_key = self.clientKey;
+                } else {
+                    context.client_token = self.clientToken;
+                    context.app = self.app;
+                }
+                self.Raven.setTagsContext(context);
                 self.Raven.captureBreadcrumb({
                     timestamp: new Date(),
                     message: "YesGraphAPI Is Ready"
@@ -176,41 +202,6 @@ export default function YesGraphAPIConstructor() {
             self.isReady = true;
             $(document).trigger(self.events.INSTALLED_SDK);
         });
-
-        function waitForOptions(options) {
-            var d1 = jQuery.Deferred();
-            var d2 = jQuery.Deferred();
-
-            if (typeof options === "object" && options) {
-                d1.resolve(options);
-            } else {
-                waitForYesGraphTarget().done(d1.resolve);
-            }
-
-            d1.done(function(options){
-                // Update the settings for the YesGraphAPI object
-                var userData = {};
-                var loadedDefaultParams = false;
-                var val;
-                self.app = self.app || options.app;
-                for (var opt in options) {
-                    val = options[opt];
-                    if (typeof val === "string" && val.slice(0,12) == "CURRENT_USER") {
-                        loadedDefaultParams = true;
-                    }
-                    if (self.settings.hasOwnProperty(opt)) {
-                        self.settings[opt] = val;
-                    } else {
-                        userData[opt] = val;
-                    }
-                }
-                if (loadedDefaultParams) {
-                    self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
-                }
-                d2.resolve(userData);
-            });
-            return d2.promise();
-        }
     };
 
     this.utils = {

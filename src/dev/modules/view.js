@@ -137,7 +137,7 @@ export default function View() {
     };
 
     this.fetchContactsFailed = function(resp) {
-        $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
+        $(document).trigger(self.Superwidget.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
     };
 
     function Modal(options) {
