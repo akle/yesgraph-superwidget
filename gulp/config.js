@@ -54,34 +54,35 @@ module.exports = {
             }
         },
         minify: {
+            js: dest.root + "/**/yesgraph?(-invites).js",
+            less: dest.root + "/**/yesgraph-invites.css"
+        },
+        bundle: [
             // Here we specify each filename individually, because the bundling tool
             // we use doesn't support gulp's built-in globbing syntax (e.g., src/**/*.js)
             // sdk: [src.root + "/sdk.js", src.dev + "/sdk.js"],
             // superwidget: [src.root + "/superwidget.js", src.dev + "/superwidget.js"],
-            js: [
-                {
-                    input: src.root + "/sdk.js",
-                    output: "yesgraph.js",
-                    sourceMap: dest.root + "/yesgraph.js.map"
-                },
-                {
-                    input: src.dev + "/sdk.js",
-                    output: "dev/yesgraph.js",
-                    sourceMap: dest.dev + "/yesgraph.js.map"
-                },
-                {
-                    input: src.root + "/superwidget.js",
-                    output: "yesgraph-invites.js",
-                    sourceMap: dest.root + "/yesgraph-invites.js.map"
-                },
-                {
-                    input: src.dev + "/superwidget.js",
-                    output: "dev/yesgraph-invites.js",
-                    sourceMap: dest.dev + "/yesgraph-invites.js.map"
-                }
-            ],
-            less: dest.root + "/**/yesgraph-invites.css"
-        },
+            {
+                input: src.root + "/sdk.js",
+                output: "yesgraph.js",
+                sourceMap: dest.root + "/yesgraph.js.map"
+            },
+            {
+                input: src.dev + "/sdk.js",
+                output: "dev/yesgraph.js",
+                sourceMap: dest.dev + "/yesgraph.js.map"
+            },
+            {
+                input: src.root + "/superwidget.js",
+                output: "yesgraph-invites.js",
+                sourceMap: dest.root + "/yesgraph-invites.js.map"
+            },
+            {
+                input: src.dev + "/superwidget.js",
+                output: "dev/yesgraph-invites.js",
+                sourceMap: dest.dev + "/yesgraph-invites.js.map"
+            }
+        ],
         watch: {
             files: {
                 js: src.dev + "/**/*.js",

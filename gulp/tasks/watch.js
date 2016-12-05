@@ -2,9 +2,10 @@
 var gulp = require("gulp");
 var gutil = require('gulp-util');
 var config = require("../config");
+var sequence = require("run-sequence").use(gulp);
 
-gulp.task("_js", ["minify:js"], function(){
-	return gulp.start("version");
+gulp.task("_js", function(done) {
+    return sequence("bundle", "version", "minify", done);
 });
 
 gulp.task("watch", function(){

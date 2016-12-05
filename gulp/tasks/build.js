@@ -3,5 +3,5 @@ var gulp = require("gulp");
 var sequence = require("run-sequence").use(gulp);
 
 gulp.task("build", ["clean"], function(done){
-    sequence("compile:less", "minify", "version", done);
+    sequence("compile:less", "bundle", "version", "minify", done);
 });
