@@ -1,26 +1,14 @@
+import { requireScript } from "./utils.js";
 import logFailedClientTokenRequest from "./errors.js";
-import waitForOptions, { parseOptions } from "./options.js";
+import waitForOptions, { parseOptions, defaultParsedOptions } from "./options.js";
 import AnalyticsManager from "./analytics.js";
 import { SDK_VERSION, EVENTS, YESGRAPH_API_URL, RUNNING_LOCALLY, PUBLIC_RAVEN_DSN } from "./consts.js";
-
-var settings = {
-    app: null,
-    testmode: false,
-    target: ".yesgraph-invites",
-    contactImporting: true,
-    showContacts: true,
-    promoteMatchingDomain: false,
-    emailSending: true,
-    inviteLink: true,
-    shareBtns: true,
-    nolog: false
-};
 
 export default function YesGraphAPIConstructor() {
     this.SDK_VERSION = SDK_VERSION;
     this.isReady = false;
     this.hasLoadedSuperwidget = false;
-    this.settings = settings;
+    this.settings = defaultParsedOptions.settings;  // overwritten by custom options
     this.events = {
         INSTALLED_SDK: "installed.yesgraph.sdk"
     };
@@ -129,10 +117,12 @@ export default function YesGraphAPIConstructor() {
     };
 
     this.setOptions = function(options) {
-        if (!optionsDeferred || optionsDeferred.state() != "pending") {
-            optionsDeferred = jQuery.Deferred();
-        }
-        optionsDeferred.resolve(parseOptions(options));
+        requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", () => {
+            if (!optionsDeferred || optionsDeferred.state() != "pending") {
+                optionsDeferred = jQuery.Deferred();
+            }
+            optionsDeferred.resolve(parseOptions(options));
+        });
     };
 
     this.install = function() {
@@ -149,7 +139,6 @@ export default function YesGraphAPIConstructor() {
             self.app = options.auth.app;
             self.clientKey = options.auth.clientKey;
             self.settings = options.settings;
-            self.user = options.user;
 
             if (options.warnings.loadedDefaultParams) {
                 self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);

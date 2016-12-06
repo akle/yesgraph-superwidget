@@ -823,8 +823,7 @@ export function generateViewListener(listener) {
 
 function WidgetContainerFactory(view, settings, options) {
     // This factory creates & returns the HTML for the Superwidget container as a jQuery collection
-
-    var targetSelector = options.target || ".yesgraph-invites";
+    var targetSelector = settings.target || ".yesgraph-invites";
     var JQUERY_VERSION = $.fn.jquery;
 
     var container = $("<div>", {

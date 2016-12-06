@@ -1,4 +1,4 @@
-var defaultParsedOptions = {
+export var defaultParsedOptions = {
     auth: {
         app: null,
         clientKey: null,
@@ -14,7 +14,6 @@ var defaultParsedOptions = {
         shareBtns: true,
         nolog: false
     },
-    user: {},
     warnings: {
         loadedDefaultParams: false
     }
