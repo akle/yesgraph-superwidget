@@ -73,7 +73,8 @@ describe('testAPI', function() {
                 return d.promise();
             });
 
-            YesGraphAPI.install({ app: oldAPI.app });
+            YesGraphAPI.install();
+            YesGraphAPI.setOptions({ auth: { app: oldAPI.app } });
             expect(hitApiSpy).toHaveBeenCalled();
             expect(getScriptSpy).toHaveBeenCalled();
 
@@ -93,6 +94,16 @@ describe('testAPI', function() {
     });
 
     describe("testEndpoints", function() {
+        it('Should use a clientKey if available', function(done) {
+            var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings) {
+                expect(settings.headers.Authorization).toEqual("Bearer " + YesGraphAPI.clientKey);
+                done();
+            });
+            YesGraphAPI.clientKey = "TEST_CLIENT_KEY";
+            YesGraphAPI.test();
+            expect(ajaxSpy).toHaveBeenCalled();
+        });
+
         it('Should retry failed ajax requests', function(done) {
             var endpoint = "/test";
             var ajaxCallCount = 0;

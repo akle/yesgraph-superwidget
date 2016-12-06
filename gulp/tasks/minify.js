@@ -8,49 +8,53 @@ var clone = require("gulp-clone");
 var sourcemaps = require("gulp-sourcemaps");
 var debug = require('gulp-debug');
 var config = require("../config");
-
 var browserify = require('browserify');
 var babelify = require('babelify');
-
 var buffer = require('vinyl-buffer');
 var gutil = require('gulp-util');
 var sourceStream = require('vinyl-source-stream');
-
 var merge = require("merge-stream");
 
 gulp.task("minify", ["minify:js", "minify:css"]);
 
-gulp.task("minify:js", function(){
-    var streams = merge(), stream_, bundler, cloneSink;
+gulp.task("minify:js", function() {
+
+    // We use cloneSink here to create a copy of the files, then minify
+    // only the copies (so that an unminified version is preserved).
+    // cloneSink = clone.sink();
+    var cloneSink = clone.sink();
+
+    return gulp.src(config.tasks.minify.js)
+        .pipe(debug({title: "minify:js"}))
+        .pipe(cloneSink)
+        .pipe(sourcemaps.init({ loadMaps: true }))
+        .pipe(uglify({ preserveComments: 'license' }))
+        .pipe(rename({suffix: ".min"}))
+        .pipe(sourcemaps.write(".")) // save sourcemaps in dest/
+        .pipe(cloneSink.tap())
+        .pipe(gulp.dest(config.dest.root));
+});
+
+gulp.task("bundle", function() {
+    var streams = merge(), stream_, bundler;
 
     // Log file names to stdout as they're processed
-    streams.pipe(debug({title: "minify:js"}));
+    streams.pipe(debug({title: "bundle"}));
 
     // Loop through dev & prod versions of the SDK
     // and the Superwidget, bundling & renaming each one
-    config.tasks.minify.js.forEach(function(file){
+    config.tasks.bundle.forEach(function(file){
         // Bundle the modules into a single file,
-        // and convert it all from ES6 > ES5
-        bundler = browserify({
-            entries: file.input,
-            debug: true,
-        }).transform(babelify, { presets: ['es2015'] });
-
-        // We use cloneSink here to create a copy of the files, then minify
-        // only the copies (so that an unminified version is preserved).
-        cloneSink = clone.sink();
-
-        // Create a pipe to bundle & minify the code
-        stream_ = bundler.bundle()
+        // and transpile it all from ES6 > ES5
+        stream_ = browserify({
+                entries: file.input,
+                debug: true,
+            })
+            .transform(babelify, { presets: ['es2015'] })
+            .bundle()
             .pipe(sourceStream(file.output))
             .pipe(buffer())
-            .pipe(cloneSink)
-            .pipe(sourcemaps.init({ loadMaps: true }))
-            .pipe(uglify({ preserveComments: 'license' }))
-            .pipe(rename({suffix: ".min"}))
-            .pipe(sourcemaps.write(".")) // save sourcemaps in dest/
-            .pipe(cloneSink.tap())
-            .pipe(gulp.dest(config.dest.root))
+            .pipe(gulp.dest(config.dest.root));
 
         streams.add(stream_);
     });

@@ -137,7 +137,7 @@ export default function View() {
     };
 
     this.fetchContactsFailed = function(resp) {
-        $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
+        $(document).trigger(self.Superwidget.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
     };
 
     function Modal(options) {
@@ -823,8 +823,7 @@ export function generateViewListener(listener) {
 
 function WidgetContainerFactory(view, settings, options) {
     // This factory creates & returns the HTML for the Superwidget container as a jQuery collection
-
-    var targetSelector = options.target || ".yesgraph-invites";
+    var targetSelector = settings.target || ".yesgraph-invites";
     var JQUERY_VERSION = $.fn.jquery;
 
     var container = $("<div>", {

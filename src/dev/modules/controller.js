@@ -93,14 +93,19 @@ export default function Controller(model, view) {
         fetchContactsSucceeded: function(resp) {
             var noSuggestions = Boolean(resp.meta.exception_matching_email_domain);
             view.fetchContactsSucceeded(resp.data.source, resp.data.ranked_contacts, resp.meta);
-            view.modal.loadContacts(resp.data.ranked_contacts, noSuggestions);
-            view.modal.openModal();
+            // Only show contacts if `showContacts` wasn't set to `false`
+            if (self.YesGraphAPI.settings.showContacts !== false) {
+                view.modal.loadContacts(resp.data.ranked_contacts, noSuggestions);
+                view.modal.openModal();                
+            }
         },
 
         fetchContactsFailed: function(resp) {
             view.fetchContactsFailed(resp);
-            view.modal.stopLoading();
-            view.modal.closeModal();
+            if (self.YesGraphAPI.settings.showContacts !== false) {
+                view.modal.stopLoading();
+                view.modal.closeModal();                
+            }
         },
 
         emailSendingFailed: function(errorData) {

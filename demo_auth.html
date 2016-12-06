@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YesGraph</title>
+</head>
+<body>
+
+<span id="referrals"></span>
+
+<script src="dist/dev/yesgraph-invites.min.js"></script>
+<script>
+YesGraphAPI.setOptions({
+    auth: {
+        app: '[YOUR_APP_ID]',
+        clientKey: '[YOUR_CLIENT_KEY]'
+    },
+    settings: {
+        target: "#referrals"
+    }
+});
+</script>
+
+</body>
+</html>
