@@ -1,7 +1,3 @@
-export function isObject(o) {
-  return null != o && toString.call(o) === '[object Object]';
-}
-
 export function requireScript(globalVar, script, func) {
     // Get the specified script if it hasn't been loaded already
     if (window.hasOwnProperty(globalVar)) {

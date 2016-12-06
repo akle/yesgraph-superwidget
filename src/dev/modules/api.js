@@ -83,14 +83,14 @@ export default function YesGraphAPIConstructor() {
     };
 
     this.rankContacts = function (rawContacts, done, maxTries, interval) {
-        var matchDomain = settings.promoteMatchingDomain,
+        var matchDomain = self.settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
         rawContacts.promote_matching_domain = domainVal;
         return self.hitAPI("/address-book", "POST", rawContacts, done, maxTries, interval);
     };
 
     this.getRankedContacts = function (done, maxTries, interval) {
-        var matchDomain = settings.promoteMatchingDomain,
+        var matchDomain = self.settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
         return self.hitAPI("/address-book", "GET", {promote_matching_domain: domainVal}, done, maxTries, interval);
     };
