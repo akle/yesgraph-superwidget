@@ -14,6 +14,7 @@ export var defaultParsedOptions = {
         shareBtns: true,
         nolog: false
     },
+    user: {},
     warnings: {
         loadedDefaultParams: false
     }

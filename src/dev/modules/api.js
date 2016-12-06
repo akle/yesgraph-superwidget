@@ -139,6 +139,7 @@ export default function YesGraphAPIConstructor() {
             self.app = options.auth.app;
             self.clientKey = options.auth.clientKey;
             self.settings = options.settings;
+            self.user = options.user;
 
             if (options.warnings.loadedDefaultParams) {
                 self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
@@ -157,7 +158,7 @@ export default function YesGraphAPIConstructor() {
             if (self.clientKey) {
                 authDeferred.resolve();
             } else {
-                self.utils.getOrFetchClientToken(options.userData).done(authDeferred.resolve);                
+                self.utils.getOrFetchClientToken(options.user).done(authDeferred.resolve);                
             }
         });
 

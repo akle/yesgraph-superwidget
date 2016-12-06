@@ -7,19 +7,14 @@
 <body>
 <div>
 
-<span class="yesgraph-invites"></span>
+<span id="yesgraph" class="yesgraph-invites"
+      data-app="YesGraph" data-email="some@email.com"
+      data-name="Some Name" data-foo="bar">
+</span>
 
 <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="dist/dev/yesgraph-invites.min.js"></script>
 <script>
-
-YesGraphAPI.setOptions({
-    auth: {
-        app: '409e9d05-413e-4ee6-9683-90f8da1f25ee',
-        clientKey: 'WzEsMCwiNDA5ZTlkMDUtNDEzZS00ZWU2LTk2ODMtOTBmOGRhMWYyNWVlIiwidXNlcl8xMjM0Il0.CyNpOQ.4vssHnli22EVX0VuR3Y4eiEDRcI'
-    }
-});
-
 $(document).on("installed.yesgraph.sdk", function(evt) {
     console.debug("SDK is ready");
 });
