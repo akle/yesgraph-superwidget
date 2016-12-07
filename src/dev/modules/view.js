@@ -588,7 +588,7 @@ export default function View() {
     };
 
     this.toggleSelected = function(evt) {
-        var checkbox = $(evt.target).find("[type='checkbox']");
+        var checkbox = $(this).find("input[type='checkbox']");
         checkbox.prop("checked", !checkbox.prop("checked"));
         self.updateModalSendBtn();
     };
@@ -760,9 +760,11 @@ export default function View() {
         });
 
         // "Select All" checkbox
-        $(document).on("click", ".yes-select-all-form [type='checkbox']", function(evt) {
+        $(document).on("click", ".yes-select-all-form *", function(evt) {
+            var is_checked = self.modal.container.find(".yes-select-all").prop("checked");
             var checkboxes = self.modal.container.find(".yes-modal-body [type='checkbox']");
-            checkboxes.prop("checked", $(evt.target).prop("checked"));
+            checkboxes.prop("checked", !is_checked);
+            self.updateModalSendBtn();
         });
 
         // Contact checkboxes

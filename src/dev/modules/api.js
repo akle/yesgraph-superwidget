@@ -140,6 +140,7 @@ export default function YesGraphAPIConstructor() {
             self.clientKey = options.auth.clientKey;
             self.settings = options.settings;
             self.user = options.user;
+            self.inviteLink = options.user.inviteLink;
 
             if (options.warnings.loadedDefaultParams) {
                 self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
@@ -156,7 +157,7 @@ export default function YesGraphAPIConstructor() {
 
             // Get a clientToken if no clientKey was provided
             if (self.clientKey) {
-                authDeferred.resolve();
+                self.utils.validateClientKey(options.user).done(authDeferred.resolve);
             } else {
                 self.utils.getOrFetchClientToken(options.user).done(authDeferred.resolve);                
             }
@@ -255,11 +256,12 @@ export default function YesGraphAPIConstructor() {
         },
         getOrFetchClientToken: function (userData) {
             var data = {
-                appName: self.app
+                appName: self.app,
+                userData: userData || undefined,
+                token: self.utils.readCookie('yg-client-token')
             };
-            data.userData = userData || undefined;
-            self.clientToken = self.utils.readCookie('yg-client-token');
-            data.token = self.clientToken;
+            self.clientToken = data.token;
+
             // If there is a client token available in the user's cookies,
             // hitting the API will validate the token and return the same one.
             // Otherwise, the API will create a new client token.
@@ -268,6 +270,17 @@ export default function YesGraphAPIConstructor() {
             return self.hitAPI("/client-token", "POST", data, self.utils.storeClientToken, 3, 1500).fail(function(error) {
                 var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Token Request Failed" : error.error;
                 self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true, true);
+            });
+        },
+        storeClientKey: function (data) {
+            self.inviteLink = data.inviteLink;
+            self.app = data.app_name;
+        },
+        validateClientKey: function (userData) {
+            var data = { userData: userData };
+            return self.hitAPI("/client-key/validate", "POST", data, self.utils.storeClientKey, 3, 1500).fail(function(error) {
+                var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Key Validation Failed" : error.error;
+                self.utils.error(errorMsg + ". Please see docs.yesgraph.com/v0/docs/create-client-keys or contact support@yesgraph.com", true, true);
             });
         },
         error: function (msg, fail, noLog, level) {

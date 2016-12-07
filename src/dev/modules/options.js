@@ -21,24 +21,11 @@ export var defaultParsedOptions = {
 };
 
 function parseStructuredOptions(options) {
-    var parsed = $.extend({}, defaultParsedOptions);
-
-    for (let section in defaultParsedOptions) {
-        options[section] = options[section] || {};
-
-        for (let opt in defaultParsedOptions[section]) {
-            if (options[section][opt] === undefined) {
-                parsed[section][opt] = defaultParsedOptions[section][opt];
-            } else {
-                parsed[section][opt] = options[section][opt];
-            }
-        }
-    }
-    return parsed;
+    return $.extend(true, {}, defaultParsedOptions, options);
 }
 
 function parseBasicOptions(options) {
-    var parsed = $.extend({}, defaultParsedOptions);
+    var parsed = $.extend(true, {}, defaultParsedOptions);
     for (let opt in options) {
         let val = options[opt];
         // Sort options in to the right sections
@@ -77,7 +64,7 @@ export function parseOptions(options) {
 export default function waitForOptions(optionsDeferred) {
     // Check the dom periodically until we find an
     // element with the id `yesgraph` to get options from,
-    // or until the .options() method is called.
+    // or until the .setOptions() method is called.
     var d = optionsDeferred || jQuery.Deferred();
     var target;
     var options;
