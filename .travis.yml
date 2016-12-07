@@ -26,7 +26,7 @@ before_script:
 notifications:
   slack:
     rooms:
-      - yesgraph:Ozpbr6IIOfkmUjw79ZPrOC6d#general
+      - yesgraph:Ozpbr6IIOfkmUjw79ZPrOC6d#eng
 
 # For SauceLabs
 env:
