@@ -46,7 +46,7 @@ export default function Model() {
     this.getWidgetOptions = function() {
         // Fetch the options saved on the superwidget dashboard
         var api = self.Superwidget.YesGraphAPI;
-        var OPTIONS_ENDPOINT
+        var OPTIONS_ENDPOINT;
         if (api.clientKey) {
             OPTIONS_ENDPOINT = '/apps/js/get-options';
         } else {
