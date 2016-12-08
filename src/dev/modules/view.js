@@ -1010,7 +1010,7 @@ function WidgetContainerFactory(view, settings, options) {
     // Create a button for each contact importing service, & instantiate an auth manager
     var btn, service, serviceId;
     for (serviceId in contactImportingServices) {
-        if (contactImportingServices.hasOwnProperty(serviceId)) {
+        if (contactImportingServices[serviceId].include) {
             service = contactImportingServices[serviceId];
             btn = generateContactImportBtn(btnText, btnCount, service);
             contactImportSection.append(btn);
