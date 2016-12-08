@@ -137,7 +137,7 @@ export default function View() {
     };
 
     this.fetchContactsFailed = function(resp) {
-        $(document).trigger(self.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
+        $(document).trigger(self.Superwidget.YesGraphAPI.events.CONTACT_IMPORT_FAILED, [resp]);
     };
 
     function Modal(options) {
@@ -587,8 +587,8 @@ export default function View() {
         return Boolean(b.name) - Boolean(a.name);
     };
 
-    this.toggleSelected = function(evt) {
-        var checkbox = $(evt.target).find("[type='checkbox']");
+    this.toggleSelected = function() {
+        var checkbox = $(this).find("input[type='checkbox']");
         checkbox.prop("checked", !checkbox.prop("checked"));
         self.updateModalSendBtn();
     };
@@ -760,9 +760,11 @@ export default function View() {
         });
 
         // "Select All" checkbox
-        $(document).on("click", ".yes-select-all-form [type='checkbox']", function(evt) {
+        $(document).on("click", ".yes-select-all-form *", function() {
+            var is_checked = self.modal.container.find(".yes-select-all").prop("checked");
             var checkboxes = self.modal.container.find(".yes-modal-body [type='checkbox']");
-            checkboxes.prop("checked", $(evt.target).prop("checked"));
+            checkboxes.prop("checked", !is_checked);
+            self.updateModalSendBtn();
         });
 
         // Contact checkboxes
@@ -823,8 +825,7 @@ export function generateViewListener(listener) {
 
 function WidgetContainerFactory(view, settings, options) {
     // This factory creates & returns the HTML for the Superwidget container as a jQuery collection
-
-    var targetSelector = options.target || ".yesgraph-invites";
+    var targetSelector = settings.target || ".yesgraph-invites";
     var JQUERY_VERSION = $.fn.jquery;
 
     var container = $("<div>", {

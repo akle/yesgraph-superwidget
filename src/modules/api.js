@@ -1,30 +1,21 @@
+import { requireScript } from "./utils.js";
+import logFailedClientTokenRequest from "./errors.js";
+import waitForOptions, { parseOptions, defaultParsedOptions } from "./options.js";
 import AnalyticsManager from "./analytics.js";
 import { SDK_VERSION, EVENTS, YESGRAPH_API_URL, RUNNING_LOCALLY, PUBLIC_RAVEN_DSN } from "./consts.js";
-import { waitForYesGraphTarget } from "./utils.js";
-
-var settings = {
-    app: null,
-    testmode: false,
-    target: ".yesgraph-invites",
-    contactImporting: true,
-    showContacts: true,
-    promoteMatchingDomain: false,
-    emailSending: true,
-    inviteLink: true,
-    shareBtns: true,
-    nolog: false
-};
 
 export default function YesGraphAPIConstructor() {
     this.SDK_VERSION = SDK_VERSION;
     this.isReady = false;
     this.hasLoadedSuperwidget = false;
-    this.settings = settings;
+    this.settings = defaultParsedOptions.settings;  // overwritten by custom options
     this.events = {
         INSTALLED_SDK: "installed.yesgraph.sdk"
     };
 
     var self = this;
+    var optionsDeferred;
+
     this.hitAPI = function (endpoint, method, data, done, maxTries, interval) {
         var d = jQuery.Deferred();
         if (typeof method !== "string") {
@@ -33,12 +24,14 @@ export default function YesGraphAPIConstructor() {
         } else if (method.toUpperCase() !== "GET") {
             data = JSON.stringify(data || {});
         }
+
+        var auth = self.clientKey ? "Bearer " + self.clientKey : "ClientToken " + self.clientToken;
         var ajaxSettings = {
             url: YESGRAPH_API_URL + endpoint,
             data: data,
             contentType: "application/json; charset=UTF-8",
             headers: {
-                "Authorization": "ClientToken " + self.clientToken
+                "Authorization": auth
             }
         };
 
@@ -90,19 +83,23 @@ export default function YesGraphAPIConstructor() {
     };
 
     this.rankContacts = function (rawContacts, done, maxTries, interval) {
-        var matchDomain = settings.promoteMatchingDomain,
+        var matchDomain = self.settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
         rawContacts.promote_matching_domain = domainVal;
         return self.hitAPI("/address-book", "POST", rawContacts, done, maxTries, interval);
     };
 
     this.getRankedContacts = function (done, maxTries, interval) {
-        var matchDomain = settings.promoteMatchingDomain,
+        var matchDomain = self.settings.promoteMatchingDomain,
             domainVal = isNaN(Number(matchDomain)) ? matchDomain : Number(matchDomain);
         return self.hitAPI("/address-book", "GET", {promote_matching_domain: domainVal}, done, maxTries, interval);
     };
 
     this.postSuggestedSeen = function (seenContacts, done, maxTries, interval) {
+        // Ensure that a `user_id` is included whenever clientKey auth is used
+        if (self.clientKey != undefined && seenContacts.entries) {  // jshint ignore:line
+            seenContacts.entries.forEach(entry => entry.user_id = entry.user_id || self.user.user_id);
+        }
         return self.hitAPI("/suggested-seen", "POST", seenContacts, done, maxTries, interval);
     };
 
@@ -123,51 +120,75 @@ export default function YesGraphAPIConstructor() {
         return self;
     };
 
-    this.install = function(options) {
-        var ravenDeferred = jQuery.Deferred(),
-            clientTokenDeferred = jQuery.Deferred();
+    this.setOptions = function(options) {
+        requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", () => {
+            if (!optionsDeferred || optionsDeferred.state() != "pending") {
+                optionsDeferred = jQuery.Deferred();
+            }
+            optionsDeferred.resolve(parseOptions(options));
+        });
+    };
 
+    this.install = function() {
+        var ravenDeferred = jQuery.Deferred();
+        var authDeferred = jQuery.Deferred();
+        if (!optionsDeferred || optionsDeferred.state() != "pending") {
+            optionsDeferred = jQuery.Deferred();
+        }
         self.AnalyticsManager = new AnalyticsManager(self);
         self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
 
-        waitForOptions(options).done(function(userData){
+        waitForOptions(optionsDeferred).done(options => {
+            // Save parsed options
+            self.app = options.auth.app;
+            self.clientKey = options.auth.clientKey;
+            self.settings = options.settings;
+            self.user = options.user;
+            self.inviteLink = options.user.inviteLink;
+
+            if (options.warnings.loadedDefaultParams) {
+                self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
+            }
+
             // Configure Sentry/Raven for error logging
             if (self.settings.nolog) {
                 ravenDeferred.resolve();
             } else {
                 self.utils.loadRaven()
-                    .fail(function(){
-                        self.AnalyticsManager.log(EVENTS.RAVEN_FAILED);
-                    }).always(function() {
-                        ravenDeferred.resolve(); // Fail gracefully no matter what
-                    });
+                    .fail(() => self.AnalyticsManager.log(EVENTS.RAVEN_FAILED))
+                    .always(ravenDeferred.resolve); // Fail gracefully no matter what
             }
-            self.utils.getOrFetchClientToken(userData).done(clientTokenDeferred.resolve);
+
+            // Get a clientToken if no clientKey was provided
+            if (self.clientKey) {
+                self.utils.validateClientKey(options.user).done(authDeferred.resolve);
+            } else {
+                self.utils.getOrFetchClientToken(options.user).done(authDeferred.resolve);                
+            }
         });
 
         // If the client token fails, log that to Sentry
-        if (self.Raven) {
-            clientTokenDeferred.fail(function(clientTokenResponse){
-                ravenDeferred.done(function(){
-                    self.Raven.captureBreadcrumb({
-                        timestamp: new Date(),
-                        message: "Client Token Request Failed",
-                        level: "error",
-                        data: clientTokenResponse
-                    });
-                    self.Raven.captureException(new Error("Client Token Request Failed"));
-                });
-            });
-        }
+        authDeferred.fail(clientTokenResponse => {
+            if (ravenDeferred.state() === "pending") {
+                ravenDeferred.done(() => logFailedClientTokenRequest(self.Raven, clientTokenResponse));
+            } else {
+                logFailedClientTokenRequest(self.Raven, clientTokenResponse);
+            }
+        });
 
-        jQuery.when(ravenDeferred, clientTokenDeferred).done(function(){
+        jQuery.when(ravenDeferred, authDeferred).done(function(){
             if (self.Raven) {
-                self.Raven.setTagsContext({
+                let context = {
                     sdk_version: self.SDK_VERSION,
-                    app: self.app,
-                    client_token: self.clientToken,
                     jquery_version: jQuery.fn.jquery
-                });
+                };
+                if (self.clientKey) {
+                    context.client_key = self.clientKey;
+                } else {
+                    context.client_token = self.clientToken;
+                    context.app = self.app;
+                }
+                self.Raven.setTagsContext(context);
                 self.Raven.captureBreadcrumb({
                     timestamp: new Date(),
                     message: "YesGraphAPI Is Ready"
@@ -176,41 +197,6 @@ export default function YesGraphAPIConstructor() {
             self.isReady = true;
             $(document).trigger(self.events.INSTALLED_SDK);
         });
-
-        function waitForOptions(options) {
-            var d1 = jQuery.Deferred();
-            var d2 = jQuery.Deferred();
-
-            if (typeof options === "object" && options) {
-                d1.resolve(options);
-            } else {
-                waitForYesGraphTarget().done(d1.resolve);
-            }
-
-            d1.done(function(options){
-                // Update the settings for the YesGraphAPI object
-                var userData = {};
-                var loadedDefaultParams = false;
-                var val;
-                self.app = self.app || options.app;
-                for (var opt in options) {
-                    val = options[opt];
-                    if (typeof val === "string" && val.slice(0,12) == "CURRENT_USER") {
-                        loadedDefaultParams = true;
-                    }
-                    if (self.settings.hasOwnProperty(opt)) {
-                        self.settings[opt] = val;
-                    } else {
-                        userData[opt] = val;
-                    }
-                }
-                if (loadedDefaultParams) {
-                    self.AnalyticsManager.log(EVENTS.LOAD_DEFAULT_PARAMS);
-                }
-                d2.resolve(userData);
-            });
-            return d2.promise();
-        }
     };
 
     this.utils = {
@@ -274,11 +260,12 @@ export default function YesGraphAPIConstructor() {
         },
         getOrFetchClientToken: function (userData) {
             var data = {
-                appName: self.app
+                appName: self.app,
+                userData: userData || undefined,
+                token: self.utils.readCookie('yg-client-token')
             };
-            data.userData = userData || undefined;
-            self.clientToken = self.utils.readCookie('yg-client-token');
-            data.token = self.clientToken;
+            self.clientToken = data.token;
+
             // If there is a client token available in the user's cookies,
             // hitting the API will validate the token and return the same one.
             // Otherwise, the API will create a new client token.
@@ -287,6 +274,18 @@ export default function YesGraphAPIConstructor() {
             return self.hitAPI("/client-token", "POST", data, self.utils.storeClientToken, 3, 1500).fail(function(error) {
                 var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Token Request Failed" : error.error;
                 self.utils.error(errorMsg + ". Please see docs.yesgraph.com/javascript-sdk or contact support@yesgraph.com", true, true);
+            });
+        },
+        storeClientKey: function (data) {
+            self.inviteLink = data.inviteLink;
+            self.app = data.app_name;
+            self.user.user_id = data.user_id;
+        },
+        validateClientKey: function (userData) {
+            var data = { userData: userData };
+            return self.hitAPI("/client-key/validate", "POST", data, self.utils.storeClientKey, 3, 1500).fail(function(error) {
+                var errorMsg = ((!error.error) || (error.error === "error")) ? "Client Key Validation Failed" : error.error;
+                self.utils.error(errorMsg + ". Please see docs.yesgraph.com/v0/docs/create-client-keys or contact support@yesgraph.com", true, true);
             });
         },
         error: function (msg, fail, noLog, level) {

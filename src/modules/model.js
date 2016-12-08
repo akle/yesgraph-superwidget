@@ -44,18 +44,17 @@ export default function Model() {
     };
 
     this.getWidgetOptions = function() {
-        // If the Superwidget already has options set, use those.
-        var existingOptions = self.Superwidget.options;
-        if (existingOptions) {
-            self.notifyGetWidgetOptionsSucceeded(existingOptions);
-            return;
-        }
-
-        // If no options have been set yet, get them from the API
+        // Fetch the options saved on the superwidget dashboard
         var api = self.Superwidget.YesGraphAPI;
-        var OPTIONS_ENDPOINT = '/apps/' + api.app + '/js/get-options';
+        var userEditable = Boolean(api.settings.optionsId != 'staff');
+        var OPTIONS_ENDPOINT;
+        if (api.clientKey) {
+            OPTIONS_ENDPOINT = '/apps/js/get-options';
+        } else {
+            OPTIONS_ENDPOINT = '/apps/' + api.app + '/js/get-options';
+        }
         // Retry failed request up to 3 times, waiting 1500ms between tries
-        api.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 1500)
+        api.hitAPI(OPTIONS_ENDPOINT, "GET", {"userEditable": userEditable}, null, 3, 1500)
             .done(self.notifyGetWidgetOptionsSucceeded)
             .fail(self.notifyGetWidgetOptionsFailed);
     };
@@ -65,8 +64,8 @@ export default function Model() {
         api.hitAPI("/send-email-invites", "POST", {
             recipients: recipients,
             test: TESTMODE || undefined,
-            invite_link: api.inviteLink
-
+            invite_link: api.inviteLink,
+            userEditable: api.settings.userEditable
         }).done(function (resp) {
             if (!resp.emails) {
                 self.notifyEmailSendingFailed(resp);
