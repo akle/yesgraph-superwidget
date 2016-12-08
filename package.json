@@ -66,12 +66,15 @@
     "presets": ["es2015"]
   },
   "scripts": {
-    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
-    "test:debug": "gulp lint; node_modules/karma/bin/karma start karma.conf.js;",
+    "test": "gulp build --local=false; node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
+    "test:local": "gulp build gulp lint; node_modules/karma/bin/karma start karma.conf.js;",
+    "test:debug": "gulp build --local=false; gulp lint; node_modules/karma/bin/karma start karma.conf.js;",
     "build": "gulp build",
+    "build:prod": "gulp build --local=false",
     "lint": "gulp lint",
     "clean": "gulp clean",
-    "start": "gulp build; echo \"Starting server at localhost:8080\"; python3 -m http.server 8080;"
+    "start": "gulp build; echo \"Starting server at localhost:8080\"; python3 -m http.server 8080;",
+    "start:prod": "gulp build --local=false; echo \"Starting server at localhost:8080\"; python3 -m http.server 8080;"
   },
   "repository": {
     "type": "git",

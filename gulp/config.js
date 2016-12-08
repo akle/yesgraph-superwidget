@@ -35,6 +35,9 @@ module.exports = {
         compileLess: {
             files: src.root + "/**/yesgraph-invites.less"
         },
+        consts: {
+            files: dest.root + "/**/yesgraph?(-invites)?(.min).js"
+        },
         lint: {
             files: src.dev + "/**/*.js",
             reportFile: root + "/jshint-report.txt",
