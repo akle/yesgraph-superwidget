@@ -36,7 +36,19 @@ module.exports = {
             files: src.root + "/**/yesgraph-invites.less"
         },
         consts: {
-            files: dest.root + "/**/yesgraph?(-invites)?(.min).js"
+            files: dest.root + "/**/yesgraph?(-invites)?(.min).js",
+            values: {
+                prod: {
+                    YESGRAPH_BASE_URL: "https://api.yesgraph.com",
+                    PUBLIC_RAVEN_DSN: "https://2f5e2b0beb494197b745f10f9fca6c9d@app.getsentry.com/79844",
+                    RUNNING_LOCALLY: false
+                },
+                dev: {
+                    YESGRAPH_BASE_URL: "http://localhost:5001",
+                    PUBLIC_RAVEN_DSN: "https://26657ee86c48458ea5c65e27de766715@app.getsentry.com/81078",
+                    RUNNING_LOCALLY: true
+                }
+            }
         },
         lint: {
             files: src.dev + "/**/*.js",
