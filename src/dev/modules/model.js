@@ -46,7 +46,7 @@ export default function Model() {
     this.getWidgetOptions = function() {
         // Fetch the options saved on the superwidget dashboard
         var api = self.Superwidget.YesGraphAPI;
-        var userEditable = api.settings.userEditable;
+        var userEditable = Boolean(api.settings.optionsId != 'staff');
         var OPTIONS_ENDPOINT;
         if (api.clientKey) {
             OPTIONS_ENDPOINT = '/apps/js/get-options';
@@ -64,8 +64,8 @@ export default function Model() {
         api.hitAPI("/send-email-invites", "POST", {
             recipients: recipients,
             test: TESTMODE || undefined,
-            invite_link: api.inviteLink
-
+            invite_link: api.inviteLink,
+            userEditable: api.settings.userEditable
         }).done(function (resp) {
             if (!resp.emails) {
                 self.notifyEmailSendingFailed(resp);

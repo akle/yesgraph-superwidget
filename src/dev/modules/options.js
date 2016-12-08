@@ -17,7 +17,7 @@ export var defaultParsedOptions = {
         emailSending: true,
         inviteLink: true,
         shareBtns: true,
-        userEditable: true,
+        optionsId: 'default',
         nolog: false
     },
     user: {},
