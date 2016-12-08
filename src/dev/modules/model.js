@@ -46,7 +46,7 @@ export default function Model() {
     this.getWidgetOptions = function() {
         // Fetch the options saved on the superwidget dashboard
         var api = self.Superwidget.YesGraphAPI;
-        var options_id = api.settings.optionsId;
+        var userEditable = api.settings.userEditable;
         var OPTIONS_ENDPOINT;
         if (api.clientKey) {
             OPTIONS_ENDPOINT = '/apps/js/get-options';
@@ -54,7 +54,7 @@ export default function Model() {
             OPTIONS_ENDPOINT = '/apps/' + api.app + '/js/get-options';
         }
         // Retry failed request up to 3 times, waiting 1500ms between tries
-        api.hitAPI(OPTIONS_ENDPOINT, "GET", {"options_id": options_id}, null, 3, 1500)
+        api.hitAPI(OPTIONS_ENDPOINT, "GET", {"userEditable": userEditable}, null, 3, 1500)
             .done(self.notifyGetWidgetOptionsSucceeded)
             .fail(self.notifyGetWidgetOptionsFailed);
     };
