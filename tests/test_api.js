@@ -29,6 +29,37 @@ describe('testAPI', function() {
         expect(window.YesGraphAPI).toBeDefined();
     });
 
+    describe("testClientKey", function() {
+        beforeAll(() => {
+            YesGraphAPI.clientKey = "some-client-key";
+            YesGraphAPI.user.user_id = "some-user-id";
+        });
+        afterAll(() => {
+            YesGraphAPI.clientKey = undefined;
+            YesGraphAPI.user.user_id = "some-user-id";
+        });
+
+        it('Should add a `user_id` when hittings /suggested-seen with a clientKey', (done) => {
+            expect(YesGraphAPI).toBeDefined();
+            var spy = spyOn(YesGraphAPI, "hitAPI").and.callFake((endpoint, _, data) => {
+                // Check that user_ids were added to the entries
+                if (endpoint === "/suggested-seen") {
+                    data.entries.forEach(entry => expect(entry.user_id).toBeDefined());
+                    done();
+                }
+            });
+
+            // POST some entries without user_ids
+            var entries = [
+                { "emails": ["test1@email.com"] },
+                { "emails": ["test2@email.com"] },
+                { "emails": ["test3@email.com"] },
+            ];
+            YesGraphAPI.postSuggestedSeen({ entries: entries })
+        });
+
+    });
+
     describe("testInstall", function() {
         it('Should load YesGraphAPI.Raven', function() {
             // After Raven loads automatically, remove it and

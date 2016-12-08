@@ -87,9 +87,6 @@ export default function Model() {
     };
 
     this.sawSuggestions = function(suggestedContacts) {
-        suggestedContacts.forEach(entry => {
-            entry.user_id = self.Superwidget.YesGraphAPI.user.user_id;
-        });
         self.Superwidget.YesGraphAPI.postSuggestedSeen({ entries: suggestedContacts });
     };
 

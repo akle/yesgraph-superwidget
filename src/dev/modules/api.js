@@ -96,6 +96,10 @@ export default function YesGraphAPIConstructor() {
     };
 
     this.postSuggestedSeen = function (seenContacts, done, maxTries, interval) {
+        // Ensure that a `user_id` is included whenever clientKey auth is used
+        if (self.clientKey != undefined && seenContacts.entries) {  // jshint ignore:line
+            seenContacts.entries.forEach(entry => entry.user_id = entry.user_id || self.user.user_id);
+        }
         return self.hitAPI("/suggested-seen", "POST", seenContacts, done, maxTries, interval);
     };
 
