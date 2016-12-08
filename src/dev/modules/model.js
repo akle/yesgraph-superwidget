@@ -46,6 +46,7 @@ export default function Model() {
     this.getWidgetOptions = function() {
         // Fetch the options saved on the superwidget dashboard
         var api = self.Superwidget.YesGraphAPI;
+        var userEditable = Boolean(api.settings.optionsId != 'staff');
         var OPTIONS_ENDPOINT;
         if (api.clientKey) {
             OPTIONS_ENDPOINT = '/apps/js/get-options';
@@ -53,7 +54,7 @@ export default function Model() {
             OPTIONS_ENDPOINT = '/apps/' + api.app + '/js/get-options';
         }
         // Retry failed request up to 3 times, waiting 1500ms between tries
-        api.hitAPI(OPTIONS_ENDPOINT, "GET", {}, null, 3, 1500)
+        api.hitAPI(OPTIONS_ENDPOINT, "GET", {"userEditable": userEditable}, null, 3, 1500)
             .done(self.notifyGetWidgetOptionsSucceeded)
             .fail(self.notifyGetWidgetOptionsFailed);
     };
@@ -63,8 +64,8 @@ export default function Model() {
         api.hitAPI("/send-email-invites", "POST", {
             recipients: recipients,
             test: TESTMODE || undefined,
-            invite_link: api.inviteLink
-
+            invite_link: api.inviteLink,
+            userEditable: api.settings.userEditable
         }).done(function (resp) {
             if (!resp.emails) {
                 self.notifyEmailSendingFailed(resp);
