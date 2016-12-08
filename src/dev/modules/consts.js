@@ -14,30 +14,13 @@ var EVENTS = {
     INVITES_SENT: "Invite(s) Sent",
     CLIPBOARD_FAILED: "Clipboard Failed to Load"
 };
-var YESGRAPH_BASE_URL;
-var YESGRAPH_API_URL;
-var PUBLIC_RAVEN_DSN;
-var RUNNING_LOCALLY;
-
-// Initialize in dev-mode as appropriate
-if (["localhost", "lvh.me"].indexOf(window.location.hostname) !== -1 && window.document.title === 'YesGraph') {
-    YESGRAPH_BASE_URL = "http://localhost:5001";
-    PUBLIC_RAVEN_DSN = "https://26657ee86c48458ea5c65e27de766715@app.getsentry.com/81078";
-    RUNNING_LOCALLY = true;
-} else {
-    YESGRAPH_BASE_URL = "https://api.yesgraph.com";
-    PUBLIC_RAVEN_DSN = "https://2f5e2b0beb494197b745f10f9fca6c9d@app.getsentry.com/79844";
-    RUNNING_LOCALLY = false;
-}
-YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0';
+var YESGRAPH_BASE_URL = "__CONST_YESGRAPH_BASE_URL__";
+var YESGRAPH_API_URL = YESGRAPH_BASE_URL + '/v0';
+var PUBLIC_RAVEN_DSN = "__CONST_PUBLIC_RAVEN_DSN__";
+var RUNNING_LOCALLY = "__CONST_RUNNING_LOCALLY__" === "true" ? true : false;
 
 // Check the protocol used by the window
-var PROTOCOL;
-if (window.location.protocol.indexOf("http") !== -1) {
-    PROTOCOL = window.location.protocol;
-} else {
-    PROTOCOL = "http:";
-}
+var PROTOCOL = window.location.protocol.startsWith("http") ? window.location.protocol : "http:";
 
 export {
     SUPERWIDGET_VERSION,

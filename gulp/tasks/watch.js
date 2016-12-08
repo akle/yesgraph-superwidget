@@ -5,7 +5,7 @@ var config = require("../config");
 var sequence = require("run-sequence").use(gulp);
 
 gulp.task("_js", function(done) {
-    return sequence("bundle", "version", "minify", done);
+    return sequence("bundle", "consts", "version", "minify", done);
 });
 
 gulp.task("watch", function(){

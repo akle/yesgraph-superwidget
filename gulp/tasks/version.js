@@ -25,7 +25,7 @@ var versions = config.version;
  * `$ gulp version --update:minor superwidget --update:patch css`
  */
 
-gulp.task("version", function() {
+gulp.task("version", ["consts"], function() {
     setUpdateType();
     var stream_;
     var streams = merge();
