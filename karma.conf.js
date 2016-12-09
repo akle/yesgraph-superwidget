@@ -8,11 +8,9 @@ module.exports = function(config) {
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
 
-
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jasmine-jquery', 'jasmine', ],
-
+    frameworks: ['jasmine-jquery', 'jasmine', 'browserify'],
 
     // list of files / patterns to load in the browser
     files: [
@@ -21,35 +19,20 @@ module.exports = function(config) {
       // jquery instance that comes with karma-jasmine-jquery)
       'http://code.jquery.com/jquery-2.1.1.min.js',
       'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
-      'tests/fixtures.html',
-      'tests/*.js',
-      'dist/dev/yesgraph-invites.js',
-      // 'dist/dev/yesgraph-invites.css',
-      //'tests/*.js', 
-      //'tests/*.html', 
-    // Source and spec files
-    // Fixtures
-
-//    {
-//      pattern: 'tests/*.html',
-//      watched: false,
-//      served: true,
-//      included: false
-//    }
-      
+      'tests/fixtures/*.html',
+      'tests/master.js',
+      'dist/dev/yesgraph-invites.js'      
     ],
-
 
     // list of files to exclude
-    exclude: [
-    ],
-
+    exclude: [],
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'tests/fixtures.html': ['html2js'],
-      'src/dev/*.js': ['coverage']
+      'tests/fixtures/*.html': ['html2js'],
+      'src/dev/*.js': ['coverage'],
+      'tests/tests.js': ['browserify']
     },
 
     // test results reporter to use
@@ -84,6 +67,7 @@ module.exports = function(config) {
       'karma-phantomjs-launcher',
       'karma-jasmine-jquery',
       'karma-jasmine',
+      'karma-browserify',
       'karma-coverage',
       'karma-chrome-launcher',
       'karma-html2js-preprocessor',
@@ -105,7 +89,7 @@ module.exports = function(config) {
             base: 'Chrome',
             flags: ['--no-sandbox']
         },
-        'PhantomJS_custom': {
+        PhantomJS_custom: {
             base: 'PhantomJS',
             options: {
                 windowName: 'window',
@@ -146,7 +130,7 @@ module.exports = function(config) {
             'karma-safari-launcher',
             ];
         config.preprocessors = {
-            'tests/fixtures.html': ['html2js'],
+            'tests/fixtures/*.html': ['html2js'],
         };
     }
     else if (process.env.TRAVIS) {

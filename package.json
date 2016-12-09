@@ -41,6 +41,7 @@
     "jasmine-jquery": "^2.1.1",
     "jshint": "^2.9.2",
     "karma": "^0.13.22",
+    "karma-browserify": "^5.1.0",
     "karma-chrome-launcher": "^1.0.1",
     "karma-coverage": "^1.0.0",
     "karma-coveralls": "^1.1.2",
@@ -63,10 +64,12 @@
     "yargs": "^4.8.1"
   },
   "babel": {
-    "presets": ["es2015"]
+    "presets": [
+      "es2015"
+    ]
   },
   "scripts": {
-    "test": "gulp build --local=false; node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
+    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run; gulp lint;",
     "test:local": "gulp build gulp lint; node_modules/karma/bin/karma start karma.conf.js;",
     "test:debug": "gulp build --local=false; gulp lint; node_modules/karma/bin/karma start karma.conf.js;",
     "build": "gulp build",
