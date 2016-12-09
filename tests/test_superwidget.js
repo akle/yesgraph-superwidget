@@ -355,6 +355,48 @@ describe('testSuperwidgetUI', function() {
             expect(suggestedRows.length).toEqual(expectedSuggestionCount);
         });
 
+        it('Should allow selecting contacts', function() {
+            // Generate dummy contact entries to load into the widget
+            const personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
+            const contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
+            const selectAll = widget.modal.container.find("input.yes-select-all");
+            const contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row");
+
+            widget.modal.loading();
+            widget.modal.loadContacts(contacts);
+
+            // Check that select-all works
+            expect(selectAll.prop("checked")).toBeFalsy();
+            selectAll.click();
+            contactRows.each(function() {
+                let checkbox = $(this).find("input[type='checkbox']");
+                expect(checkbox.prop("checked")).toBeTruthy();
+            });
+            selectAll.click();
+            contactRows.each(function() {
+                let checkbox = $(this).find("input[type='checkbox']");
+                expect(checkbox.prop("checked")).toBeFalsy();
+            });
+
+            // Check that selecting & deselecting single rows works
+            contactRows.each(function() {
+                let row = $(this), checkbox = row.find("input[type='checkbox']");
+                // Clicking the row should select/deselect the contact
+                expect(checkbox.prop("checked")).toBeFalsy();
+                row.click();
+                expect(checkbox.prop("checked")).toBeTruthy();
+                row.click();
+                expect(checkbox.prop("checked")).toBeFalsy();
+
+                // Clicking the row's checkbox should select/deselect the contact
+                expect(checkbox.prop("checked")).toBeFalsy();
+                checkbox.click();
+                expect(checkbox.prop("checked")).toBeTruthy();
+                checkbox.click();
+                expect(checkbox.prop("checked")).toBeFalsy();
+            });
+        });
+
         it('Should correctly handle contacts with the same name', function() {
             var emails = ["jane.doe@gmail.com", "jdoe@yahoo.net",
                           "jane.doe@about.me", "jdoe@hotmail.com"];

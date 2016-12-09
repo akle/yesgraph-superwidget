@@ -587,10 +587,13 @@ export default function View() {
         return Boolean(b.name) - Boolean(a.name);
     };
 
-    this.toggleSelected = function() {
-        var checkbox = $(this).find("input[type='checkbox']");
-        checkbox.prop("checked", !checkbox.prop("checked"));
-        self.updateModalSendBtn();
+    this.toggleSelected = function(evt) {
+        var target = $(evt.target);
+        if (!target.is("input[type='checkbox']")) {
+            var checkbox = $(this).find("input[type='checkbox']");
+            checkbox.prop("checked", !checkbox.prop("checked"));
+            self.updateModalSendBtn();            
+        }
     };
 
     this.applyStyling = function() {
@@ -1009,6 +1012,9 @@ function WidgetContainerFactory(view, settings, options) {
 
     // Create a button for each contact importing service, & instantiate an auth manager
     var btn, service, serviceId;
+    if (options.settings.oauthServices.length <= 1) {
+        btnText = (options.widgetCopy.contactImportBtnCta || "Find friends") + " with ";
+    }
     for (serviceId in contactImportingServices) {
         if (contactImportingServices[serviceId].include) {
             service = contactImportingServices[serviceId];
