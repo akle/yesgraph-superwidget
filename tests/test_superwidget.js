@@ -357,10 +357,10 @@ describe('testSuperwidgetUI', function() {
 
         it('Should allow selecting contacts', function() {
             // Generate dummy contact entries to load into the widget
-            const personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
-            const contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
-            const selectAll = widget.modal.container.find("input.yes-select-all");
-            const contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row");
+            var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
+            var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
+            var selectAll = widget.modal.container.find("input.yes-select-all");
+            var contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row");
 
             widget.modal.loading();
             widget.modal.loadContacts(contacts);
@@ -369,18 +369,18 @@ describe('testSuperwidgetUI', function() {
             expect(selectAll.prop("checked")).toBeFalsy();
             selectAll.click();
             contactRows.each(function() {
-                let checkbox = $(this).find("input[type='checkbox']");
+                var checkbox = $(this).find("input[type='checkbox']");
                 expect(checkbox.prop("checked")).toBeTruthy();
             });
             selectAll.click();
             contactRows.each(function() {
-                let checkbox = $(this).find("input[type='checkbox']");
+                var checkbox = $(this).find("input[type='checkbox']");
                 expect(checkbox.prop("checked")).toBeFalsy();
             });
 
             // Check that selecting & deselecting single rows works
             contactRows.each(function() {
-                let row = $(this), checkbox = row.find("input[type='checkbox']");
+                var row = $(this), checkbox = row.find("input[type='checkbox']");
                 // Clicking the row should select/deselect the contact
                 expect(checkbox.prop("checked")).toBeFalsy();
                 row.click();
