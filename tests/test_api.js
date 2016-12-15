@@ -130,6 +130,7 @@ describe('testAPI', function() {
         it('Should use a clientKey if available', function(done) {
             var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings) {
                 expect(settings.headers.Authorization).toEqual("Bearer " + YesGraphAPI.clientKey);
+                YesGraphAPI.clientKey = undefined;
                 done();
             });
             YesGraphAPI.clientKey = "TEST_CLIENT_KEY";
