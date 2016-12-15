@@ -101,7 +101,7 @@ describe('testSuperwidgetUI', function() {
         });
         it('Should load invite link section', function() {
             expect(widget.container.find(".yes-invite-link-section").length).toEqual(1);
-            expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com?foo=bar");
+            expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com/referrals?referral_code=1234");
         });
         it('Should load share button section', function() {
             expect(widget.container.find(".yes-share-btn-section").length).toEqual(1);
@@ -135,18 +135,18 @@ describe('testSuperwidgetUI', function() {
 
     describe("testOAuthUtils", function() {
         it("Should parse URL params", function() {
-            var url = "www.example.com/?foo=bar";
+            var url = "www.example.com/referrals?referral_code=1234";
+            expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toEqual("1234");
+
+            url = "www.example.com/referrals/#referral_code=1234";
+            expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toEqual("1234");
+
+            url = "www.example.com/referrals?referral_code=1234#foo=bar";
+            expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toEqual("1234");
             expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
 
-            url = "www.example.com/#foo=bar";
-            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
-
-            url = "www.example.com/?foo=bar#qux=quux";
-            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
-            expect(YesGraphAPI.utils.getUrlParam(url, "qux")).toEqual("quux");
-
-            url = "www.example.com";
-            expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toBeNull();
+            url = "www.example.com/referrals";
+            expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toBeNull();
         });
     });
 
@@ -309,13 +309,16 @@ describe('testSuperwidgetUI', function() {
 
     describe('testContactsModal', function(){
 
+        beforeEach(function() {
+            widget.modal.loading();
+        });
+
         it('Should load contacts modal', function() {
             expect(widget.modal).toBeDefined();
             expect(widget.modal.container).toBeDefined();
         });
 
         it('Should handle empty contacts list', function() {
-            widget.modal.loading();
             widget.modal.loadContacts([]);
             var modalSendBtn = widget.modal.container.find(".yes-modal-submit-btn");
             var modalTitle = widget.modal.container.find(".yes-modal-title");
@@ -330,7 +333,6 @@ describe('testSuperwidgetUI', function() {
             var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
             var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
 
-            widget.modal.loading();
             widget.modal.loadContacts(contacts, true); // noSuggestions = true
             var totalRows = widget.modal.container.find(".yes-contact-row");
             var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
@@ -347,7 +349,6 @@ describe('testSuperwidgetUI', function() {
             var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
             var expectedSuggestionCount = 5;
 
-            widget.modal.loading();
             widget.modal.loadContacts(contacts);
             var totalRows = widget.modal.container.find(".yes-contact-row");
             var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
@@ -357,30 +358,25 @@ describe('testSuperwidgetUI', function() {
 
         it('Should allow selecting contacts', function() {
             // Generate dummy contact entries to load into the widget
-            var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
+            var personCount = 3, emailsPerPerson = 1, invalidEntryCount = 0;
             var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
             var selectAll = widget.modal.container.find("input.yes-select-all");
-            var contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row");
+            var contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row").toArray();
 
-            widget.modal.loading();
             widget.modal.loadContacts(contacts);
 
             // Check that select-all works
             expect(selectAll.prop("checked")).toBeFalsy();
             selectAll.click();
-            contactRows.each(function() {
-                var checkbox = $(this).find("input[type='checkbox']");
-                expect(checkbox.prop("checked")).toBeTruthy();
-            });
+            expect(allRowsAreSelected(contactRows)).toEqual(true);
             selectAll.click();
-            contactRows.each(function() {
-                var checkbox = $(this).find("input[type='checkbox']");
-                expect(checkbox.prop("checked")).toBeFalsy();
-            });
+            expect(noRowsAreSelected(contactRows)).toEqual(true);
 
             // Check that selecting & deselecting single rows works
-            contactRows.each(function() {
-                var row = $(this), checkbox = row.find("input[type='checkbox']");
+            contactRows.forEach(function(row) {
+                row = $(row);
+                var checkbox = row.find("input[type='checkbox']");
+
                 // Clicking the row should select/deselect the contact
                 expect(checkbox.prop("checked")).toBeFalsy();
                 row.click();
@@ -389,7 +385,6 @@ describe('testSuperwidgetUI', function() {
                 expect(checkbox.prop("checked")).toBeFalsy();
 
                 // Clicking the row's checkbox should select/deselect the contact
-                expect(checkbox.prop("checked")).toBeFalsy();
                 checkbox.click();
                 expect(checkbox.prop("checked")).toBeTruthy();
                 checkbox.click();
@@ -410,7 +405,6 @@ describe('testSuperwidgetUI', function() {
                     emails: emails.slice(2)
                 }
             ];
-            widget.modal.loading();
             widget.modal.loadContacts(contacts);
             var contactRows = widget.modal.container.find(".yes-contact-row");
 
@@ -431,7 +425,6 @@ describe('testSuperwidgetUI', function() {
             // Open the contacts modal w/ suggestions
             var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
             var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
-            widget.modal.loading();
             widget.modal.loadContacts(contacts);
 
             // Check that analytics were logged
@@ -470,7 +463,8 @@ describe('testSuperwidgetUI', function() {
             invitesSentAnalyticsEvent = undefined;
 
             // Send invites from the contacts modal
-            widget.modal.container.find("[type='checkbox']").prop("checked", true);
+            widget.modal.loadContacts([{emails: ["test@email.com"]}]);
+            widget.modal.container.find(".yes-contact-row input[type='checkbox']").prop("checked", true);
             widget.modal.container.find(".yes-modal-submit-btn").click();
             expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
             expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
@@ -511,4 +505,22 @@ function generateRandomString(len){
         string += chars[randint];
     }
     return string;
+}
+
+function allRowsAreSelected(contactRows) {
+    var i, checkbox;
+    for (i=0; i < contactRows.length; i++) {
+        checkbox = $(contactRows[i]).find("input[type='checkbox']");
+        if (!checkbox.prop("checked")) return false;
+    }
+    return true;
+}
+
+function noRowsAreSelected(contactRows) {
+    var i, checkbox;
+    for (i=0; i < contactRows.length; i++) {
+        checkbox = $(contactRows[i]).find("input[type='checkbox']");
+        if (checkbox.prop("checked")) return false;
+    }
+    return true;
 }
