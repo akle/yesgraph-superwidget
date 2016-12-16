@@ -20,7 +20,7 @@ var PUBLIC_RAVEN_DSN = "__CONST_PUBLIC_RAVEN_DSN__";
 var RUNNING_LOCALLY = "__CONST_RUNNING_LOCALLY__" === "true" ? true : false;
 
 // Check the protocol used by the window
-var PROTOCOL = window.location.protocol.startsWith("http") ? window.location.protocol : "http:";
+var PROTOCOL = (window.location.protocol.slice(0,4) == "http") ? window.location.protocol : "http:";
 
 export {
     SUPERWIDGET_VERSION,

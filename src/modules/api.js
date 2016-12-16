@@ -24,17 +24,17 @@ export default function YesGraphAPIConstructor() {
         } else if (method.toUpperCase() !== "GET") {
             data = JSON.stringify(data || {});
         }
-
-        var auth = self.clientKey ? "Bearer " + self.clientKey : "ClientToken " + self.clientToken;
         var ajaxSettings = {
             url: YESGRAPH_API_URL + endpoint,
             data: data,
-            contentType: "application/json; charset=UTF-8",
-            headers: {
-                "Authorization": auth
-            }
+            contentType: "application/json; charset=UTF-8"
         };
-
+        // Add authorization headers if we have a ClientKey or ClientToken
+        if (self.clientKey) {
+            ajaxSettings.headers = { Authorization: "Bearer " + self.clientKey };
+        } else if (self.clientToken) {
+            ajaxSettings.headers = { Authorization: "ClientToken " + self.clientToken };
+        }
         // In jQuery 1.9+, the jQuery.ajax "type" is changed to "method"
         if (jQuery.fn.jquery < "1.9") {
             ajaxSettings.type = method;
