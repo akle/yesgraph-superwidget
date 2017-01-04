@@ -225,20 +225,30 @@ describe('testSuperwidgetUI', function() {
             }()).toEqual(0); // No valid recipients should be returned
         });
 
+        it("Should handle multiple email subdomains", function() {
+            var inputField = widget.container.find(".yes-manual-input-field");
+            inputField.val("valid@email.co.uk");
+
+            expect(function(){
+                var recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
+                return recipients[0].email;
+            }()).toEqual("valid@email.co.uk");
+        })
+
         it("Should identify multiple email recipients", function() {
             var inputField = widget.container.find(".yes-manual-input-field");
-            var emails = ["Valid Email 1 <valid+1@email.com>", "valid+2@email.com", "Valid Email 3 <valid+3@email.com>"];
+            var emails = ["Valid Email 1 <valid+1@email.com>", "valid+2@email.co.uk", "Valid Email 3 <valid+3@email.com>"];
             var recipients;
 
             inputField.val(emails.join(",")); // separated by comma
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
             recipients.forEach(function(recipient){
-                if (recipient.email === "valid+1@email.com") {
+                if (recipient.email === emails[0]) {
                     expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === "valid+2@email.com") {
+                } else if (recipient.email === emails[1]) {
                     expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === "valid+3@email.com") {
+                } else if (recipient.email === emails[2]) {
                     expect(recipient.name).toEqual("Valid Email 3");
                 } else {
                     expect(true).toEqual(false);  // fail the test
@@ -249,11 +259,11 @@ describe('testSuperwidgetUI', function() {
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
             recipients.forEach(function(recipient){
-                if (recipient.email === "valid+1@email.com") {
+                if (recipient.email === emails[0]) {
                     expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === "valid+2@email.com") {
+                } else if (recipient.email === emails[1]) {
                     expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === "valid+3@email.com") {
+                } else if (recipient.email === emails[2]) {
                     expect(recipient.name).toEqual("Valid Email 3");
                 } else {
                     expect(true).toEqual(false);  // fail the test
@@ -264,11 +274,11 @@ describe('testSuperwidgetUI', function() {
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
             recipients.forEach(function(recipient){
-                if (recipient.email === "valid+1@email.com") {
+                if (recipient.email === emails[0]) {
                     expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === "valid+2@email.com") {
+                } else if (recipient.email === emails[1]) {
                     expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === "valid+3@email.com") {
+                } else if (recipient.email === emails[2]) {
                     expect(recipient.name).toEqual("Valid Email 3");
                 } else {
                     expect(true).toEqual(false);  // fail the test
@@ -279,11 +289,11 @@ describe('testSuperwidgetUI', function() {
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
             recipients.forEach(function(recipient){
-                if (recipient.email === "valid+1@email.com") {
+                if (recipient.email === emails[0]) {
                     expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === "valid+2@email.com") {
+                } else if (recipient.email === emails[1]) {
                     expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === "valid+3@email.com") {
+                } else if (recipient.email === emails[2]) {
                     expect(recipient.name).toEqual("Valid Email 3");
                 } else {
                     expect(true).toEqual(false);  // fail the test
@@ -294,11 +304,11 @@ describe('testSuperwidgetUI', function() {
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
             expect(recipients.length).toEqual(emails.length);
             recipients.forEach(function(recipient){
-                if (recipient.email === "valid+1@email.com") {
+                if (recipient.email === emails[0]) {
                     expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === "valid+2@email.com") {
+                } else if (recipient.email === emails[1]) {
                     expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === "valid+3@email.com") {
+                } else if (recipient.email === emails[2]) {
                     expect(recipient.name).toEqual("Valid Email 3");
                 } else {
                     expect(true).toEqual(false);  // fail the test
