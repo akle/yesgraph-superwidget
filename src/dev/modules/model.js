@@ -61,11 +61,12 @@ export default function Model() {
 
     this.sendEmailInvites = function(recipients) {
         var api = self.Superwidget.YesGraphAPI;
+        var userEditable = Boolean(api.settings.optionsId != 'staff');
         api.hitAPI("/send-email-invites", "POST", {
             recipients: recipients,
             test: TESTMODE || undefined,
             invite_link: api.inviteLink,
-            userEditable: api.settings.userEditable
+            userEditable: userEditable,
         }).done(function (resp) {
             if (!resp.emails) {
                 self.notifyEmailSendingFailed(resp);
