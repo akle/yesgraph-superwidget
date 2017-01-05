@@ -14,7 +14,7 @@ export default function YesGraphAPIConstructor() {
     };
 
     var self = this;
-    var optionsDeferred;
+    this._optionsDeferred = null;
 
     this.hitAPI = function (endpoint, method, data, done, maxTries, interval) {
         var d = jQuery.Deferred();
@@ -122,23 +122,26 @@ export default function YesGraphAPIConstructor() {
 
     this.setOptions = function(options) {
         requireScript("jQuery", "https://code.jquery.com/jquery-2.1.1.min.js", () => {
-            if (!optionsDeferred || optionsDeferred.state() != "pending") {
-                optionsDeferred = jQuery.Deferred();
+            if (!self._optionsDeferred || self._optionsDeferred.state() != "pending") {
+                self._optionsDeferred = jQuery.Deferred();
             }
-            optionsDeferred.resolve(parseOptions(options));
+            self._optionsDeferred.resolve(parseOptions(options));
         });
     };
 
     this.install = function() {
         var ravenDeferred = jQuery.Deferred();
         var authDeferred = jQuery.Deferred();
-        if (!optionsDeferred || optionsDeferred.state() != "pending") {
-            optionsDeferred = jQuery.Deferred();
+        if (!self._optionsDeferred) {
+            self._optionsDeferred = jQuery.Deferred();
         }
         self.AnalyticsManager = new AnalyticsManager(self);
         self.AnalyticsManager.log(EVENTS.LOAD_JS_SDK);
 
-        waitForOptions(optionsDeferred).done(options => {
+        waitForOptions(self._optionsDeferred).done(options => {
+            // Reset the optionsDeferred
+            self._optionsDeferred = undefined;
+
             // Save parsed options
             self.app = options.auth.app;
             self.clientKey = options.auth.clientKey;
