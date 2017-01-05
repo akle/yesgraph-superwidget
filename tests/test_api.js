@@ -124,6 +124,29 @@ describe('testAPI', function() {
             window.YesGraphAPI.noConflict();
             window.YesGraphAPI = oldAPI;
         });
+
+        it('Should load properly if `setOptions` is called before `install`', function(done) {
+            // Remove the old instance of YesGraph
+            var oldAPI = YesGraphAPI.noConflict();
+            expect(window.YesGraphAPI).not.toBeDefined();
+
+            // Create a new instance & set options before installing
+            window.YesGraphAPI = new YesGraphAPIConstructor();
+            YesGraphAPI.setOptions({ auth: { app: oldAPI.app } });
+            YesGraphAPI.install();
+
+            // Check that it succesfully installed          
+            var interval = setInterval(function(){
+                if (YesGraphAPI.isReady) {
+                    clearInterval(interval);
+                    done();
+                }
+            }, 100);
+
+            // Cleanup! We should replace the original YesGraphAPI object
+            // because the Superwidget is associated with that instance
+            window.YesGraphAPI = oldAPI;
+        });
     });
 
     describe("testEndpoints", function() {

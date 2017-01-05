@@ -242,78 +242,44 @@ describe('testSuperwidgetUI', function() {
 
             inputField.val(emails.join(",")); // separated by comma
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
-            expect(recipients.length).toEqual(emails.length);
-            recipients.forEach(function(recipient){
-                if (recipient.email === emails[0]) {
-                    expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === emails[1]) {
-                    expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === emails[2]) {
-                    expect(recipient.name).toEqual("Valid Email 3");
-                } else {
-                    expect(true).toEqual(false);  // fail the test
-                }
-            });
+            validateRecipientParsing(recipients, emails)
 
             inputField.val(emails.join(";")); // separated by semicolon
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
-            expect(recipients.length).toEqual(emails.length);
-            recipients.forEach(function(recipient){
-                if (recipient.email === emails[0]) {
-                    expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === emails[1]) {
-                    expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === emails[2]) {
-                    expect(recipient.name).toEqual("Valid Email 3");
-                } else {
-                    expect(true).toEqual(false);  // fail the test
-                }
-            });
+            validateRecipientParsing(recipients, emails)
 
             inputField.val(emails.join(" ")); // separated by space
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
-            expect(recipients.length).toEqual(emails.length);
-            recipients.forEach(function(recipient){
-                if (recipient.email === emails[0]) {
-                    expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === emails[1]) {
-                    expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === emails[2]) {
-                    expect(recipient.name).toEqual("Valid Email 3");
-                } else {
-                    expect(true).toEqual(false);  // fail the test
-                }
-            });
+            validateRecipientParsing(recipients, emails)
 
             inputField.val(emails.join("\n")); // separated by newline
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
-            expect(recipients.length).toEqual(emails.length);
-            recipients.forEach(function(recipient){
-                if (recipient.email === emails[0]) {
-                    expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === emails[1]) {
-                    expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === emails[2]) {
-                    expect(recipient.name).toEqual("Valid Email 3");
-                } else {
-                    expect(true).toEqual(false);  // fail the test
-                }
-            });
+            validateRecipientParsing(recipients, emails)
 
             inputField.val(emails.join("\n, ")); // combined delimiters
             recipients = window.YesGraphAPI.utils.getSelectedRecipients(inputField);
-            expect(recipients.length).toEqual(emails.length);
-            recipients.forEach(function(recipient){
-                if (recipient.email === emails[0]) {
-                    expect(recipient.name).toEqual("Valid Email 1");
-                } else if (recipient.email === emails[1]) {
-                    expect(recipient.name).not.toBeDefined();
-                } else if (recipient.email === emails[2]) {
-                    expect(recipient.name).toEqual("Valid Email 3");
-                } else {
-                    expect(true).toEqual(false);  // fail the test
-                }
-            });
+            validateRecipientParsing(recipients, emails)
+
+            function validateRecipientParsing(recipients, emails) {
+                expect(recipients.length).toEqual(emails.length);
+                recipients.forEach(function(recipient){
+                    switch (recipient.email) {
+                        case "valid+1@email.com":
+                            expect(recipient.name).toEqual("Valid Email 1");
+                            break;
+                        case "valid+2@email.com":
+                            expect(recipient.name).not.toBeDefined();
+                            break;
+                        case "valid+3@email.com":
+                            expect(recipient.name).toEqual("Valid Email 3");
+                            break;
+                        default:
+                            console.log("Email parsing failed for:", recipient.email, recipient.name);
+                            expect(emails.indexOf(recipient.email)).not.toEqual(-1);  // fail the test
+                    }
+                });
+            }
+
         });
     });
 
