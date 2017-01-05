@@ -24,11 +24,11 @@ var PROD_OR_DEV;
 
 gulp.task("consts", function() {
     PROD_OR_DEV = isLocalBuild() ? "dev" : "prod";
+    gutil.log("Bulding for ", PROD_OR_DEV);
     return gulp.src(config.tasks.consts.files, {base: config.src.root})
         .pipe(debug({ title: "consts" }))
         .pipe(replace(/__CONST_(\w*)__/g, constReplacer))
         .pipe(gulp.dest(config.dest.root));
-
 });
 
 function isLocalBuild() {

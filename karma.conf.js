@@ -32,7 +32,12 @@ module.exports = function(config) {
     preprocessors: {
       'tests/fixtures/*.html': ['html2js'],
       'src/dev/*.js': ['coverage'],
-      'tests/tests.js': ['browserify']
+      'tests/master.js': ['browserify']
+    },
+
+    browserify: {
+      debug: true,
+      presets: ['es2015']
     },
 
     // test results reporter to use

@@ -19,6 +19,7 @@ module.exports = function runTests() {
                 widget = window.YesGraphAPI.Superwidget;
                 window.YesGraphAPI.isTestMode(true);
                 window.YesGraphAPI.Raven = undefined; // don't log sentry errors
+                expect(YesGraphAPI.hasLoadedSuperwidget).toEqual(true);
                 done();
             }
         });
@@ -311,13 +312,17 @@ module.exports = function runTests() {
 
         describe('testContactsModal', function(){
 
+            beforeEach(function(){
+                widget.modal.loading();
+                // CURRENT TODO: debug failing tests
+            });
+
             it('Should load contacts modal', function() {
                 expect(widget.modal).toBeDefined();
                 expect(widget.modal.container).toBeDefined();
             });
 
             it('Should handle empty contacts list', function() {
-                widget.modal.loading();
                 widget.modal.loadContacts([]);
                 var modalSendBtn = widget.modal.container.find(".yes-modal-submit-btn");
                 var modalTitle = widget.modal.container.find(".yes-modal-title");
@@ -332,7 +337,6 @@ module.exports = function runTests() {
                 var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
                 var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
 
-                widget.modal.loading();
                 widget.modal.loadContacts(contacts, true); // noSuggestions = true
                 var totalRows = widget.modal.container.find(".yes-contact-row");
                 var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
@@ -349,7 +353,6 @@ module.exports = function runTests() {
                 var expectedRowCount = (personCount - invalidEntryCount) * emailsPerPerson;
                 var expectedSuggestionCount = 5;
 
-                widget.modal.loading();
                 widget.modal.loadContacts(contacts);
                 var totalRows = widget.modal.container.find(".yes-contact-row");
                 var suggestedRows = widget.modal.container.find(".yes-suggested-contact-list .yes-contact-row");
@@ -362,27 +365,24 @@ module.exports = function runTests() {
                 var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
                 var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
                 var selectAll = widget.modal.container.find("input.yes-select-all");
-                var contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row");
+                var contactRows = widget.modal.container.find(".yes-total-contact-list .yes-contact-row").toArray();
 
-                widget.modal.loading();
                 widget.modal.loadContacts(contacts);
 
                 // Check that select-all works
                 expect(selectAll.prop("checked")).toBeFalsy();
+
                 selectAll.click();
-                contactRows.each(function() {
-                    var checkbox = $(this).find("input[type='checkbox']");
-                    expect(checkbox.prop("checked")).toBeTruthy();
-                });
+                expect(allContactsAreSelected(contactRows)).toEqual(true);
+
                 selectAll.click();
-                contactRows.each(function() {
-                    var checkbox = $(this).find("input[type='checkbox']");
-                    expect(checkbox.prop("checked")).toBeFalsy();
-                });
+                expect(noContactsAreSelected(contactRows)).toEqual(true);
 
                 // Check that selecting & deselecting single rows works
-                contactRows.each(function() {
-                    var row = $(this), checkbox = row.find("input[type='checkbox']");
+                contactRows.forEach(function(row) {
+                    row = $(row);
+                    var checkbox = row.find("input[type='checkbox']");
+                    if (checkbox.prop("checked")) { row.click(); }
                     // Clicking the row should select/deselect the contact
                     expect(checkbox.prop("checked")).toBeFalsy();
                     row.click();
@@ -412,7 +412,6 @@ module.exports = function runTests() {
                         emails: emails.slice(2)
                     }
                 ];
-                widget.modal.loading();
                 widget.modal.loadContacts(contacts);
                 var contactRows = widget.modal.container.find(".yes-contact-row");
 
@@ -433,7 +432,6 @@ module.exports = function runTests() {
                 // Open the contacts modal w/ suggestions
                 var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
                 var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
-                widget.modal.loading();
                 widget.modal.loadContacts(contacts);
 
                 // Check that analytics were logged
@@ -442,7 +440,7 @@ module.exports = function runTests() {
 
             it('Should log invites sent analytics', function() {
                 // Skip email sending & return a fake response
-                spyOn(YesGraphAPI, "hitAPI").and.callFake(function(){
+                var emailSpy = spyOn(YesGraphAPI, "hitAPI").and.callFake(function(){
                     var d = $.Deferred();
                     var fakeRespone = {
                         "emails": {
@@ -456,7 +454,7 @@ module.exports = function runTests() {
                 });
 
                 var invitesSentAnalyticsEvent
-                spyOn(YesGraphAPI.AnalyticsManager, "log").and.callFake(function(evt){
+                var analyticsSpy = spyOn(YesGraphAPI.AnalyticsManager, "log").and.callFake(function(evt){
                     if (evt === "Invite(s) Sent") {
                         invitesSentAnalyticsEvent = evt;
                     }
@@ -465,8 +463,8 @@ module.exports = function runTests() {
                 // Send invites from the manual input
                 widget.container.find(".yes-manual-input-field").val("test@email.com");
                 widget.container.find(".yes-manual-input-submit").click();
-                expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
-                expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+                expect(emailSpy).toHaveBeenCalled();
+                expect(analyticsSpy).toHaveBeenCalled();
                 expect(invitesSentAnalyticsEvent).toBeDefined();
 
                 invitesSentAnalyticsEvent = undefined;
@@ -474,8 +472,8 @@ module.exports = function runTests() {
                 // Send invites from the contacts modal
                 widget.modal.container.find("[type='checkbox']").prop("checked", true);
                 widget.modal.container.find(".yes-modal-submit-btn").click();
-                expect(YesGraphAPI.hitAPI).toHaveBeenCalled();
-                expect(YesGraphAPI.AnalyticsManager.log).toHaveBeenCalled();
+                expect(emailSpy).toHaveBeenCalled();
+                expect(analyticsSpy).toHaveBeenCalled();
                 expect(invitesSentAnalyticsEvent).toBeDefined();
             });
 
@@ -514,4 +512,20 @@ function generateRandomString(len){
         string += chars[randint];
     }
     return string;
+}
+
+function allContactsAreSelected(contactRows) {
+    for (let row of contactRows) {
+        let rowIsSelected = Boolean($(row).find("input[type='checkbox']").prop("checked"));
+        if (!rowIsSelected) { return false; }
+    }
+    return true;
+}
+
+function noContactsAreSelected(contactRows) {
+    for (let row of contactRows) {
+        let rowIsSelected = Boolean($(row).find("input[type='checkbox']").prop("checked"));
+        if (rowIsSelected) { return false; }
+    }
+    return true;
 }
