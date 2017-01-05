@@ -4,10 +4,10 @@ module.exports = function runTests(fixtures) {
 
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
         jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
-        jasmine.getFixtures().load(fixtures);   // load a template
+        jasmine.getFixtures().load(fixtures) // load templates
 
         beforeAll(function() {
-            console.debug("Running test_api.js");
+            console.debug("Running test_api.js with " + fixtures);
         });
 
         beforeEach(function (done) {
@@ -16,10 +16,6 @@ module.exports = function runTests(fixtures) {
             } else {
                 $(document).on("installed.yesgraph.sdk", done);
             }
-        });
-        afterEach(function() {
-            // jasmine.getFixtures().cleanUp();
-            // jasmine.getFixtures().clearCache();
         });
 
         it('Should have yesgraph', function() {
@@ -43,6 +39,15 @@ module.exports = function runTests(fixtures) {
             afterAll(function() {
                 YesGraphAPI.clientKey = undefined;
                 YesGraphAPI.user.user_id = "some-user-id";
+            });
+
+            it('Should use a clientKey if available', function(done) {
+                var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings) {
+                    expect(settings.headers.Authorization).toEqual("Bearer " + YesGraphAPI.clientKey);
+                    done();
+                });
+                expect(YesGraphAPI.clientKey).toBeDefined();
+                YesGraphAPI.test();
             });
 
             it('Should add a `user_id` when hittings /suggested-seen with a clientKey', function(done) {
@@ -133,16 +138,6 @@ module.exports = function runTests(fixtures) {
         });
 
         describe("testEndpoints", function() {
-            it('Should use a clientKey if available', function(done) {
-                var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings) {
-                    expect(settings.headers.Authorization).toEqual("Bearer " + YesGraphAPI.clientKey);
-                    done();
-                });
-                YesGraphAPI.clientKey = "TEST_CLIENT_KEY";
-                YesGraphAPI.test();
-                expect(ajaxSpy).toHaveBeenCalled();
-            });
-
             it('Should retry failed ajax requests', function(done) {
                 var endpoint = "/test";
                 var ajaxCallCount = 0;

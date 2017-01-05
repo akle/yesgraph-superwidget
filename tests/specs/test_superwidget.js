@@ -3,10 +3,14 @@ module.exports = function runTests(fixtures) {
     describe('testSuperwidgetUI', function() {
 
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-
         jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
-        jasmine.getFixtures().load(fixtures);   // load a template
+        jasmine.getFixtures().load(fixtures)  // load templates
+
         var widget;
+
+        beforeAll(function() {
+            console.debug("Running test_superwidget.js with " + fixtures);
+        });
 
         beforeEach(function (done) {
             // Wait for the Superwidget to be ready
@@ -22,11 +26,6 @@ module.exports = function runTests(fixtures) {
                 expect(YesGraphAPI.hasLoadedSuperwidget).toEqual(true);
                 done();
             }
-        });
-
-        afterEach(function() {
-            // jasmine.getFixtures().cleanUp();
-            // jasmine.getFixtures().clearCache();
         });
 
         describe("testInstall", function() {
@@ -470,10 +469,9 @@ module.exports = function runTests(fixtures) {
                 invitesSentAnalyticsEvent = undefined;
 
                 // Select contacts in the contacts modal
-                var contacts = [{emails: ["test@email.com"]}];
-                widget.modal.loadContacts(contacts);
-                var checkboxes = widget.modal.container.find("[type='checkbox']");
-                expect(checkboxes.length).toEqual(contacts.length);
+                widget.modal.loadContacts([{emails: ["test@email.com"]}]);
+                var checkboxes = widget.modal.container.find("[type='checkbox']").not(".yes-select-all");
+                expect(checkboxes.length).toEqual(1);
                 checkboxes.prop("checked", true);
 
                 // Send invites to selected contacts

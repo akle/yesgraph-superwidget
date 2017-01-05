@@ -18,8 +18,8 @@ module.exports = function(config) {
     files: [
       'http://code.jquery.com/jquery-1.7.2.min.js',
       'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.8/clipboard.min.js',
-      'tests/fixtures.html',
-      'tests/*.js',
+      'tests/fixtures/*.html',
+      'tests/master.js',
       'dist/dev/yesgraph-invites.min.js',
       //'tests/*.js', 
       //'tests/*.html', 
@@ -142,7 +142,7 @@ module.exports = function(config) {
             'karma-safari-launcher',
             ];
         config.preprocessors = {
-            'tests/fixtures.html': ['html2js'],
+            'tests/fixtures/*.html': ['html2js'],
         };
             
         

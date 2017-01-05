@@ -1,5 +1,28 @@
-var testApi = require("./specs/test_api.js");
-var testSuperwidget = require("./specs/test_superwidget.js");
+//
+// Import all of our test files into a single dictionary
+//
+var tests = require("./specs/*.js", { hash: true });
 
-// testApi("fixtures.html.js");
-testSuperwidget("fixtures.html.js");
+//
+// Define configurations for each set of tests to run
+//
+var configurations = [
+    {
+        tests: ['test_api', 'test_superwidget'],
+        fixture: 'fixtures1.html.js'
+    },
+    {
+        tests: ['test_api'],
+        fixture: 'fixtures2.html.js'
+    },
+]
+
+//
+// Run tests according to the configurations defined above
+//
+configurations.forEach(config => {
+    config.tests.forEach(testName => {
+        let runTests = tests[testName];
+        runTests(config.fixture);
+    });
+});
