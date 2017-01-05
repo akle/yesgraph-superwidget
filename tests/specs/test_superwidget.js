@@ -1,11 +1,11 @@
-module.exports = function runTests() {
+module.exports = function runTests(fixtures) {
 
     describe('testSuperwidgetUI', function() {
 
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-        jasmine.getFixtures().fixturesPath = "base/tests";  // path to your templates
-        jasmine.getFixtures().load('fixtures.html.js');   // load a template
+        jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
+        jasmine.getFixtures().load(fixtures);   // load a template
         var widget;
 
         beforeEach(function (done) {
@@ -104,7 +104,7 @@ module.exports = function runTests() {
             });
             it('Should load invite link section', function() {
                 expect(widget.container.find(".yes-invite-link-section").length).toEqual(1);
-                expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com?foo=bar");
+                expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com/referrals?referral_code=1234");
             });
             it('Should load share button section', function() {
                 expect(widget.container.find(".yes-share-btn-section").length).toEqual(1);
@@ -138,18 +138,18 @@ module.exports = function runTests() {
 
         describe("testOAuthUtils", function() {
             it("Should parse URL params", function() {
-                var url = "www.example.com/?foo=bar";
-                expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
+                var url = "www.example.com/referrals?referral_code=1234";
+                expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toEqual("1234");
 
-                url = "www.example.com/#foo=bar";
-                expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
+                url = "www.example.com/referrals#referral_code=1234";
+                expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toEqual("1234");
 
-                url = "www.example.com/?foo=bar#qux=quux";
-                expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toEqual("bar");
-                expect(YesGraphAPI.utils.getUrlParam(url, "qux")).toEqual("quux");
+                url = "www.example.com/referrals?referral_code=1234#user_id=5678";
+                expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toEqual("1234");
+                expect(YesGraphAPI.utils.getUrlParam(url, "user_id")).toEqual("5678");
 
-                url = "www.example.com";
-                expect(YesGraphAPI.utils.getUrlParam(url, "foo")).toBeNull();
+                url = "www.example.com/referrals";
+                expect(YesGraphAPI.utils.getUrlParam(url, "referral_code")).toBeNull();
             });
         });
 
@@ -469,8 +469,14 @@ module.exports = function runTests() {
 
                 invitesSentAnalyticsEvent = undefined;
 
-                // Send invites from the contacts modal
-                widget.modal.container.find("[type='checkbox']").prop("checked", true);
+                // Select contacts in the contacts modal
+                var contacts = [{emails: ["test@email.com"]}];
+                widget.modal.loadContacts(contacts);
+                var checkboxes = widget.modal.container.find("[type='checkbox']");
+                expect(checkboxes.length).toEqual(contacts.length);
+                checkboxes.prop("checked", true);
+
+                // Send invites to selected contacts
                 widget.modal.container.find(".yes-modal-submit-btn").click();
                 expect(emailSpy).toHaveBeenCalled();
                 expect(analyticsSpy).toHaveBeenCalled();

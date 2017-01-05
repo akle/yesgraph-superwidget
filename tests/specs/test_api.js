@@ -1,10 +1,10 @@
-module.exports = function runTests() {
+module.exports = function runTests(fixtures) {
 
     describe('testAPI', function() {
 
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
         jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
-        jasmine.getFixtures().load('fixtures.html.js');   // load a template
+        jasmine.getFixtures().load(fixtures);   // load a template
 
         beforeAll(function() {
             console.debug("Running test_api.js");
