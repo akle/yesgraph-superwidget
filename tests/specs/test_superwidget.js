@@ -153,26 +153,26 @@ module.exports = function runTests(fixtures) {
                 });
 
                 it('Facebook share button should open a popup', function() {
-                    var spy = spyOn(window, "open");
+                    var spy = spyOn(window, "open").and.callFake(url => { return new FakePopup(url); });
                     widget.container.find(".yes-share-btn-facebook").click();
                     expect(spy).toHaveBeenCalled();
                 });
 
                 it('Twitter share button should open a popup', function() {
-                    var spy = spyOn(window, "open");
+                    var spy = spyOn(window, "open").and.callFake(url => { return new FakePopup(url); });
                     widget.container.find(".yes-share-btn-twitter").click();
                     expect(spy).toHaveBeenCalled();
                 });
 
                 it('LinkedIn share button should open a popup', function() {
-                    var spy = spyOn(window, "open");
+                    var spy = spyOn(window, "open").and.callFake(url => { return new FakePopup(url); });
                     widget.container.find(".yes-share-btn-linkedin").click();
                     expect(spy).toHaveBeenCalled();
                 });
 
                 it("Pinterest share button should NOT open a popup", function() {
                     // We shouldn't open a new window for Pinterest
-                    var spy = spyOn(window, "open");
+                    var spy = spyOn(window, "open").and.callFake(url => { return new FakePopup(url); });
                     widget.container.find(".yes-share-btn-pinterest").click();
                     expect(spy).not.toHaveBeenCalled();
                 });                
@@ -203,13 +203,12 @@ module.exports = function runTests(fixtures) {
             });
 
             it("Should succesfully complete the OAuth flow", function(done) {
-
                 // When we open the popup, change the URL so we bypass the authorization process
-                var realOpen = window.open;
-                spyOn(window, "open").and.callFake(function(url){
+                spyOn(window, "open").and.callFake(function() {
                     var url = window.location.href + "#code=TEST";
-                    return realOpen(url, "_blank");
+                    return new FakePopup(url);
                 });
+
                 var realHitAPI = YesGraphAPI.hitAPI;
                 spyOn(YesGraphAPI, "hitAPI").and.callFake(function(url) {
                     var d = $.Deferred();
@@ -560,6 +559,13 @@ function noContactsAreSelected(contactRows) {
         if (rowIsSelected) { return false; }
     }
     return true;
+}
+
+function FakePopup(url) {
+    this.closed = false;
+    this.close = () => this.closed = true;
+    this.location = { href: url };
+    this.document = { URL: url };
 }
 
 function emailSendingIsDisabled(api) {
