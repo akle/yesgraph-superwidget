@@ -2,12 +2,11 @@ module.exports = function runTests(fixtures) {
 
     describe('testAPI', function() {
 
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
-        jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
-        jasmine.getFixtures().load(fixtures) // load templates
-
         beforeAll(function() {
             console.debug("Running test_api.js with " + fixtures);
+            jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
+            jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
+            jasmine.getFixtures().load(fixtures); // load templates
         });
 
         beforeEach(function (done) {
@@ -36,6 +35,7 @@ module.exports = function runTests(fixtures) {
                 YesGraphAPI.clientKey = "some-client-key";
                 YesGraphAPI.user.user_id = "some-user-id";
             });
+
             afterAll(function() {
                 YesGraphAPI.clientKey = undefined;
                 YesGraphAPI.user.user_id = "some-user-id";
@@ -45,6 +45,7 @@ module.exports = function runTests(fixtures) {
                 var ajaxSpy = spyOn($, "ajax").and.callFake(function(settings) {
                     expect(settings.headers.Authorization).toEqual("Bearer " + YesGraphAPI.clientKey);
                     done();
+                    return $.Deferred().resolve({});
                 });
                 expect(YesGraphAPI.clientKey).toBeDefined();
                 YesGraphAPI.test();

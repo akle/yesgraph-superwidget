@@ -1,18 +1,30 @@
 module.exports = function runTests(fixtures) {
 
     describe('testSuperwidgetUI', function() {
-
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-        jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
-        jasmine.getFixtures().load(fixtures)  // load templates
-
+        // Define global variables accessible to the entire suite
         var widget;
+        var _raven;
 
-        beforeAll(function() {
+        beforeAll(() => {
             console.debug("Running test_superwidget.js with " + fixtures);
+            jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+            jasmine.getFixtures().fixturesPath = "base/tests/fixtures";  // path to your templates
+            jasmine.getFixtures().load(fixtures);  // load templates
+
+            // Remove Raven so that we don't log sentry errors during this test suite.
+            // It will be replaced in the `afterAll` function, to cleanup for any
+            // test suites after this one.
+            _raven = window.YesGraphAPI.Raven;
+            window.YesGraphAPI.Raven = undefined;
         });
 
-        beforeEach(function (done) {
+        afterAll(() => {
+            // Replace the sentry error logger, so that it can
+            // be used in later test suites
+            window.YesGraphAPI.Raven = _raven;
+        });
+
+        beforeEach(done => {
             // Wait for the Superwidget to be ready
             if (window.YesGraphAPI && window.YesGraphAPI.Superwidget && window.YesGraphAPI.Superwidget.isReady) {
                 finishPrep();
@@ -22,7 +34,6 @@ module.exports = function runTests(fixtures) {
             function finishPrep(){
                 widget = window.YesGraphAPI.Superwidget;
                 window.YesGraphAPI.isTestMode(true);
-                window.YesGraphAPI.Raven = undefined; // don't log sentry errors
                 expect(YesGraphAPI.hasLoadedSuperwidget).toEqual(true);
                 done();
             }
@@ -95,44 +106,77 @@ module.exports = function runTests(fixtures) {
             it('Should load widget container', function() {
                 expect(widget.container).toBeDefined();
             });
-            it('Should load contact import section', function() {
-                expect(widget.container.find(".yes-contact-import-section").length).toEqual(1);
-            });
-            it('Should load manual input form', function() {
-                expect(widget.container.find(".yes-manual-input-form").length).toEqual(1);
-            });
-            it('Should load invite link section', function() {
-                expect(widget.container.find(".yes-invite-link-section").length).toEqual(1);
-                expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com/referrals?referral_code=1234");
-            });
-            it('Should load share button section', function() {
-                expect(widget.container.find(".yes-share-btn-section").length).toEqual(1);
+
+            describe('testContactImportSection', () => {
+                // Skip these tests if the current options disabled contact importing
+                beforeAll(() => {
+                    if (contactImportingIsDisabled(YesGraphAPI)) pending();
+                });
+
+                it('Should load contact import section', function() {
+                    expect(widget.container.find(".yes-contact-import-section").length).toEqual(1);
+                });                
             });
 
-            it('Facebook share button should open a popup', function() {
-                var spy = spyOn(window, "open");
-                widget.container.find(".yes-share-btn-facebook").click();
-                expect(spy).toHaveBeenCalled();
+            describe('testManualInputForm', () => {
+                // Skip these tests if the current options disabled email sending
+                beforeAll(() => {
+                    if (emailSendingIsDisabled(YesGraphAPI)) pending();
+                });
+
+                it('Should load manual input form', function() {
+                    expect(widget.container.find(".yes-manual-input-form").length).toEqual(1);
+                }); 
             });
 
-            it('Twitter share button should open a popup', function() {
-                var spy = spyOn(window, "open");
-                widget.container.find(".yes-share-btn-twitter").click();
-                expect(spy).toHaveBeenCalled();
+            describe('testInviteLink', () => {
+                // Skip these tests if the current options disabled the invite link
+                beforeAll(() => {
+                    if (inviteLinkIsDisabled(YesGraphAPI)) pending();
+                });
+
+                it('Should load invite link section', function() {
+                    console.log("Current app:", window.YesGraphAPI.app);
+                    expect(widget.container.find(".yes-invite-link-section").length).toEqual(1);
+                    expect(widget.container.find("#yes-invite-link").val()).toEqual("www.example.com/referrals?referral_code=1234");
+                });
             });
 
-            it('LinkedIn share button should open a popup', function() {
-                var spy = spyOn(window, "open");
-                widget.container.find(".yes-share-btn-linkedin").click();
-                expect(spy).toHaveBeenCalled();
-            });
+            describe('testShareButtons', function(){
+                // Skip these tests if the current options disabled share buttons
+                beforeAll(() => {
+                    if (shareButtonsAreDisabled(YesGraphAPI)) pending();
+                });
 
-            it("Pinterest share button should NOT open a popup", function() {
-                // We shouldn't open a new window for Pinterest
-                var spy = spyOn(window, "open");
-                widget.container.find(".yes-share-btn-pinterest").click();
-                expect(spy).not.toHaveBeenCalled();
-            });
+                it('Should load share button section', function() {
+                    expect(widget.container.find(".yes-share-btn-section").length).toEqual(1);
+                });
+
+                it('Facebook share button should open a popup', function() {
+                    var spy = spyOn(window, "open");
+                    widget.container.find(".yes-share-btn-facebook").click();
+                    expect(spy).toHaveBeenCalled();
+                });
+
+                it('Twitter share button should open a popup', function() {
+                    var spy = spyOn(window, "open");
+                    widget.container.find(".yes-share-btn-twitter").click();
+                    expect(spy).toHaveBeenCalled();
+                });
+
+                it('LinkedIn share button should open a popup', function() {
+                    var spy = spyOn(window, "open");
+                    widget.container.find(".yes-share-btn-linkedin").click();
+                    expect(spy).toHaveBeenCalled();
+                });
+
+                it("Pinterest share button should NOT open a popup", function() {
+                    // We shouldn't open a new window for Pinterest
+                    var spy = spyOn(window, "open");
+                    widget.container.find(".yes-share-btn-pinterest").click();
+                    expect(spy).not.toHaveBeenCalled();
+                });                
+            })
         });
 
         describe("testOAuthUtils", function() {
@@ -153,6 +197,11 @@ module.exports = function runTests(fixtures) {
         });
 
         describe("testOAuthFlow", function() {
+            // Skip these tests if the current options disabled contact importing
+            beforeAll(() => {
+                if (contactImportingIsDisabled(YesGraphAPI)) pending();
+            });
+
             it("Should succesfully complete the OAuth flow", function(done) {
 
                 // When we open the popup, change the URL so we bypass the authorization process
@@ -187,26 +236,28 @@ module.exports = function runTests(fixtures) {
                 });
 
                 // Click the contact import button, and check that the auth flow succeeds
-                widget.container.find(".yes-contact-import-btn-google").click();
+                var contactImportBtn = widget.container.find(".yes-contact-import-btn").first();
+                expect(contactImportBtn.length).toEqual(1);
+                contactImportBtn.click();
 
                 // Check that the popup was opened
                 expect(window.open).toHaveBeenCalled();
 
                 $(document).on("imported.yesgraph.contacts", function() {
                     // Among the API calls made, one should be to the /oauth endpoint
-                    var oauthEndpointCall;
-                    YesGraphAPI.hitAPI.calls.all().forEach(function(call) {
-                        if (call.args.indexOf("/oauth") !== 1) {
-                            oauthEndpointCall = call;
-                        }
+                    YesGraphAPI.hitAPI.calls.all().forEach(call => {
+                        if (call.args.indexOf("/oauth") !== 1) done();
                     });
-                    expect(oauthEndpointCall).toBeDefined();
-                    done();
                 });
             });
         });
 
         describe("testEmailValidation", function() {
+            // Skip these tests if the current options disabled email sending
+            beforeAll(() => {
+                if (emailSendingIsDisabled(YesGraphAPI)) pending();
+            });
+
             it("Should identify valid email recipients", function() {
                 var inputField = widget.container.find(".yes-manual-input-field");
                 inputField.val("valid@email.com");
@@ -311,10 +362,8 @@ module.exports = function runTests(fixtures) {
 
         describe('testContactsModal', function(){
 
-            beforeEach(function(){
-                widget.modal.loading();
-                // CURRENT TODO: debug failing tests
-            });
+            beforeEach(() => widget.modal.loading());
+            afterEach(() => widget.modal.loading());
 
             it('Should load contacts modal', function() {
                 expect(widget.modal).toBeDefined();
@@ -532,4 +581,27 @@ function noContactsAreSelected(contactRows) {
         if (rowIsSelected) { return false; }
     }
     return true;
+}
+
+function emailSendingIsDisabled(api) {
+    let enabledEmailSending = api.settings.emailSending;
+    enabledEmailSending = enabledEmailSending && api.Superwidget.options.settings.hasValidEmailSettings[0];
+    return !enabledEmailSending;
+}
+
+function contactImportingIsDisabled(api) {
+    let enabledContactImporting = api.settings.contactImporting;
+    enabledContactImporting = enabledContactImporting && api.Superwidget.options.settings.hasValidOAuthSettings[0];
+    return !enabledContactImporting;
+}
+
+function inviteLinkIsDisabled(api) {
+    let enabledInviteLink = api.settings.inviteLink;
+    return !enabledInviteLink;
+}
+
+function shareButtonsAreDisabled(api) {
+    let enabledShareBtns = api.settings.shareBtns;
+    enabledShareBtns = enabledShareBtns && api.Superwidget.options.shareButtons.length > 0;
+    return !enabledShareBtns;
 }

@@ -1,5 +1,5 @@
 //
-// Import all of our test files into a single dictionary
+// Import all of our test files into a single object
 //
 var tests = require("./specs/*.js", { hash: true });
 
@@ -12,10 +12,10 @@ var configurations = [
         fixture: 'fixtures1.html.js'
     },
     {
-        tests: ['test_api'],
+        tests: ['test_api', 'test_superwidget'],
         fixture: 'fixtures2.html.js'
     },
-]
+];
 
 //
 // Run tests according to the configurations defined above
