@@ -129,11 +129,6 @@ module.exports = function(config) {
             'tests/fixtures/*.html': ['html2js'],
             'tests/master.js': ['browserify'],
         };
-        config.browserify = {
-            debug: true,
-            presets: ['es2015'],
-            transform: ['require-globify']
-        };
         config.plugins = [
             'karma-jasmine-jquery',
             'karma-jasmine',
@@ -147,11 +142,6 @@ module.exports = function(config) {
         config.browsers = ['Chrome_travis_ci', 'Firefox'];
         config.reporters = ['progress', 'coverage', 'coveralls'];
         config.preprocessors['tests/master.js'] = ['browserify'];
-        config.browserify = {
-            debug: true,
-            presets: ['es2015'],
-            transform: ['require-globify']
-        };
         config.plugins = [
             'karma-jasmine-jquery',
             'karma-jasmine',

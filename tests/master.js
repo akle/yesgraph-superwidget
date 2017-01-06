@@ -20,9 +20,9 @@ var configurations = [
 //
 // Run tests according to the configurations defined above
 //
-configurations.forEach(config => {
-    config.tests.forEach(testName => {
-        let runTests = tests[testName];
+configurations.forEach(function (config) {
+    config.tests.forEach(function (testName) {
+        var runTests = tests[testName];
         runTests(config.fixture);
     });
 });
