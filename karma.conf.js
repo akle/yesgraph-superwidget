@@ -125,6 +125,15 @@ module.exports = function(config) {
         config.browsers = ['Chrome_travis_ci', 'Firefox', 'Safari'];
         // Which plugins to enable
         config.reporters = ['progress'];
+        config.preprocessors = {
+            'tests/fixtures/*.html': ['html2js'],
+            'tests/master.js': ['browserify'],
+        };
+        config.browserify = {
+            debug: true,
+            presets: ['es2015'],
+            transform: ['require-globify']
+        };
         config.plugins = [
             'karma-jasmine-jquery',
             'karma-jasmine',
@@ -132,16 +141,17 @@ module.exports = function(config) {
             'karma-html2js-preprocessor',
             'karma-firefox-launcher',
             'karma-safari-launcher',
-            ];
-        config.preprocessors = {
-            'tests/fixtures/*.html': ['html2js'],
-            'tests/master.js': ['browserify'],
-        };
+        ];
     }
     else if (process.env.TRAVIS) {
         config.browsers = ['Chrome_travis_ci', 'Firefox'];
         config.reporters = ['progress', 'coverage', 'coveralls'];
         config.preprocessors['tests/master.js'] = ['browserify'];
+        config.browserify = {
+            debug: true,
+            presets: ['es2015'],
+            transform: ['require-globify']
+        };
         config.plugins = [
             'karma-jasmine-jquery',
             'karma-jasmine',
