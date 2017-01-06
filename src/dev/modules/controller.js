@@ -30,7 +30,7 @@ export default function Controller(model, view) {
 
             if (elem.is("textarea")) {
                 var text = elem.val();
-                var regex = /([^<>\s,.;]*@[^<>\s,.;]*\.[^<>\s,.;]*)/gi;
+                var regex = /([^<>\s,.;]*@([^<>\s,.;]*\.[^<>\s,.;]*)*)/gi;
                 var match, lastMatchEnd = 0;
                 while(true) {
                     match = regex.exec(text);
