@@ -140,6 +140,8 @@ module.exports = function(config) {
     }
     else if (process.env.TRAVIS) {
         config.browsers = ['Chrome_travis_ci', 'Firefox'];
+        // Add babel polyfill to handle outdated Chromium (v37) on Ubuntu
+        config.files.unshift('node_modules/babel-polyfill/dist/polyfill.js');
         config.reporters = ['progress', 'coverage', 'coveralls'];
         config.preprocessors['tests/master.js'] = ['browserify'];
         config.plugins = [
