@@ -8,9 +8,9 @@ script:
     - gulp build --local=false; node_modules/karma/bin/karma start karma-jquery1.7.conf.js --single-run;
 before_install:
     - export CHROME_BIN=/usr/bin/google-chrome
-    # - export FIREFOX_BIN=`which firefox`
+      # - export FIREFOX_BIN=`which firefox`
     - export DISPLAY=:99.0
-    # - if [[ "$TRAVIS_OS_NAME" == "linux" ]] then sh -e /etc/init.d/xvfb start; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] then sh -e /etc/init.d/xvfb start; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] then sudo apt-get install -y libappindicator1 fonts-liberation; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] then wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]] then sudo dpkg -i google-chrome*.deb; fi
