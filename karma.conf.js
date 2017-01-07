@@ -24,7 +24,7 @@ module.exports = function(config) {
     browserify: {
       debug: true,
       presets: ['es2015'],
-      transform: ['require-globify']
+      transform: ['babelify', 'require-globify']
     },
 
     // list of files / patterns to load in the browser
