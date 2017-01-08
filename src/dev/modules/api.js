@@ -374,6 +374,7 @@ export default function YesGraphAPIConstructor() {
     this.mount = function(superwidget) {
         self.Superwidget = superwidget;
         self.Superwidget.YesGraphAPI = self;
+        self.hasLoadedSuperwidget = true;
         return self;
     };
 }
