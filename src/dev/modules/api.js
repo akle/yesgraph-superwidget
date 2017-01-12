@@ -96,8 +96,8 @@ export default function YesGraphAPIConstructor() {
     };
 
     this.postSuggestedSeen = function (seenContacts, done, maxTries, interval) {
-        // Ensure that a `user_id` is included whenever clientKey auth is used
-        if (self.clientKey != undefined && seenContacts.entries) {  // jshint ignore:line
+        // Ensure that a `user_id` is included
+        if (seenContacts.entries) {  // jshint ignore:line
             seenContacts.entries.forEach(entry => entry.user_id = entry.user_id || self.user.user_id);
         }
         return self.hitAPI("/suggested-seen", "POST", seenContacts, done, maxTries, interval);
@@ -260,6 +260,7 @@ export default function YesGraphAPIConstructor() {
             self.inviteLink = data.inviteLink;
             self.clientToken = data.token;
             self.utils.setCookie('yg-client-token', data.token);
+            self.user.user_id = data.user_id;
         },
         getOrFetchClientToken: function (userData) {
             var data = {

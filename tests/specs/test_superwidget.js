@@ -349,6 +349,7 @@ module.exports = function runTests(fixtures) {
             });
 
             it('Should handle empty contacts list', function() {
+                spyOn(YesGraphAPI, "hitAPI"); // skip the api hits
                 widget.modal.loadContacts([]);
                 var modalSendBtn = widget.modal.container.find(".yes-modal-submit-btn");
                 var modalTitle = widget.modal.container.find(".yes-modal-title");
@@ -357,6 +358,7 @@ module.exports = function runTests(fixtures) {
             });
 
             it('Should optionally exclude suggestions', function() {
+                spyOn(YesGraphAPI, "hitAPI"); // skip the api hits
                 var personCount = 30;
                 var emailsPerPerson = 3;
                 var invalidEntryCount = 5;
@@ -371,6 +373,7 @@ module.exports = function runTests(fixtures) {
             });
 
             it('Should display contacts', function() {
+                spyOn(YesGraphAPI, "hitAPI"); // skip the api hits
                 // Generate dummy contact entries to load into the widget
                 var personCount = 30;
                 var emailsPerPerson = 3;
@@ -387,6 +390,7 @@ module.exports = function runTests(fixtures) {
             });
 
             it('Should allow selecting contacts', function() {
+                spyOn(YesGraphAPI, "hitAPI"); // skip the api hits
                 // Generate dummy contact entries to load into the widget
                 var personCount = 10, emailsPerPerson = 2, invalidEntryCount = 0;
                 var contacts = generateContacts(personCount, emailsPerPerson, invalidEntryCount);
@@ -426,6 +430,7 @@ module.exports = function runTests(fixtures) {
             });
 
             it('Should correctly handle contacts with the same name', function() {
+                spyOn(YesGraphAPI, "hitAPI"); // skip the api hits
                 var emails = ["jane.doe@gmail.com", "jdoe@yahoo.net",
                               "jane.doe@about.me", "jdoe@hotmail.com"];
                 var contacts = [
@@ -451,6 +456,7 @@ module.exports = function runTests(fixtures) {
             });
 
             it('Should log suggested seen analytics', function() {
+                spyOn(YesGraphAPI, "hitAPI"); // skip the api hits
                 spyOn(YesGraphAPI.AnalyticsManager, "log").and.callFake(function(evt){
                     expect(evt).toEqual("Viewed Suggested Contacts");
                 });

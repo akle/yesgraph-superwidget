@@ -2,6 +2,11 @@ module.exports = function runTests(fixtures) {
 
     describe('testAPI', function() {
 
+        var auth = {
+            clientToken: null,
+            clientKey: null
+        };
+
         beforeAll(function() {
             console.debug("Running test_api.js with " + fixtures);
             jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
@@ -11,9 +16,14 @@ module.exports = function runTests(fixtures) {
 
         beforeEach(function (done) {
             if (window.YesGraphAPI && window.YesGraphAPI.isReady) {
-                done();
+                finishPrep();
             } else {
-                $(document).on("installed.yesgraph.sdk", done);
+                $(document).on("installed.yesgraph.sdk", finishPrep);
+            }
+            function finishPrep(){
+                auth.clientToken = window.YesGraphAPI.user.clientToken;
+                auth.clientKey = window.YesGraphAPI.user.clientKey;
+                done();
             }
         });
 
@@ -32,13 +42,13 @@ module.exports = function runTests(fixtures) {
 
         describe("testClientKey", function() {
             beforeAll(function() {
-                YesGraphAPI.clientKey = "some-client-key";
-                YesGraphAPI.user.user_id = "some-user-id";
+                // Make sure we have a client key available
+                YesGraphAPI.clientKey = auth.clientKey || "some-client-key";
             });
 
             afterAll(function() {
-                YesGraphAPI.clientKey = undefined;
-                YesGraphAPI.user.user_id = "some-user-id";
+                // Reset the autorization to whatever it was before we ran this test suite
+                YesGraphAPI.clientKey = auth.clientKey || undefined;
             });
 
             it('Should use a clientKey if available', function(done) {
@@ -50,28 +60,6 @@ module.exports = function runTests(fixtures) {
                 expect(YesGraphAPI.clientKey).toBeDefined();
                 YesGraphAPI.test();
             });
-
-            it('Should add a `user_id` when hittings /suggested-seen with a clientKey', function(done) {
-                expect(YesGraphAPI).toBeDefined();
-                var spy = spyOn(YesGraphAPI, "hitAPI").and.callFake(function(endpoint, _, data) {
-                    // Check that user_ids were added to the entries
-                    if (endpoint === "/suggested-seen") {
-                        data.entries.forEach(function(entry) {
-                            expect(entry.user_id).toBeDefined()
-                        });
-                        done();
-                    }
-                });
-
-                // POST some entries without user_ids
-                var entries = [
-                    { "emails": ["test1@email.com"] },
-                    { "emails": ["test2@email.com"] },
-                    { "emails": ["test3@email.com"] },
-                ];
-                YesGraphAPI.postSuggestedSeen({ entries: entries })
-            });
-
         });
 
         describe("testInstall", function() {
@@ -249,6 +237,32 @@ module.exports = function runTests(fixtures) {
                 expect(result).not.toBe(null);
             });
 
+            it('Should add a `user_id` when hitting /suggested-seen', function(done) {
+                expect(YesGraphAPI).toBeDefined();
+                var spy = spyOn(YesGraphAPI, "hitAPI").and.callFake(function(endpoint, _, data) {
+                    // Check that user_ids were added to the entries
+                    if (endpoint === "/suggested-seen") {
+                        console.debug(data.entries.slice(0,5))
+                        data.entries.forEach(function(entry) {
+                            expect(entry.user_id).toBeDefined();
+                        });
+                        YesGraphAPI.user.user_id = userId;
+                        done();
+                    }
+                });
+
+                // POST some entries without user_ids
+                var entries = [
+                    { "emails": ["test1@email.com"] },
+                    { "emails": ["test2@email.com"] },
+                    { "emails": ["test3@email.com"] },
+                ];
+
+                var userId = YesGraphAPI.user.user_id;
+                YesGraphAPI.user.user_id = userId || null;
+                YesGraphAPI.postSuggestedSeen({ entries: entries });
+            });
+
             it('Should POST to /invites-sent endpoint', function() {
                 spyOn(window.YesGraphAPI, 'hitAPI').and.callFake(function(endpoint, method, data, done, maxTries, interval) {
                     expect(endpoint).toEqual("/invites-sent");
@@ -309,10 +323,6 @@ module.exports = function runTests(fixtures) {
         });
 
         describe("testUtils", function() {
-
-            it('Should store client token', function() {
-                expect(window.YesGraphAPI.clientToken).toBeDefined();
-            });
 
             it("Should optionally throw errors", function() {
                 var errorMsg = "Test error message";
