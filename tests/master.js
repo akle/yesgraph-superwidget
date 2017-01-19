@@ -9,11 +9,15 @@ var tests = require("./specs/*.js", { hash: true });
 var configurations = [
     {
         tests: ['test_api', 'test_superwidget'],
-        fixture: 'fixtures1.html.js'
+        fixture: 'fixtures1.html.js'  // full widget w/ client token auth
     },
     {
         tests: ['test_api', 'test_superwidget'],
-        fixture: 'fixtures2.html.js'
+        fixture: 'fixtures2.html.js'  // contact importer w/ client token auth
+    },
+    {
+        tests: ['test_api', 'test_superwidget'],
+        fixture: 'fixtures3.html.js'  // full widget w/ client key auth
     },
 ];
 
