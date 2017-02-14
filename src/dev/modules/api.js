@@ -104,10 +104,18 @@ export default function YesGraphAPIConstructor() {
     };
 
     this.postInvitesAccepted = function (invitesAccepted, done, maxTries, interval) {
+        // Ensure that a `user_id` is included
+        if (invitesAccepted.entries) {
+            invitesAccepted.entries.forEach(entry => entry.user_id = entry.user_id || self.user.user_id);
+        }
         return self.hitAPI("/invites-accepted", "POST", invitesAccepted, done, maxTries, interval);
     };
 
     this.postInvitesSent = function (invitesSent, done, maxTries, interval) {
+        // Ensure that a `user_id` is included
+        if (invitesSent.entries) {
+            invitesSent.entries.forEach(entry => entry.user_id = entry.user_id || self.user.user_id);
+        }
         return self.hitAPI("/invites-sent", "POST", invitesSent, done, maxTries, interval);
     };
 

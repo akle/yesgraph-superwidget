@@ -242,7 +242,6 @@ module.exports = function runTests(fixtures) {
                 var spy = spyOn(YesGraphAPI, "hitAPI").and.callFake(function(endpoint, _, data) {
                     // Check that user_ids were added to the entries
                     if (endpoint === "/suggested-seen") {
-                        console.debug(data.entries.slice(0,5))
                         data.entries.forEach(function(entry) {
                             expect(entry.user_id).toBeDefined();
                         });
@@ -261,6 +260,32 @@ module.exports = function runTests(fixtures) {
                 var userId = YesGraphAPI.user.user_id;
                 YesGraphAPI.user.user_id = userId || null;
                 YesGraphAPI.postSuggestedSeen({ entries: entries });
+            });
+
+            it('Should add a `user_id` when hitting /invites-sent & invites-accepted', function(done) {
+                expect(YesGraphAPI).toBeDefined();
+                var spy = spyOn(YesGraphAPI, "hitAPI").and.callFake(function(endpoint, _, data) {
+                    // Check that user_ids were added to the entries
+                    if (endpoint === "/invites-sent" || endpoint === "/invites-accepted") {
+                        data.entries.forEach(function(entry) {
+                            expect(entry.user_id).toBeDefined();
+                        });
+                        YesGraphAPI.user.user_id = userId;
+                        done();
+                    }
+                });
+
+                // POST some entries without user_ids
+                var entries = [
+                    { "email": "test1@email.com" },
+                    { "email": "test2@email.com" },
+                    { "email": "test3@email.com" },
+                ];
+
+                var userId = YesGraphAPI.user.user_id;
+                YesGraphAPI.user.user_id = userId || null;
+                YesGraphAPI.postInvitesSent({ entries: entries });
+                YesGraphAPI.postInvitesAccepted({ entries: entries });
             });
 
             it('Should POST to /invites-sent endpoint', function() {
